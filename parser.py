@@ -49,6 +49,25 @@ operators = {
 
 
 
+# Helper functions
+
+def atEnd(tokens):
+    return (len(tokens) == 0)
+
+def check(tokens):
+    return tokens[0]
+
+def consume(tokens):
+    token = tokens.pop(0)
+    return token
+
+def makeExpr(left, oper, right):
+    return {
+        'left': left,
+        'oper': oper,
+        'right': right,
+    }
+
 # Precedence parsers
 
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
