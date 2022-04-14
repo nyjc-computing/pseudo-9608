@@ -83,7 +83,7 @@ def scan(src):
         elif char == '"':
             text = string(code)
             token = makeToken('string', text, text[1:-1])
-        elif char in '()[]:.+-/*=<>':
+        elif char in '()[]:,.+-/*=<>':
             text = symbol(code)
             oper = operators.get(text, None)
             token = makeToken('symbol', text, oper)

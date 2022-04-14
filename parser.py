@@ -1,11 +1,14 @@
 from builtin import ParseError
+from scanner import makeToken
 
 
 
 # Helper functions
 
 def atEnd(tokens):
-    return (len(tokens) == 0)
+    if check(tokens)['type'] == 'EOF':
+        return True
+    return False
 
 def check(tokens):
     return tokens[0]
@@ -77,3 +80,52 @@ def expression(tokens):
     # An entire expression
     expr = equality(tokens)
     return expr
+
+# Statement parsing helpers
+
+def expectElseError(tokens, word):
+    # Return True if first token matches word.
+    # Otherwise, raises an error.
+    if check(tokens)['word'] == word:
+        consume(tokens)
+        return True
+    raise ParseError(f"Expected {word}")
+
+def match(tokens, *words):
+    # Return True if first token is in the
+    # sequence of provided words.
+    # Otherwise, return False.
+    if check(tokens)['word'] in words:
+        consume(tokens)
+        return True
+    return False
+
+# Statement parsers
+
+def outputStmt(tokens):
+    # Parse the first expression
+    exprs = [expression(tokens)]
+    # If comma, parse the next expression
+    while match(tokens, ','):
+        exprs += [expression(tokens)]
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'output',
+        'exprs': exprs,
+    }
+    return stmt
+
+def statement(tokens):
+    if match(tokens, 'OUTPUT'):
+        return outputStmt(tokens)
+    else:
+        raise ParseError(f"Unrecognised token {check(tokens)}")
+
+# Main parsing loop
+
+def parse(tokens):
+    tokens.append(makeToken('EOF', "", None))
+    statements = []
+    while not atEnd(tokens):
+        statements += [statement(tokens)]
+    return statements
