@@ -1,3 +1,5 @@
+# Operators
+
 def add(x, y):
     return x + y
 
@@ -27,3 +29,13 @@ def ne(x, y):
 
 def eq(x, y):
     return x == y
+
+
+
+# Classifier
+
+operators = {
+    '+': add, '-': sub, '*': mul, '/': div,
+    '<': lt, '<=': lte, '>': gt, '>=': gte,
+    '<>': ne, '=': eq
+}
