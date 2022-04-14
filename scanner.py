@@ -82,15 +82,23 @@ def scan(src):
             consume(code)
             continue
         elif char == '\n':
-            token = consume(code)
+            text = consume(code)
+            token = makeToken('keyword', text, None)
         elif char.isalpha():
-            token = word(code)
+            text = word(code)
+            if text in KEYWORDS:
+                token = makeToken('keyword', text, None)
+            else:
+                token = makeToken('name', text, None)
         elif char.isdigit():
-            token = integer(code)
+            text = integer(code)
+            token = makeToken('integer', text, int(text))
         elif char == '"':
-            token = string(code)
+            text = string(code)
+            token = makeToken('string', text, text[1:-1])
         elif char in '()[]:.+-/*=<>':
-            token = symbol(code)
+            text = symbol(code)
+            token = makeToken('symbol', text, None)
         else:
             raise ValueError(f"Unrecognised character {repr(char)}.")
         tokens += [token]
