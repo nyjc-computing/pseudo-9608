@@ -11,6 +11,49 @@ def consume(code):
     code['src'] = code['src'][1:]  # Remove first char
     return char
 
+# Scanning functions
+
+def word(code):
+    # We know the first character is an alphabet letter
+    # because we checked in main()
+    token = consume(code)
+    while not atEnd(code) and check(code).isalpha():
+        # Keep adding letters to token
+        # and removing from src
+        token += consume(code)
+    return token
+
+def integer(code):
+    # Starting with digits
+    token = consume(code)
+    while not atEnd(code) and check(code).isdigit():
+        # Keep adding digits to token
+        # and removing from src
+        token += consume(code)
+    return token
+
+def string(code):
+    token = consume(code)
+    # Stop at next double-quote (")
+    while not atEnd(code) and check(code) != '"':
+        # Keep adding letters to token
+        # and removing from src
+        token += consume(code)
+    # Remember to consume the ending double-quote '"'
+    if not atEnd(code):
+        token += consume(code)
+    return token
+
+def symbol(code):
+    token = consume(code)
+    if token in '()[]':  # single-character tokens
+        return token
+    # Check if the next character is a valid symbol
+    # that forms part of a multi-character symbol.
+    while not atEnd(code) and (check(code) in ':.+-/*=<>'):
+        token += consume(code)
+    return token
+
 
 
 # Main scanning loop
