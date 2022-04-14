@@ -103,13 +103,9 @@ def outputStmt(tokens):
     # Parse the first expression
     exprs = [expression(tokens)]
     # If comma, parse the next expression
-    while check(tokens)['word'] == ',':
-        consume(tokens)  # ,
-        tokens += [expression(tokens)]
-    # If no comma, expect \n
-    if check(tokens)['word'] != '\n':
-        raise ParseError("Expected \n")
-    consume(tokens)  # \n
+    while match(tokens, ','):
+        exprs += [expression(tokens)]
+    expectElseError(tokens, '\n')
     stmt = {
         'rule': 'output',
         'exprs': exprs,
@@ -117,9 +113,7 @@ def outputStmt(tokens):
     return stmt
 
 def statement(tokens):
-    if check(tokens)['word'] == 'OUTPUT':
-        consume(tokens)
-        stmt = outputStmt(tokens)
+    if match(tokens, 'OUTPUT'):
+        return outputStmt(tokens)
     else:
         raise ParseError(f"Unrecognised token {check(tokens)}")
-    return stmt
