@@ -1,23 +1,5 @@
 from builtin import ParseError
-
-
-
-# Token types
-
-KEYWORDS = [
-    'DECLARE', 'OUTPUT',
-    'WHILE', 'DO', 'ENDWHILE',
-    'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
-]
-
-TYPES = ['INTEGER', 'STRING']
-
-OPERATORS = [
-    '+', '-', '/', '*', '=',
-    '<', '<-', '<=', '>', '>=', '<>',
-]
-
-SYMBOLS = [':']
+from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
 
 
 
