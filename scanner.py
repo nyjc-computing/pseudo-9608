@@ -1,3 +1,28 @@
+# Errors
+
+class ParseError(Exception): pass
+
+
+
+# Token types
+
+KEYWORDS = [
+    'DECLARE', 'OUTPUT',
+    'WHILE', 'DO', 'ENDWHILE',
+    'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
+]
+
+TYPES = ['INTEGER', 'STRING']
+
+OPERATORS = [
+    '+', '-', '/', '*', '=',
+    '<', '<-', '<=', '>', '>=', '<>',
+]
+
+SYMBOLS = [':']
+
+
+
 # Helper functions
 
 def atEnd(code):
@@ -10,6 +35,13 @@ def consume(code):
     char = check(code)
     code['src'] = code['src'][1:]
     return char
+
+def makeToken(tokentype, word, value):
+    return {
+        'type': tokentype,
+        'word': word,
+        'value': value,
+    }
 
 # Scanning functions
 
@@ -56,17 +88,25 @@ def scan(src):
             consume(code)
             continue
         elif char == '\n':
-            token = consume(code)
+            text = consume(code)
+            token = makeToken('keyword', text, None)
         elif char.isalpha():
-            token = word(code)
+            text = word(code)
+            if text in KEYWORDS:
+                token = makeToken('keyword', text, None)
+            else:
+                token = makeToken('name', text, None)
         elif char.isdigit():
-            token = integer(code)
+            text = integer(code)
+            token = makeToken('integer', text, int(text))
         elif char == '"':
-            token = string(code)
+            text = string(code)
+            token = makeToken('string', text, text[1:-1])
         elif char in '()[]:.+-/*=<>':
-            token = symbol(code)
+            text = symbol(code)
+            token = makeToken('symbol', text, None)
         else:
-            raise ValueError(f"Unrecognised character {repr(char)}.")
+            raise ParseError(f"Unrecognised character {repr(char)}.")
         tokens += [token]
         print('Scanned token:', token, ', characters left:', len(code['src']))
     return tokens
