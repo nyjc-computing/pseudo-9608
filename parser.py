@@ -105,7 +105,7 @@ def outputStmt(tokens):
     # If comma, parse the next expression
     while check(tokens)['word'] == ',':
         consume(tokens)  # ,
-        tokens += [expression(consume(tokens))]
+        tokens += [expression(tokens)]
     # If no comma, expect \n
     if check(tokens)['word'] != '\n':
         raise ParseError("Expected \n")
