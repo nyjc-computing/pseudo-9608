@@ -60,12 +60,16 @@ def symbol(code):
 
 def scan(src):
     code = {'src': src}
+    tokens = []
     while not atEnd(code):
         char = check(code)
         # If it is whitespace, ignore it.
         if char in [' ', '\r', '\t']:
             consume(code)
             continue
+        # Line break
+        elif char == '\n':
+            token = consume(code)
         # Tokenise words
         elif char.isalpha():
             token = word(code)
