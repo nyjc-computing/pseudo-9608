@@ -108,5 +108,4 @@ def scan(src):
         else:
             raise ParseError(f"Unrecognised character {repr(char)}.")
         tokens += [token]
-        print('Scanned token:', token, ', characters left:', len(code['src']))
     return tokens
