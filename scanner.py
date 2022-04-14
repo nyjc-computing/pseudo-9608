@@ -1,25 +1,6 @@
-# Errors
-
-class ParseError(Exception): pass
-
-
-
-# Token types
-
-KEYWORDS = [
-    'DECLARE', 'OUTPUT',
-    'WHILE', 'DO', 'ENDWHILE',
-    'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
-]
-
-TYPES = ['INTEGER', 'STRING']
-
-OPERATORS = [
-    '+', '-', '/', '*', '=',
-    '<', '<-', '<=', '>', '>=', '<>',
-]
-
-SYMBOLS = [':']
+from builtin import ParseError
+from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
+from builtin import operators
 
 
 
@@ -80,7 +61,7 @@ def symbol(code):
 # Main scanning loop
 
 def scan(src):
-    code = {'src': src}
+    code = {'src': src + '\n'}
     tokens = []
     while not atEnd(code):
         char = check(code)
@@ -104,7 +85,8 @@ def scan(src):
             token = makeToken('string', text, text[1:-1])
         elif char in '()[]:.+-/*=<>':
             text = symbol(code)
-            token = makeToken('symbol', text, None)
+            oper = operators.get(text, None)
+            token = makeToken('symbol', text, oper)
         else:
             raise ParseError(f"Unrecognised character {repr(char)}.")
         tokens += [token]
