@@ -8,3 +8,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 
 - [01a Scanning](https://github.com/nyjc-computing/pseudo/pull/1)
 - [01b Tokens](https://github.com/nyjc-computing/pseudo/pull/2)
+- [02 Expressions](https://github.com/nyjc-computing/pseudo/pull/3)
