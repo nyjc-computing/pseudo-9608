@@ -1,4 +1,5 @@
 from builtin import ParseError
+from scanner import makeToken
 
 
 
@@ -117,3 +118,12 @@ def statement(tokens):
         return outputStmt(tokens)
     else:
         raise ParseError(f"Unrecognised token {check(tokens)}")
+
+# Main parsing loop
+
+def parse(tokens):
+    tokens.append(makeToken('EOF', "", None))
+    statements = []
+    while not atEnd(tokens):
+        statements += [statement(tokens)]
+    return statements
