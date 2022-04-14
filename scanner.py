@@ -1,3 +1,9 @@
+# Errors
+
+class ParseError(Exception): pass
+
+
+
 # Token types
 
 KEYWORDS = [
@@ -100,7 +106,7 @@ def scan(src):
             text = symbol(code)
             token = makeToken('symbol', text, None)
         else:
-            raise ValueError(f"Unrecognised character {repr(char)}.")
+            raise ParseError(f"Unrecognised character {repr(char)}.")
         tokens += [token]
         print('Scanned token:', token, ', characters left:', len(code['src']))
     return tokens
