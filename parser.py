@@ -35,7 +35,14 @@ def eq(x, y):
 # Classifier
 
 operators = {
-    '+': add, '-': sub, '*': mul, '/': div,
-    '<': lt, '<=': lte, '>': gt, '>=': gte,
-    '<>': ne, '=': eq
+    '+': add,
+    '-': sub,
+    '*': mul,
+    '/': div,
+    '<': lt,
+    '<=': lte,
+    '>': gt,
+    '>=': gte,
+    '<>': ne,
+    '=': eq,
 }
