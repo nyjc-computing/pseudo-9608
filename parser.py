@@ -1,3 +1,9 @@
+# Errors
+
+from scanner import ParseError
+
+
+
 # Operators
 
 def add(x, y):
@@ -73,25 +79,43 @@ def makeExpr(left, oper, right):
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
 
 def value(tokens):
-    # A single value or grouping
-    pass
+    # A single value
+    if check(tokens)['type'] in ['integer', 'string']:
+        return consume(tokens)
+    #  A grouping
+    elif check(tokens)['word'] == '(':
+        consume(tokens)  # (
+        expr = expression()
+        if not check(tokens)['word'] == ')':
+            raise ParseError(f"')' expected at end of expression")
+        consume(tokens)  # )
+        return expr        
 
 def muldiv(tokens):
     # *, /
-    pass
+    expr = value(tokens)  # get the left-side expr
+    # ... more code to get the operator and right-side expr
+    return expr
 
 def addsub(tokens):
-    # +, -
-    pass
+    expr = muldiv(tokens)
+    # ... more code to get the operator and right-side expr
+    return expr
 
 def comparison(tokens):
     # <, <=, >, >=
-    pass
+    expr = addsub(tokens)
+    # ... more code to get the operator and right-side expr
+    return expr
 
 def equality(tokens):
     # <>, =
-    pass
+    expr = comparison(tokens)
+    # ... more code to get the operator and right-side expr
+    return expr
 
 def expression(tokens):
     # An entire expression
-    pass
+    expr = equality(tokens)
+    # ... more code to get the operator and right-side expr
+    return expr
