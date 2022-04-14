@@ -30,6 +30,13 @@ def consume(code):
     code['src'] = code['src'][1:]
     return char
 
+def makeToken(tokentype, word, value):
+    return {
+        'type': tokentype,
+        'word': word,
+        'value': value,
+    }
+
 # Scanning functions
 
 def word(code):
