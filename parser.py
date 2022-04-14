@@ -46,3 +46,33 @@ operators = {
     '<>': ne,
     '=': eq,
 }
+
+
+
+# Precedence parsers
+
+# Expr: {'left': ..., 'oper': ..., 'right': ...}
+
+def value(tokens):
+    # A single value or grouping
+    pass
+
+def muldiv(tokens):
+    # *, /
+    pass
+
+def addsub(tokens):
+    # +, -
+    pass
+
+def comparison(tokens):
+    # <, <=, >, >=
+    pass
+
+def equality(tokens):
+    # <>, =
+    pass
+
+def expression(tokens):
+    # An entire expression
+    pass
