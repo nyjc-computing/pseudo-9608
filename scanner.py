@@ -80,7 +80,7 @@ def symbol(code):
 # Main scanning loop
 
 def scan(src):
-    code = {'src': src}
+    code = {'src': src + '\n'}
     tokens = []
     while not atEnd(code):
         char = check(code)
