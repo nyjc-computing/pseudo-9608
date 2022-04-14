@@ -81,6 +81,20 @@ def expression(tokens):
 # Statement parsers
 
 def outputStmt(tokens):
+    # Parse the first expression
+    exprs = [expression(tokens)]
+    # If comma, parse the next expression
+    while check(tokens)['word'] == ',':
+        consume(tokens)  # ,
+        tokens += [expression(consume(tokens))]
+    # If no comma, expect \n
+    if check(tokens)['word'] != '\n':
+        raise ParseError("Expected \n")
+    consume(tokens)  # \n
+    stmt = {
+        'rule': 'output',
+        'exprs': exprs,
+    }
     return stmt
 
 def statement(tokens):
