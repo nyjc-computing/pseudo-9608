@@ -1,3 +1,22 @@
+# Token types
+
+KEYWORDS = [
+    'DECLARE', 'OUTPUT',
+    'WHILE', 'DO', 'ENDWHILE',
+    'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
+]
+
+TYPES = ['INTEGER', 'STRING']
+
+OPERATORS = [
+    '+', '-', '/', '*', '=',
+    '<', '<-', '<=', '>', '>=', '<>',
+]
+
+SYMBOLS = [':']
+
+
+
 # Helper functions
 
 def atEnd(code):
