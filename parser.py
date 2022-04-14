@@ -6,7 +6,9 @@ from scanner import makeToken
 # Helper functions
 
 def atEnd(tokens):
-    return (len(tokens) == 0)
+    if check(tokens)['type'] == 'EOF':
+        return True
+    return False
 
 def check(tokens):
     return tokens[0]
