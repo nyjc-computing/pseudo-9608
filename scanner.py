@@ -1,6 +1,4 @@
-# Errors
-
-class ParseError(Exception): pass
+from builtin import ParseError
 
 
 

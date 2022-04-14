@@ -1,6 +1,4 @@
-# Errors
-
-from scanner import ParseError
+from builtin import ParseError
 
 
 
