@@ -93,29 +93,40 @@ def value(tokens):
 
 def muldiv(tokens):
     # *, /
-    expr = value(tokens)  # get the left-side expr
-    # ... more code to get the operator and right-side expr
+    expr = value(tokens)
+    while check(tokens)['word'] in ['*', '/']:
+        oper = consume(tokens)
+        right = value(tokens)
+        expr = makeExpr(expr, oper, right)
     return expr
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    # ... more code to get the operator and right-side expr
+    while check(tokens)['word'] in ['+', '-']:
+        oper = consume(tokens)
+        right = muldiv(tokens)
+        expr = makeExpr(expr, oper, right)
     return expr
 
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    # ... more code to get the operator and right-side expr
+    while check(tokens)['word'] in ['<', '<=', '>', '>=']:
+        oper = consume(tokens)
+        right = addsub(tokens)
+        expr = makeExpr(expr, oper, right)
     return expr
 
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    # ... more code to get the operator and right-side expr
+    while check(tokens)['word'] in ['<>', '=']:
+        oper = consume(tokens)
+        right = comparison(tokens)
+        expr = makeExpr(expr, oper, right)
     return expr
 
 def expression(tokens):
     # An entire expression
     expr = equality(tokens)
-    # ... more code to get the operator and right-side expr
     return expr
