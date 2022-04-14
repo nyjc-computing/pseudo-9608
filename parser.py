@@ -77,3 +77,16 @@ def expression(tokens):
     # An entire expression
     expr = equality(tokens)
     return expr
+
+# Statement parsers
+
+def outputStmt(tokens):
+    return stmt
+
+def statement(tokens):
+    if check(tokens)['word'] == 'OUTPUT':
+        consume(tokens)
+        stmt = outputStmt(tokens)
+    else:
+        raise ParseError(f"Unrecognised token {check(tokens)}")
+    return stmt
