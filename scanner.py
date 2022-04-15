@@ -50,8 +50,6 @@ def symbol(code):
     token = consume(code)
     if token in '()[]':
         return token
-    # Check if the next character is a valid symbol
-    # that forms part of a multi-character symbol.
     while not atEnd(code) and (check(code) in ':.+-/*=<>'):
         token += consume(code)
     return token

@@ -18,7 +18,7 @@ def execute(frame, stmt):
     if stmt['rule'] == 'output':
         for expr in stmt['exprs']:
             print(str(evaluate(expr)), end='')
-        print('')  # Add line break
+        print('')  # Add \n
     if stmt['rule'] == 'declare':
         name = evaluate(stmt['name'])
         type_ = evaluate(stmt['type'])

@@ -82,24 +82,18 @@ def equality(tokens):
     return expr
 
 def expression(tokens):
-    # An entire expression
     expr = equality(tokens)
     return expr
 
 # Statement parsing helpers
 
 def expectElseError(tokens, word):
-    # Return True if first token matches word.
-    # Otherwise, raises an error.
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
     raise ParseError(f"Expected {word}")
 
 def match(tokens, *words):
-    # Return True if first token is in the
-    # sequence of provided words.
-    # Otherwise, return False.
     if check(tokens)['word'] in words:
         consume(tokens)
         return True
@@ -108,9 +102,7 @@ def match(tokens, *words):
 # Statement parsers
 
 def outputStmt(tokens):
-    # Parse the first expression
     exprs = [expression(tokens)]
-    # If comma, parse the next expression
     while match(tokens, ','):
         exprs += [expression(tokens)]
     expectElseError(tokens, '\n')
