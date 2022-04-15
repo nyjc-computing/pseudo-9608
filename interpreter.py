@@ -20,9 +20,10 @@ def execute(stmt):
     # Add more if statements for other kinds of statements
 
 def interpret(statements):
+    frame = {}
     for stmt in statements:
         try:
-            execute(stmt)
+            execute(frame, stmt)
         except RuntimeError:
             print()
             break
