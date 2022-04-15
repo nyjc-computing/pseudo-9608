@@ -31,7 +31,7 @@ def makeExpr(left, oper, right):
 def value(tokens):
     token = check(tokens)
     # A single value
-    if tokens['type'] in ['integer', 'string']:
+    if token['type'] in ['integer', 'string']:
         return consume(tokens)
     #  A grouping
     elif token['word'] == '(':
