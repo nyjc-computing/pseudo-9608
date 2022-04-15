@@ -138,5 +138,7 @@ def parse(tokens):
     tokens.append(makeToken('EOF', "", None))
     statements = []
     while not atEnd(tokens):
+        while match(tokens, '\n'):
+            pass
         statements += [statement(tokens)]
     return statements
