@@ -7,7 +7,7 @@ import interpreter
 
 
 
-src = 'OUTPUT "Hello", ", ", "everyone", "!"'
+src = 'DECLARE Index : INTEGER'
 
 
 
@@ -19,7 +19,8 @@ def main():
         print(err)
         sys.exit(65)
     try:
-        interpreter.interpret(statements)
+        frame = interpreter.interpret(statements)
+        print(frame)
     except RuntimeError as err:
         print(err)
         sys.exit(70)
@@ -27,13 +28,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    tokens = scanner.scan('DECLARE Index : INTEGER')
-
-    for token in tokens:
-        print(token)
-    
-    statements = parser.parse(tokens)
-    
-    for statement in statements:
-        print(statement)
+    main()
