@@ -43,6 +43,8 @@ def value(tokens):
         return expr        
     elif token['type'] == 'name':
         return consume(tokens)
+    else:
+        raise ParseError(f"Unexpected token {repr(token['word'])}")
 
 def muldiv(tokens):
     # *, /
