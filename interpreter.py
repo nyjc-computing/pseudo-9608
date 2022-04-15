@@ -23,13 +23,13 @@ def execOutput(frame, stmt):
     print('')  # Add \n
 
 def execDeclare(frame, stmt):
-    name = evaluate(stmt['name'])
-    type_ = evaluate(stmt['type'])
+    name = evaluate(stmt['name'], frame)
+    type_ = evaluate(stmt['type'], frame)
     frame[name] = {'type': type_, 'value': None}
 
 def execAssign(frame, stmt):
-    name = evaluate(stmt['name'])
-    value = evaluate(stmt['expr'])
+    name = evaluate(stmt['name'], frame)
+    value = evaluate(stmt['expr'], frame)
     if name not in frame:
         raise LogicError(f'Undeclared name {repr(name)}')
     # HACK: type-check values before storing
