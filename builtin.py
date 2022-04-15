@@ -2,6 +2,8 @@
 
 class ParseError(Exception): pass
 
+class RuntimeError(Exception): pass
+
 
 
 # Token types

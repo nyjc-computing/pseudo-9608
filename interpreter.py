@@ -1,3 +1,7 @@
+from builtin import RuntimeError
+
+
+
 def evaluate(expr):
     # Evaluating tokens
     if 'type' in expr:
@@ -14,3 +18,11 @@ def execute(stmt):
             print(str(evaluate(expr)), end='')
         print('')  # Add line break
     # Add more if statements for other kinds of statements
+
+def interpret(statements):
+    for stmt in statements:
+        try:
+            execute(stmt)
+        except RuntimeError:
+            print()
+            break
