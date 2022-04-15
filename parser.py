@@ -29,11 +29,12 @@ def makeExpr(left, oper, right):
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
 
 def value(tokens):
+    token = check(tokens)
     # A single value
-    if check(tokens)['type'] in ['integer', 'string']:
+    if tokens['type'] in ['integer', 'string']:
         return consume(tokens)
     #  A grouping
-    elif check(tokens)['word'] == '(':
+    elif token['word'] == '(':
         consume(tokens)  # (
         expr = expression()
         if not check(tokens)['word'] == ')':
