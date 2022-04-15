@@ -1,6 +1,5 @@
 from builtin import ParseError
 from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
-from builtin import operators
 
 
 
@@ -83,7 +82,7 @@ def scan(src):
             token = makeToken('string', text, text[1:-1])
         elif char in '()[]:,.+-/*=<>':
             text = symbol(code)
-            oper = operators.get(text, None)
+            oper = OPERATORS.get(text, None)
             token = makeToken('symbol', text, oper)
         else:
             raise ParseError(f"Unrecognised character {repr(char)}.")
