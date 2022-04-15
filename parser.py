@@ -1,4 +1,4 @@
-from builtin import ParseError
+from builtin import ParseError, get
 from scanner import makeToken
 
 
@@ -28,6 +28,13 @@ def makeExpr(left, oper, right):
 
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
 
+def identifier(tokens):
+    token = check(tokens)
+    if token['type'] == 'name':
+        return consume(tokens)
+    else:
+        raise ParseError(f"Expected variable name, got {repr(token['word'])}")
+
 def value(tokens):
     token = check(tokens)
     # A single value
@@ -42,7 +49,10 @@ def value(tokens):
         consume(tokens)  # )
         return expr        
     elif token['type'] == 'name':
-        return consume(tokens)
+        frame = None
+        name = identifier(tokens)
+        oper = {'type': 'symbol', 'word': '', 'value': get}
+        return makeExpr(frame, oper, name)
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
 
@@ -113,7 +123,7 @@ def outputStmt(tokens):
     return stmt
 
 def declareStmt(tokens):
-    name = value(tokens)
+    name = identifier(tokens)
     expectElseError(tokens, ':')
     typetoken = consume(tokens)
     expectElseError(tokens, '\n')
@@ -125,7 +135,7 @@ def declareStmt(tokens):
     return stmt
 
 def assignStmt(tokens):
-    name = value(tokens)
+    name = identifier(tokens)
     expectElseError(tokens, '<-')
     expr = expression(tokens)
     stmt = {

@@ -1,32 +1,35 @@
-from builtin import RuntimeError, LogicError
+from builtin import RuntimeError, LogicError, get
 
 
 
-def evaluate(expr):
+def evaluate(expr, frame=None):
     # Evaluating tokens
     if 'type' in expr:
         if expr['type'] == 'name':
             return expr['word']
         return expr['value']
     # Evaluating exprs
-    left = evaluate(expr['left'])
-    right = evaluate(expr['right'])
     oper = expr['oper']['value']
+    if oper is get:
+        left = frame  # <-- expr['left'] is None
+    else:
+        left = evaluate(expr['left'])
+    right = evaluate(expr['right'])
     return oper(left, right)
 
 def execOutput(frame, stmt):
     for expr in stmt['exprs']:
-        print(str(evaluate(expr)), end='')
+        print(str(evaluate(expr, frame)), end='')
     print('')  # Add \n
 
 def execDeclare(frame, stmt):
-    name = evaluate(stmt['name'])
-    type_ = evaluate(stmt['type'])
+    name = evaluate(stmt['name'], frame)
+    type_ = evaluate(stmt['type'], frame)
     frame[name] = {'type': type_, 'value': None}
 
 def execAssign(frame, stmt):
-    name = evaluate(stmt['name'])
-    value = evaluate(stmt['expr'])
+    name = evaluate(stmt['name'], frame)
+    value = evaluate(stmt['expr'], frame)
     if name not in frame:
         raise LogicError(f'Undeclared name {repr(name)}')
     # HACK: type-check values before storing
