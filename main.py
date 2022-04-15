@@ -21,7 +21,7 @@ def main():
         tokens = scanner.scan(src)
         statements = parser.parse(tokens)
         statements, frame = resolver.resolve(statements)
-    except ParseError, LogicError as err:
+    except (ParseError, LogicError) as err:
         print(err)
         sys.exit(65)
     try:
