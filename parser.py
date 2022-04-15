@@ -40,6 +40,8 @@ def value(tokens):
             raise ParseError(f"')' expected at end of expression")
         consume(tokens)  # )
         return expr        
+    elif token['type'] == 'name':
+        return consume(tokens)
 
 def muldiv(tokens):
     # *, /
