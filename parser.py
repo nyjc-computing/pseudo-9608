@@ -120,9 +120,17 @@ def outputStmt(tokens):
     }
     return stmt
 
+def declareStmt(tokens):
+    stmt = {
+        
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
+    if match(tokens, 'DECLARE'):
+        return declareStmt(tokens)
     else:
         raise ParseError(f"Unrecognised token {check(tokens)}")
 
