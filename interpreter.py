@@ -12,12 +12,15 @@ def evaluate(expr):
     oper = expr['oper']['value']
     return oper(left, right)
 
-def execute(stmt):
+def execute(frame, stmt):
     if stmt['rule'] == 'output':
         for expr in stmt['exprs']:
             print(str(evaluate(expr)), end='')
         print('')  # Add line break
-    # Add more if statements for other kinds of statements
+    if stmt['rule'] == 'declare':
+        name = evaluate(stmt['name'])
+        type_ = evaluate(stmt['type'])
+        frame[name] = type_
 
 def interpret(statements):
     frame = {}
