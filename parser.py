@@ -1,4 +1,4 @@
-from builtin import ParseError
+from builtin import ParseError, get
 from scanner import makeToken
 
 
@@ -49,7 +49,10 @@ def value(tokens):
         consume(tokens)  # )
         return expr        
     elif token['type'] == 'name':
-        return consume(tokens)
+        frame = None
+        name = identifier(tokens)
+        oper = {'type': 'symbol', 'word': '', 'value': get}
+        return makeExpr(frame, oper, name)
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
 
