@@ -20,7 +20,7 @@ def main():
     try:
         tokens = scanner.scan(src)
         statements = parser.parse(tokens)
-        statements, frame = resolver.resolve(statements)
+        statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
         print(err)
         sys.exit(65)
