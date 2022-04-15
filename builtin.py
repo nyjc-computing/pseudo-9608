@@ -18,10 +18,18 @@ KEYWORDS = [
 
 TYPES = ['INTEGER', 'STRING']
 
-OPERATORS = [
-    '+', '-', '/', '*', '=',
-    '<', '<-', '<=', '>', '>=', '<>',
-]
+OPERATORS = {
+    '+': add,
+    '-': sub,
+    '*': mul,
+    '/': div,
+    '<': lt,
+    '<=': lte,
+    '>': gt,
+    '>=': gte,
+    '<>': ne,
+    '=': eq,
+}
 
 SYMBOLS = [':']
 
@@ -61,20 +69,3 @@ def eq(x, y):
 
 def get(frame, name):
     return frame[name]['value']
-
-
-
-# Classifier
-
-operators = {
-    '+': add,
-    '-': sub,
-    '*': mul,
-    '/': div,
-    '<': lt,
-    '<=': lte,
-    '>': gt,
-    '>=': gte,
-    '<>': ne,
-    '=': eq,
-}
