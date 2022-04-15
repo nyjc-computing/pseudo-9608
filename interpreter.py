@@ -19,7 +19,7 @@ def evaluate(expr, frame=None):
 
 def execOutput(frame, stmt):
     for expr in stmt['exprs']:
-        print(str(evaluate(expr)), end='')
+        print(str(evaluate(expr, frame)), end='')
     print('')  # Add \n
 
 def execDeclare(frame, stmt):
