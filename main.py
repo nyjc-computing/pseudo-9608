@@ -27,4 +27,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    tokens = scanner.scan('DECLARE Index : INTEGER')
+
+    for token in tokens:
+        print(token)
+    
+    statements = parser.parse(tokens)
+    
+    for statement in statements:
+        print(statement)
