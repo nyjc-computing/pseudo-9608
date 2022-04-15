@@ -1,17 +1,20 @@
-from builtin import RuntimeError, LogicError
+from builtin import RuntimeError, LogicError, get
 
 
 
-def evaluate(expr):
+def evaluate(expr, frame=None):
     # Evaluating tokens
     if 'type' in expr:
         if expr['type'] == 'name':
             return expr['word']
         return expr['value']
     # Evaluating exprs
-    left = evaluate(expr['left'])
-    right = evaluate(expr['right'])
     oper = expr['oper']['value']
+    if oper is get:
+        left = frame  # <-- expr['left'] is None
+    else:
+        left = evaluate(expr['left'])
+    right = evaluate(expr['right'])
     return oper(left, right)
 
 def execOutput(frame, stmt):
