@@ -7,3 +7,10 @@ def evaluate(expr):
     right = evaluate(expr['right'])
     oper = expr['oper']['value']
     return oper(left, right)
+
+def execute(stmt):
+    if stmt['rule'] == 'output':
+        for expr in stmt['exprs']:
+            print(str(evaluate(expr)), end='')
+        print('')  # Add line break
+    # Add more if statements for other kinds of statements
