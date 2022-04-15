@@ -140,6 +140,8 @@ def statement(tokens):
         return outputStmt(tokens)
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    elif check(tokens)['type'] == 'name':
+        return assignStmt(tokens)
     else:
         raise ParseError(f"Unrecognised token {check(tokens)}")
 
