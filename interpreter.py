@@ -14,28 +14,37 @@ def evaluate(expr):
     oper = expr['oper']['value']
     return oper(left, right)
 
+def execOutput(frame, stmt):
+    for expr in stmt['exprs']:
+        print(str(evaluate(expr)), end='')
+    print('')  # Add \n
+
+def execDeclare(frame, stmt):
+    name = evaluate(stmt['name'])
+    type_ = evaluate(stmt['type'])
+    frame[name] = {'type': type_, 'value': None}
+
+def execAssign(frame, stmt):
+    name = evaluate(stmt['name'])
+    value = evaluate(stmt['expr'])
+    if name not in frame:
+        raise LogicError(f'Undeclared name {repr(name)}')
+    # HACK: type-check values before storing
+    frametype = frame[name]['type']
+    valuetype = type(value)
+    if frametype == 'INTEGER' and valuetype != int:
+        raise LogicError(f'Expected {frametype}, got {valuetype}')
+    elif frametype == 'STRING' and valuetype != str:
+        raise LogicError(f'Expected {frametype}, got {valuetype}')
+    frame[name]['value'] = value
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
-        for expr in stmt['exprs']:
-            print(str(evaluate(expr)), end='')
-        print('')  # Add \n
+        execOutput(frame, stmt)
     if stmt['rule'] == 'declare':
-        name = evaluate(stmt['name'])
-        type_ = evaluate(stmt['type'])
-        frame[name] = {'type': type_, 'value': None}
+        execDeclare(frame, stmt)
     if stmt['rule'] == 'assign':
-        name = evaluate(stmt['name'])
-        value = evaluate(stmt['expr'])
-        if name not in frame:
-            raise LogicError(f'Undeclared name {repr(name)}')
-        # HACK: type-check values before storing
-        frametype = frame[name]['type']
-        valuetype = type(value)
-        if frametype == 'INTEGER' and valuetype != int:
-            raise LogicError(f'Expected {frametype}, got {valuetype}')
-        elif frametype == 'STRING' and valuetype != str:
-            raise LogicError(f'Expected {frametype}, got {valuetype}')
-        frame[name]['value'] = value
+        execAssign(frame, stmt)
 
 def interpret(statements):
     frame = {}
