@@ -12,3 +12,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [03 Evaluation](https://github.com/nyjc-computing/pseudo/pull/8)
 - [04 Statements](https://github.com/nyjc-computing/pseudo/pull/9)
 - [05 Interpreting](https://github.com/nyjc-computing/pseudo/pull/10)
+- [06a Variables](https://github.com/nyjc-computing/pseudo/pull/11)
