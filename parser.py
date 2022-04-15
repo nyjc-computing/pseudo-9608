@@ -120,7 +120,7 @@ def outputStmt(tokens):
     return stmt
 
 def declareStmt(tokens):
-    name = value(tokens)
+    name = identifier(tokens)
     expectElseError(tokens, ':')
     typetoken = consume(tokens)
     expectElseError(tokens, '\n')
@@ -132,7 +132,7 @@ def declareStmt(tokens):
     return stmt
 
 def assignStmt(tokens):
-    name = value(tokens)
+    name = identifier(tokens)
     expectElseError(tokens, '<-')
     expr = expression(tokens)
     stmt = {
