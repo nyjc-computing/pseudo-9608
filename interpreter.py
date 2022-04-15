@@ -22,7 +22,6 @@ def execute(frame, stmt):
     if stmt['rule'] == 'declare':
         name = evaluate(stmt['name'])
         type_ = evaluate(stmt['type'])
-        breakpoint()
         frame[name] = type_
 
 def interpret(statements):
