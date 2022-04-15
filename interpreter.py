@@ -23,6 +23,10 @@ def execute(frame, stmt):
         name = evaluate(stmt['name'])
         type_ = evaluate(stmt['type'])
         frame[name] = type_
+    if stmt['rule'] == 'assign':
+        name = evaluate(stmt['name'])
+        value = evaluate(stmt['expr'])
+        frame[name] = value
 
 def interpret(statements):
     frame = {}
