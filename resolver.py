@@ -3,6 +3,16 @@ from builtin import LogicError
 
 
 
+def resolve(expr, frame):
+    # Tokens
+    if 'type' in expr:
+        # ignore for now
+        return
+    # Exprs
+    oper = expr['oper']['value']
+    if oper is get:
+        expr['left'] = frame
+
 def verifyOutput(frame, stmt):
     for expr in stmt['exprs']:
         resolve(expr, frame)
