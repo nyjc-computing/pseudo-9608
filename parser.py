@@ -121,8 +121,14 @@ def outputStmt(tokens):
     return stmt
 
 def declareStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, ':')
+    typetoken = consume(tokens)
+    expectElseError(tokens, '\n')
     stmt = {
-        
+        'rule': 'declare',
+        'name': name,
+        'type': typetoken,
     }
     return stmt
 
