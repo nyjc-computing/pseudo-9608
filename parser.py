@@ -124,6 +124,17 @@ def declareStmt(tokens):
     }
     return stmt
 
+def assignStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, '<-')
+    expr = expression(tokens)
+    stmt = {
+        'rule': 'assign',
+        'name': name,
+        'expr': expr,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
