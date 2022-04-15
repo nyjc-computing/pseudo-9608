@@ -8,33 +8,6 @@ class LogicError(Exception): pass
 
 
 
-# Token types
-
-KEYWORDS = [
-    'DECLARE', 'OUTPUT',
-    'WHILE', 'DO', 'ENDWHILE',
-    'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
-]
-
-TYPES = ['INTEGER', 'STRING']
-
-OPERATORS = {
-    '+': add,
-    '-': sub,
-    '*': mul,
-    '/': div,
-    '<': lt,
-    '<=': lte,
-    '>': gt,
-    '>=': gte,
-    '<>': ne,
-    '=': eq,
-}
-
-SYMBOLS = [':']
-
-
-
 # Operators
 
 def add(x, y):
@@ -69,3 +42,30 @@ def eq(x, y):
 
 def get(frame, name):
     return frame[name]['value']
+
+
+
+# Token types
+
+KEYWORDS = [
+    'DECLARE', 'OUTPUT',
+    'WHILE', 'DO', 'ENDWHILE',
+    'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
+]
+
+TYPES = ['INTEGER', 'STRING']
+
+OPERATORS = {
+    '+': add,
+    '-': sub,
+    '*': mul,
+    '/': div,
+    '<': lt,
+    '<=': lte,
+    '>': gt,
+    '>=': gte,
+    '<>': ne,
+    '=': eq,
+}
+
+SYMBOLS = [':']
