@@ -23,3 +23,8 @@ def main():
     except RuntimeError as err:
         print(err)
         sys.exit(70)
+
+
+
+if __name__ == "__main__":
+    main()
