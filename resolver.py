@@ -12,7 +12,7 @@ def verifyDeclare(frame, stmt):
     pass
 
 def verifyAssign(frame, stmt):
-    value = resolve(stmt['expr'], frame)
+    resolve(stmt['expr'], frame)
 
 def verify(frame, stmt):
     if stmt['rule'] == 'output':
