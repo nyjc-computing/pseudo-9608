@@ -28,6 +28,13 @@ def execute(frame, stmt):
         value = evaluate(stmt['expr'])
         if name not in frame:
             raise LogicError(f'Undeclared name {repr(name)}')
+        # HACK: type-check values before storing
+        frametype = frame[name]['type']
+        valuetype = type(value)
+        if frametype == 'INTEGER' and valuetype != int:
+            raise LogicError(f'Expected {frametype}, got {valuetype}')
+        elif frametype == 'STRING' and valuetype != str:
+            raise LogicError(f'Expected {frametype}, got {valuetype}')
         frame[name]['value'] = value
 
 def interpret(statements):
