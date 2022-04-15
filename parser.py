@@ -154,4 +154,5 @@ def parse(tokens):
         while match(tokens, '\n'):
             pass
         statements += [statement(tokens)]
+        print(tokens)
     return statements
