@@ -1,8 +1,9 @@
 import sys
 
-from builtin import ParseError, RuntimeError
+from builtin import ParseError, RuntimeError, LogicError
 import scanner
 import parser
+import resolver
 import interpreter
 
 
@@ -19,7 +20,8 @@ def main():
     try:
         tokens = scanner.scan(src)
         statements = parser.parse(tokens)
-    except ParseError as err:
+        statements, frame = resolver.resolve(statements)
+    except ParseError, LogicError as err:
         print(err)
         sys.exit(65)
     try:
