@@ -4,6 +4,8 @@ class ParseError(Exception): pass
 
 class RuntimeError(Exception): pass
 
+class LogicError(Expcetion): pass
+
 
 
 # Token types

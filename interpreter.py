@@ -1,4 +1,4 @@
-from builtin import RuntimeError
+from builtin import RuntimeError, LogicError
 
 
 
@@ -22,11 +22,13 @@ def execute(frame, stmt):
     if stmt['rule'] == 'declare':
         name = evaluate(stmt['name'])
         type_ = evaluate(stmt['type'])
-        frame[name] = type_
+        frame[name] = {'type': type_, 'value': None}
     if stmt['rule'] == 'assign':
         name = evaluate(stmt['name'])
         value = evaluate(stmt['expr'])
-        frame[name] = value
+        if name not in frame:
+            raise LogicError(f'Undeclared name {repr(name)}')
+        frame[name]['value'] = value
 
 def interpret(statements):
     frame = {}
