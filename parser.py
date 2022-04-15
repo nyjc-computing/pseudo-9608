@@ -29,17 +29,22 @@ def makeExpr(left, oper, right):
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
 
 def value(tokens):
+    token = check(tokens)
     # A single value
-    if check(tokens)['type'] in ['integer', 'string']:
+    if token['type'] in ['integer', 'string']:
         return consume(tokens)
     #  A grouping
-    elif check(tokens)['word'] == '(':
+    elif token['word'] == '(':
         consume(tokens)  # (
         expr = expression()
         if not check(tokens)['word'] == ')':
             raise ParseError(f"')' expected at end of expression")
         consume(tokens)  # )
         return expr        
+    elif token['type'] == 'name':
+        return consume(tokens)
+    else:
+        raise ParseError(f"Unexpected token {repr(token['word'])}")
 
 def muldiv(tokens):
     # *, /
@@ -115,9 +120,23 @@ def outputStmt(tokens):
     }
     return stmt
 
+def declareStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, ':')
+    typetoken = consume(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'declare',
+        'name': name,
+        'type': typetoken,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
+    if match(tokens, 'DECLARE'):
+        return declareStmt(tokens)
     else:
         raise ParseError(f"Unrecognised token {check(tokens)}")
 

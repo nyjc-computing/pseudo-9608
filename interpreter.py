@@ -5,6 +5,8 @@ from builtin import RuntimeError
 def evaluate(expr):
     # Evaluating tokens
     if 'type' in expr:
+        if expr['type'] == 'name':
+            return expr['word']
         return expr['value']
     # Evaluating exprs
     left = evaluate(expr['left'])
@@ -12,17 +14,22 @@ def evaluate(expr):
     oper = expr['oper']['value']
     return oper(left, right)
 
-def execute(stmt):
+def execute(frame, stmt):
     if stmt['rule'] == 'output':
         for expr in stmt['exprs']:
             print(str(evaluate(expr)), end='')
         print('')  # Add line break
-    # Add more if statements for other kinds of statements
+    if stmt['rule'] == 'declare':
+        name = evaluate(stmt['name'])
+        type_ = evaluate(stmt['type'])
+        frame[name] = type_
 
 def interpret(statements):
+    frame = {}
     for stmt in statements:
         try:
-            execute(stmt)
+            execute(frame, stmt)
         except RuntimeError:
             print()
             break
+    return frame
