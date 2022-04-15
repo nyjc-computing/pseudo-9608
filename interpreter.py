@@ -27,3 +27,4 @@ def interpret(statements):
         except RuntimeError:
             print()
             break
+    return frame
