@@ -7,7 +7,10 @@ import interpreter
 
 
 
-src = 'DECLARE Index : INTEGER'
+src = '''
+DECLARE Index : INTEGER
+Index <- 1
+'''
 
 
 
