@@ -59,6 +59,9 @@ def ne(x, y):
 def eq(x, y):
     return x == y
 
+def get(frame, name):
+    return frame[name]
+
 
 
 # Classifier
