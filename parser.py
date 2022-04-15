@@ -28,6 +28,13 @@ def makeExpr(left, oper, right):
 
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
 
+def identifier(tokens):
+    token = check(tokens)
+    if token['type'] == 'name':
+        return consume(tokens)
+    else:
+        raise ParseError(f"Expected variable name, got {repr(token['word'])}")
+
 def value(tokens):
     token = check(tokens)
     # A single value
