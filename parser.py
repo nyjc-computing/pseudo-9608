@@ -124,11 +124,24 @@ def declareStmt(tokens):
     }
     return stmt
 
+def assignStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, '<-')
+    expr = expression(tokens)
+    stmt = {
+        'rule': 'assign',
+        'name': name,
+        'expr': expr,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    elif check(tokens)['type'] == 'name':
+        return assignStmt(tokens)
     else:
         raise ParseError(f"Unrecognised token {check(tokens)}")
 
@@ -138,5 +151,9 @@ def parse(tokens):
     tokens.append(makeToken('EOF', "", None))
     statements = []
     while not atEnd(tokens):
+        while match(tokens, '\n'):
+            pass
         statements += [statement(tokens)]
+        while match(tokens, '\n'):
+            pass
     return statements
