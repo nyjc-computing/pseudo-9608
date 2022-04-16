@@ -53,9 +53,5 @@ def interpret(statements, frame=None):
     if frame is None:
         frame = {}
     for stmt in statements:
-        try:
-            execute(frame, stmt)
-        except RuntimeError:
-            print()
-            break
+        execute(frame, stmt)
     return frame
