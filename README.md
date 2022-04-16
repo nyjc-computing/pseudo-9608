@@ -15,3 +15,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [06a Variables](https://github.com/nyjc-computing/pseudo/pull/11)
 - [06b Assignment](https://github.com/nyjc-computing/pseudo/pull/12)
 - [06c Retrieving variables](https://github.com/nyjc-computing/pseudo/pull/13)
+- [07 Resolving](https://github.com/nyjc-computing/pseudo/pull/14)
