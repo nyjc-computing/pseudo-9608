@@ -50,7 +50,7 @@ def execute(frame, stmt):
         execAssign(frame, stmt)
 
 def interpret(statements, frame=None):
-    if not frame:
+    if frame is None:
         frame = {}
     for stmt in statements:
         try:
