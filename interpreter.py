@@ -1,4 +1,4 @@
-from builtin import RuntimeError, LogicError, get
+from builtin import RuntimeError, LogicError
 
 
 
@@ -8,12 +8,12 @@ def evaluate(expr, frame=None):
         if expr['type'] == 'name':
             return expr['word']
         return expr['value']
+    # Passing frames
+    if 'oper' not in expr:
+        return expr
     # Evaluating exprs
     oper = expr['oper']['value']
-    if oper is get:
-        left = frame  # <-- expr['left'] is None
-    else:
-        left = evaluate(expr['left'])
+    left = evaluate(expr['left'])
     right = evaluate(expr['right'])
     return oper(left, right)
 
