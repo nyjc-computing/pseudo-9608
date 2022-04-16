@@ -49,8 +49,9 @@ def execute(frame, stmt):
     if stmt['rule'] == 'assign':
         execAssign(frame, stmt)
 
-def interpret(statements):
-    frame = {}
+def interpret(statements, frame=None):
+    if not frame:
+        frame = {}
     for stmt in statements:
         try:
             execute(frame, stmt)

@@ -25,7 +25,7 @@ def main():
         print(err)
         sys.exit(65)
     try:
-        frame = interpreter.interpret(statements)
+        frame = interpreter.interpret(statements, frame)
         print(frame)
     except RuntimeError as err:
         print(err)
