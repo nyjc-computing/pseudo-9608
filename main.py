@@ -10,7 +10,7 @@ import interpreter
 
 src = '''
 DECLARE Index : INTEGER
-Index <- 1
+Index <- "5"
 OUTPUT Index
 '''
 
