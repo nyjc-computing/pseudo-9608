@@ -4,10 +4,11 @@ from builtin import LogicError
 
 
 def resolve(expr, frame):
-    # Tokens
+    # Evaluating tokens
     if 'type' in expr:
-        # ignore for now
-        return
+        if expr['type'] == 'name':
+            return expr['word']
+        return expr['value']
     # Exprs
     oper = expr['oper']['value']
     if oper is get:
@@ -18,8 +19,9 @@ def verifyOutput(frame, stmt):
         resolve(expr, frame)
 
 def verifyDeclare(frame, stmt):
-    # No exprs to resolve
-    pass
+    name = resolve(stmt['name'], frame)
+    type_ = resolve(stmt['type'], frame)
+    frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
     resolve(stmt['expr'], frame)
