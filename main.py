@@ -10,8 +10,16 @@ import interpreter
 
 src = '''
 DECLARE Index : INTEGER
-Index <- "5"
-OUTPUT Index
+Index <- 5
+CASE OF Index
+    5: OUTPUT "Five"
+    4: OUTPUT "Four"
+    3: OUTPUT "Three"
+    2: OUTPUT "Two"
+    1: OUTPUT "One"
+    0: OUTPUT "I don't know!"
+    OTHERWISE OUTPUT "I can't count beyond five"
+ENDCASE
 '''
 
 
