@@ -9,10 +9,7 @@ def resolve(expr, frame):
     # Resolving tokens
     if 'type' in expr:
         if expr['type'] == 'name':
-            name = expr['word']
-            if name not in frame:
-                raise LogicError(f'{name}: Name not declared')
-            return name
+            return expr['word']
         elif expr['type'] in ('integer', 'string'):
             return expr['type'].upper()
         else:
@@ -22,6 +19,8 @@ def resolve(expr, frame):
     if oper is get:
         expr['left'] = frame
         name = resolve(expr['right'], frame)
+        if name not in frame:
+            raise LogicError(f'{name}: Name not declared')
         return frame[name]['type']
     elif oper in (lt, lte, gt, gte, ne, eq):
         return 'BOOLEAN'
