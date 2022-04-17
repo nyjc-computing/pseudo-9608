@@ -146,6 +146,28 @@ def assignStmt(tokens):
     return stmt
 
 def caseStmt(tokens):
+    expectElseError(tokens, 'OF')
+    cond = identifier()
+    expectElseError(tokens, '\n')
+    stmts = {}
+    while not check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
+        val = value(tokens)
+        expectElseError(tokens, ':')
+        stmt = statement()
+        expectElseError(tokens, '\n')
+        stmts[val] = stmt
+    fallback = None
+    if match(tokens, 'OTHERWISE'):
+        fallback = statement()
+        expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDIF')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'case',
+        'cond': cond,
+        'stmts': stmts,
+        'fallback': fallback,
+    }
     return stmt
 
 def ifStmt(tokens):
