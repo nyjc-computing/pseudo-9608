@@ -172,6 +172,31 @@ def caseStmt(tokens):
     return stmt
 
 def ifStmt(tokens):
+    cond = expression()
+    if match(tokens, '\n'):
+        pass  # optional line break
+    expectElseError(tokens, 'THEN')
+    expectElseError(tokens, '\n')
+    stmts = {}
+    true = []
+    while not check(tokens)['word'] in ('ELSE', 'ENDIF'):
+        true += [statement()]
+    stmts[True] = true
+    fallback = None
+    if match(tokens, 'ELSE'):
+        expectElseError(tokens, '\n')
+        false = []
+        while not check(tokens)['word'] in ('ENDIF',):
+            false += [statement()]
+        fallback = false
+    expectElseError(tokens, 'ENDIF')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'if',
+        'cond': cond,
+        'stmts': stmts,
+        'fallback': fallback,
+    }
     return stmt
 
 def statement(tokens):
