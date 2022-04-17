@@ -16,3 +16,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [06b Assignment](https://github.com/nyjc-computing/pseudo/pull/12)
 - [06c Retrieving variables](https://github.com/nyjc-computing/pseudo/pull/13)
 - [07 Resolving](https://github.com/nyjc-computing/pseudo/pull/14)
+- [08 Static typing](https://github.com/nyjc-computing/pseudo/pull/15)
