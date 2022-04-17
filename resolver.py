@@ -41,6 +41,7 @@ def verifyDeclare(frame, stmt):
     frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
+    breakpoint()
     name = resolve(stmt['name'], frame)
     valuetype = resolve(stmt['expr'], frame)
     if name not in frame:
@@ -60,9 +61,5 @@ def verify(frame, stmt):
 def inspect(statements):
     frame = {}
     for stmt in statements:
-        try:
-            verify(frame, stmt)
-        except LogicError:
-            print()
-            break
+        verify(frame, stmt)
     return statements, frame
