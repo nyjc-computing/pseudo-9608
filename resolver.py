@@ -24,7 +24,8 @@ def verifyDeclare(frame, stmt):
     frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
-    resolve(stmt['expr'], frame)
+    name = resolve(stmt['name'], frame)
+    valuetype = resolve(stmt['expr'], frame)
 
 def verify(frame, stmt):
     if stmt['rule'] == 'output':
