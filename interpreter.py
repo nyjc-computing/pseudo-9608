@@ -32,6 +32,12 @@ def execAssign(frame, stmt):
     value = evaluate(stmt['expr'], frame)
     frame[name]['value'] = value
 
+def execCase(frame, stmt):
+    pass
+
+def execIf(frame, stmt):
+    pass
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -39,6 +45,10 @@ def execute(frame, stmt):
         execDeclare(frame, stmt)
     if stmt['rule'] == 'assign':
         execAssign(frame, stmt)
+    if stmt['rule'] == 'case':
+        execCase(frame, stmt)
+    if stmt['rule'] == 'if':
+        execIf(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
