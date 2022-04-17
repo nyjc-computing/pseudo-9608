@@ -152,14 +152,13 @@ def caseStmt(tokens):
     expectElseError(tokens, '\n')
     stmts = {}
     while not check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
-        val = value(tokens)
+        val = value(tokens)['value']
         expectElseError(tokens, ':')
         stmt = statement(tokens)
         stmts[val] = stmt
     fallback = None
     if match(tokens, 'OTHERWISE'):
         fallback = statement(tokens)
-        expectElseError(tokens, '\n')
     expectElseError(tokens, 'ENDIF')
     expectElseError(tokens, '\n')
     stmt = {
