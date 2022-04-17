@@ -170,7 +170,7 @@ def caseStmt(tokens):
     return stmt
 
 def ifStmt(tokens):
-    cond = expression()
+    cond = expression(tokens)
     if match(tokens, '\n'):
         pass  # optional line break
     expectElseError(tokens, 'THEN')
