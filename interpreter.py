@@ -1,4 +1,4 @@
-from builtin import RuntimeError, LogicError
+from builtin import RuntimeError
 
 
 
