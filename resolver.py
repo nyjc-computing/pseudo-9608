@@ -44,7 +44,7 @@ def verifyAssign(frame, stmt):
     name = resolve(stmt['name'], frame)
     valuetype = resolve(stmt['expr'], frame)
     if name not in frame:
-        raise LogicError(f'Variable')
+        raise LogicError(f'{name}: Name not declared')
     frametype = frame[name]['type']
     if frametype != valuetype:
         raise LogicError(f'Expected {frametype}, got {valuetype}')
