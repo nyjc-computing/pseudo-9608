@@ -18,13 +18,13 @@ def resolve(expr, frame):
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
-        name = resolve(expr['right'])
+        name = resolve(expr['right'], frame)
         return frame[name]['type']
     elif oper in (lt, lte, gt, gte, ne, eq):
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
-        lefttype = resolve(expr['left'])
-        righttype = resolve(expr['right'])
+        lefttype = resolve(expr['left'], frame)
+        righttype = resolve(expr['right'], frame)
         if lefttype != 'INTEGER':
             raise LogicError(f"{expr['left']} Expected number, got {lefttype}")
         if righttype != 'INTEGER':
@@ -41,7 +41,6 @@ def verifyDeclare(frame, stmt):
     frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
-    breakpoint()
     name = resolve(stmt['name'], frame)
     valuetype = resolve(stmt['expr'], frame)
     if name not in frame:
