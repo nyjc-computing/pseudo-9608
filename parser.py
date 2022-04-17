@@ -138,6 +138,7 @@ def assignStmt(tokens):
     name = identifier(tokens)
     expectElseError(tokens, '<-')
     expr = expression(tokens)
+    expectElseError(tokens, '\n')
     stmt = {
         'rule': 'assign',
         'name': name,
