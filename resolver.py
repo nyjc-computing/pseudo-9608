@@ -8,8 +8,11 @@ def resolve(expr, frame):
     if 'type' in expr:
         if expr['type'] == 'name':
             return expr['word']
-        return expr['value']
-    # Resolving exprs
+        elif expr['type'] in ('integer', 'string'):
+            return expr['type'].upper()
+        else:
+            # internal error
+            raise TypeError(f'Cannot resolve type for {expr}')    # Resolving exprs
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
@@ -26,6 +29,11 @@ def verifyDeclare(frame, stmt):
 def verifyAssign(frame, stmt):
     name = resolve(stmt['name'], frame)
     valuetype = resolve(stmt['expr'], frame)
+    if name not in frame:
+        raise LogicError(f'Variable')
+    frametype = frame[name]['type']
+    if frametype != valuetype:
+        raise LogicError(f'Expected {frametype}, got {valuetype}')
 
 def verify(frame, stmt):
     if stmt['rule'] == 'output':
