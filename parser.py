@@ -159,7 +159,7 @@ def caseStmt(tokens):
     fallback = None
     if match(tokens, 'OTHERWISE'):
         fallback = statement(tokens)
-    expectElseError(tokens, 'ENDIF')
+    expectElseError(tokens, 'ENDCASE')
     expectElseError(tokens, '\n')
     stmt = {
         'rule': 'case',
