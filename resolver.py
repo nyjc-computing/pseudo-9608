@@ -1,4 +1,6 @@
 from builtin import get
+from builtin import lt, lte, gt, gte, ne, eq
+from builtin import add, sub, mul, div
 from builtin import LogicError
 
 
@@ -16,6 +18,18 @@ def resolve(expr, frame):
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
+        name = resolve(expr['right'])
+        return frame[name]['type']
+    elif oper in (lt, lte, gt, gte, ne, eq):
+        return 'BOOLEAN'
+    elif oper in (add, sub, mul, div):
+        lefttype = resolve(expr['left'])
+        righttype = resolve(expr['right'])
+        if lefttype != 'INTEGER':
+            raise LogicError(f"{expr['left']} Expected number, got {lefttype}")
+        if righttype != 'INTEGER':
+            raise LogicError(f"{expr['right']} Expected number, got {righttype}")
+        return 'INTEGER'
 
 def verifyOutput(frame, stmt):
     for expr in stmt['exprs']:
