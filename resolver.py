@@ -4,12 +4,12 @@ from builtin import LogicError
 
 
 def resolve(expr, frame):
-    # Evaluating tokens
+    # Resolving tokens
     if 'type' in expr:
         if expr['type'] == 'name':
             return expr['word']
         return expr['value']
-    # Exprs
+    # Resolving exprs
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
