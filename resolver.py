@@ -9,7 +9,10 @@ def resolve(expr, frame):
     # Resolving tokens
     if 'type' in expr:
         if expr['type'] == 'name':
-            return expr['word']
+            name = expr['word']
+            if name not in frame:
+                raise LogicError(f'{name}: Name not declared')
+            return name
         elif expr['type'] in ('integer', 'string'):
             return expr['type'].upper()
         else:
@@ -43,8 +46,6 @@ def verifyDeclare(frame, stmt):
 def verifyAssign(frame, stmt):
     name = resolve(stmt['name'], frame)
     valuetype = resolve(stmt['expr'], frame)
-    if name not in frame:
-        raise LogicError(f'{name}: Name not declared')
     frametype = frame[name]['type']
     if frametype != valuetype:
         raise LogicError(f'Expected {frametype}, got {valuetype}')
