@@ -145,11 +145,21 @@ def assignStmt(tokens):
     }
     return stmt
 
+def caseStmt(tokens):
+    return stmt
+
+def ifStmt(tokens):
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    if match(tokens, 'CASE'):
+        return caseStmt(tokens)
+    if match(tokens, 'IF'):
+        return ifStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
