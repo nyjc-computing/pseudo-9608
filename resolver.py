@@ -5,7 +5,7 @@ from builtin import LogicError
 
 
 
-def resolve(expr, frame):
+def resolve(frame, expr):
     # Resolving tokens
     if 'type' in expr:
         if expr['type'] == 'name':
@@ -20,13 +20,13 @@ def resolve(expr, frame):
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
-        name = resolve(expr['right'], frame)
+        name = resolve(frame, expr['right'])
         if name not in frame:
             raise LogicError(f'{name}: Name not declared')
         return frame[name]['type']
     # Resolving other exprs
-    lefttype = resolve(expr['left'], frame)
-    righttype = resolve(expr['right'], frame)
+    lefttype = resolve(frame, expr['left'])
+    righttype = resolve(frame, expr['right'])
     if oper in (lt, lte, gt, gte, ne, eq):
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
@@ -38,29 +38,29 @@ def resolve(expr, frame):
 
 def verifyOutput(frame, stmt):
     for expr in stmt['exprs']:
-        resolve(expr, frame)
+        resolve(frame, expr)
 
 def verifyDeclare(frame, stmt):
-    name = resolve(stmt['name'], frame)
-    type_ = resolve(stmt['type'], frame)
+    name = resolve(frame, stmt['name'])
+    type_ = resolve(frame, stmt['type'])
     frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
-    name = resolve(stmt['name'], frame)
-    valuetype = resolve(stmt['expr'], frame)
+    name = resolve(frame, stmt['name'])
+    valuetype = resolve(frame, stmt['expr'])
     frametype = frame[name]['type']
     if frametype != valuetype:
         raise LogicError(f'Expected {frametype}, got {valuetype}')
 
 def verifyCase(frame, stmt):
-    resolve(stmt['cond'], frame)
+    resolve(frame, stmt['cond'])
     for value, casestmt in stmt['stmts'].items():
         verify(frame, casestmt)
     if stmt['fallback']:
         verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
-    condtype = resolve(stmt['cond'], frame)
+    condtype = resolve(frame, stmt['cond'])
     if condtype != 'BOOLEAN':
         raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
     for truestmt in stmt['stmts'][True]:
