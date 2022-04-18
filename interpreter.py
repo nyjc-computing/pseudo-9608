@@ -33,7 +33,11 @@ def execAssign(frame, stmt):
     frame[name]['value'] = value
 
 def execCase(frame, stmt):
-    pass
+    cond = evaluate(stmt['cond'], frame)
+    if cond in stmt['stmts']:
+        execute(frame, stmt['stmts'][cond])
+    elif stmt['fallback']:
+        execute(frame, stmt['fallback']
 
 def execIf(frame, stmt):
     pass
