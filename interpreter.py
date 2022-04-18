@@ -37,7 +37,7 @@ def execCase(frame, stmt):
     if cond in stmt['stmts']:
         execute(frame, stmt['stmts'][cond])
     elif stmt['fallback']:
-        execute(frame, stmt['fallback']
+        execute(frame, stmt['fallback'])
 
 def execIf(frame, stmt):
     if evaluate(stmt['cond'], frame):
