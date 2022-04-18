@@ -50,7 +50,9 @@ def verifyAssign(frame, stmt):
         raise LogicError(f'Expected {frametype}, got {valuetype}')
 
 def verifyCase(frame, stmt):
-    resolve(stmt['cond'], frame)
+    condtype = resolve(stmt['cond'], frame)
+    if condtype != 'BOOLEAN':
+        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
     for value, casestmt in stmt['stmts']:
         resolve(casestmt, frame)
     if stmt['fallback']:
