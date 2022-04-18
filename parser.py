@@ -197,6 +197,15 @@ def ifStmt(tokens):
     }
     return stmt
 
+def whileStmt(tokens):
+    return stmt
+
+def repeatStmt(tokens):
+    return stmt
+
+def forStmt(tokens):
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -206,6 +215,12 @@ def statement(tokens):
         return caseStmt(tokens)
     if match(tokens, 'IF'):
         return ifStmt(tokens)
+    if match(tokens, 'WHILE'):
+        return whileStmt(tokens)
+    if match(tokens, 'REPEAT'):
+        return repeatStmt(tokens)
+    if match(tokens, 'FOR'):
+        return forStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
