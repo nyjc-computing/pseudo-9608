@@ -14,7 +14,9 @@ def resolve(expr, frame):
             return expr['type'].upper()
         else:
             # internal error
-            raise TypeError(f'Cannot resolve type for {expr}')    # Resolving exprs
+            raise TypeError(f'Cannot resolve type for {expr}')
+    # Resolving gets requires special handling
+    # of expr's left and right
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
@@ -22,11 +24,12 @@ def resolve(expr, frame):
         if name not in frame:
             raise LogicError(f'{name}: Name not declared')
         return frame[name]['type']
-    elif oper in (lt, lte, gt, gte, ne, eq):
+    # Resolving other exprs
+    lefttype = resolve(expr['left'], frame)
+    righttype = resolve(expr['right'], frame)
+    if oper in (lt, lte, gt, gte, ne, eq):
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
-        lefttype = resolve(expr['left'], frame)
-        righttype = resolve(expr['right'], frame)
         if lefttype != 'INTEGER':
             raise LogicError(f"{expr['left']} Expected number, got {lefttype}")
         if righttype != 'INTEGER':
