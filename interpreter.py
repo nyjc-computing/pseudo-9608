@@ -40,7 +40,12 @@ def execCase(frame, stmt):
         execute(frame, stmt['fallback']
 
 def execIf(frame, stmt):
-    pass
+    if evaluate(stmt['cond'], frame):
+        for substmt in stmt['stmts'][True]:
+            execute(frame, substmt)
+    elif stmt['fallback']:
+        for substmt in stmt['fallback']:
+            execute(frame, substmt)
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
