@@ -148,7 +148,7 @@ def assignStmt(tokens):
 
 def caseStmt(tokens):
     expectElseError(tokens, 'OF')
-    cond = identifier(tokens)
+    cond = value(tokens)
     expectElseError(tokens, '\n')
     stmts = {}
     while not check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
