@@ -51,10 +51,11 @@ def verifyAssign(frame, stmt):
 
 def verifyCase(frame, stmt):
     resolve(stmt['cond'], frame)
-    for value, casestmt in stmt['stmts']:
-        resolve(casestmt, frame)
+    breakpoint()
+    for value, casestmt in stmt['stmts'].items():
+        verify(casestmt, frame)
     if stmt['fallback']:
-        resolve(stmt['fallback'], frame)
+        verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
     condtype = resolve(stmt['cond'], frame)
@@ -67,6 +68,7 @@ def verifyIf(frame, stmt):
             verify(frame, falsestmt)
 
 def verify(frame, stmt):
+    if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
         verifyOutput(frame, stmt)
     elif stmt['rule'] == 'declare':
