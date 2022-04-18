@@ -49,6 +49,12 @@ def verifyAssign(frame, stmt):
     if frametype != valuetype:
         raise LogicError(f'Expected {frametype}, got {valuetype}')
 
+def verifyCase(frame, stmt):
+    pass
+
+def verifyIf(frame, stmt):
+    pass
+
 def verify(frame, stmt):
     if stmt['rule'] == 'output':
         verifyOutput(frame, stmt)
@@ -56,6 +62,10 @@ def verify(frame, stmt):
         verifyDeclare(frame, stmt)
     elif stmt['rule'] == 'assign':
         verifyAssign(frame, stmt)
+    elif stmt['rule'] == 'case':
+        verifyCase(frame, stmt)
+    elif stmt['rule'] == 'if':
+        verifyIf(frame, stmt)
 
 def inspect(statements):
     frame = {}
