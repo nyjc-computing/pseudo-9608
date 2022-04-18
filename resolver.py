@@ -51,9 +51,8 @@ def verifyAssign(frame, stmt):
 
 def verifyCase(frame, stmt):
     resolve(stmt['cond'], frame)
-    breakpoint()
     for value, casestmt in stmt['stmts'].items():
-        verify(casestmt, frame)
+        verify(frame, casestmt)
     if stmt['fallback']:
         verify(frame, stmt['fallback'])
 
