@@ -138,10 +138,62 @@ def assignStmt(tokens):
     name = identifier(tokens)
     expectElseError(tokens, '<-')
     expr = expression(tokens)
+    expectElseError(tokens, '\n')
     stmt = {
         'rule': 'assign',
         'name': name,
         'expr': expr,
+    }
+    return stmt
+
+def caseStmt(tokens):
+    expectElseError(tokens, 'OF')
+    cond = value(tokens)
+    expectElseError(tokens, '\n')
+    stmts = {}
+    while not check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
+        val = value(tokens)['value']
+        expectElseError(tokens, ':')
+        stmt = statement(tokens)
+        stmts[val] = stmt
+    fallback = None
+    if match(tokens, 'OTHERWISE'):
+        fallback = statement(tokens)
+    expectElseError(tokens, 'ENDCASE')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'case',
+        'cond': cond,
+        'stmts': stmts,
+        'fallback': fallback,
+    }
+    return stmt
+
+def ifStmt(tokens):
+    cond = expression(tokens)
+    if match(tokens, '\n'):
+        pass  # optional line break
+    expectElseError(tokens, 'THEN')
+    expectElseError(tokens, '\n')
+    stmts = {}
+    true = []
+    while not check(tokens)['word'] in ('ELSE', 'ENDIF'):
+        true += [statement(tokens)]
+    stmts[True] = true
+    fallback = None
+    if match(tokens, 'ELSE'):
+        expectElseError(tokens, '\n')
+        false = []
+        while not check(tokens)['word'] in ('ENDIF',):
+            false += [statement(tokens)]
+        fallback = false
+    expectElseError(tokens, 'ENDIF')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'if',
+        'cond': cond,
+        'stmts': stmts,
+        'fallback': fallback,
     }
     return stmt
 
@@ -150,6 +202,10 @@ def statement(tokens):
         return outputStmt(tokens)
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    if match(tokens, 'CASE'):
+        return caseStmt(tokens)
+    if match(tokens, 'IF'):
+        return ifStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
