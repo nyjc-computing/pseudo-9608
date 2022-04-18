@@ -50,10 +50,19 @@ def verifyAssign(frame, stmt):
         raise LogicError(f'Expected {frametype}, got {valuetype}')
 
 def verifyCase(frame, stmt):
-    pass
+    resolve(stmt['cond'], frame)
+    for value, casestmt in stmt['stmts']:
+        resolve(casestmt, frame)
+    if stmt['fallback']:
+        resolve(stmt['fallback'], frame)
 
 def verifyIf(frame, stmt):
-    pass
+    resolve(stmt['cond'], frame)
+    for truestmt in stmt['stmts'][True]:
+        resolve(truestmt, frame)
+    if stmt['fallback']:
+        for falsestmt in stmt['fallback']:
+        resolve(falsestmt, frame)
 
 def verify(frame, stmt):
     if stmt['rule'] == 'output':
