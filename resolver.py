@@ -61,10 +61,10 @@ def verifyIf(frame, stmt):
     if condtype != 'BOOLEAN':
         raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
     for truestmt in stmt['stmts'][True]:
-        resolve(truestmt, frame)
+        verify(frame, truestmt)
     if stmt['fallback']:
         for falsestmt in stmt['fallback']:
-        resolve(falsestmt, frame)
+            verify(frame, falsestmt)
 
 def verify(frame, stmt):
     if stmt['rule'] == 'output':
