@@ -151,7 +151,7 @@ def caseStmt(tokens):
     cond = value(tokens)
     expectElseError(tokens, '\n')
     stmts = {}
-    while not check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
+    while not atEnd(tokens) and check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens)['value']
         expectElseError(tokens, ':')
         stmt = statement(tokens)
@@ -177,14 +177,14 @@ def ifStmt(tokens):
     expectElseError(tokens, '\n')
     stmts = {}
     true = []
-    while not check(tokens)['word'] in ('ELSE', 'ENDIF'):
+    while not atEnd(tokens) and check(tokens)['word'] in ('ELSE', 'ENDIF'):
         true += [statement(tokens)]
     stmts[True] = true
     fallback = None
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n')
         false = []
-        while not check(tokens)['word'] in ('ENDIF',):
+        while not atEnd(tokens) and check(tokens)['word'] in ('ENDIF',):
             false += [statement(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF')
@@ -198,6 +198,18 @@ def ifStmt(tokens):
     return stmt
 
 def whileStmt(tokens):
+    cond = expression(tokens)
+    expectElseError(tokens, 'DO')
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] in ('ENDWHILE',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDWHILE')
+    stmt = {
+        'rule': 'while',
+        'cond': cond,
+        'stmts': stmts,
+    }
     return stmt
 
 def repeatStmt(tokens):
