@@ -69,6 +69,9 @@ def verifyIf(frame, stmt):
         for falsestmt in stmt['fallback']:
             verify(frame, falsestmt)
 
+def verifyWhile(frame, stmt):
+    pass
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -81,6 +84,8 @@ def verify(frame, stmt):
         verifyCase(frame, stmt)
     elif stmt['rule'] == 'if':
         verifyIf(frame, stmt)
+    elif stmt['rule'] in ('while', 'repeat'):
+        verifyWhile(frame, stmt)
 
 def inspect(statements):
     frame = {}
