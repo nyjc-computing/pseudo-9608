@@ -9,10 +9,10 @@ import interpreter
 
 
 src = '''
-DECLARE Result : STRING
-OUTPUT "Enter some text: "
-INPUT Result
-OUTPUT "You entered: ", Result
+DECLARE Person : STRING
+PROCEDURE SayHi(Person : STRING)
+    OUTPUT "Hi, ", Person, "!"
+ENDPROCEDURE
 '''
 
 
