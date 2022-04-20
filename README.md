@@ -18,3 +18,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [07 Resolving](https://github.com/nyjc-computing/pseudo/pull/14)
 - [08 Static typing](https://github.com/nyjc-computing/pseudo/pull/15)
 - [09 Conditionals](https://github.com/nyjc-computing/pseudo/pull/17)
+- [10 Loops](https://github.com/nyjc-computing/pseudo/pull/18)
