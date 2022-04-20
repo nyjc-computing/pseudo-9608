@@ -293,15 +293,15 @@ def procedureStmt(tokens):
     name = identifier(tokens)
     args = {}
     if match(tokens, '('):
-        name = identifier(tokens)
+        var = identifier(tokens)
         expectElseError(tokens, ':')
         typetoken = consume(tokens)
-        args[name] = {'type': typetoken, 'value': None}
+        args[var] = {'type': typetoken, 'value': None}
         while match(tokens, ','):
-            name = identifier(tokens)
+            var = identifier(tokens)
             expectElseError(tokens, ':')
             typetoken = consume(tokens)
-            args[name] = {'type': typetoken, 'value': None}
+            args[var] = {'type': typetoken, 'value': None}
         expectElseError(tokens, ')')
     expectElseError(tokens, '\n')
     stmts = []
