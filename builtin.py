@@ -72,4 +72,4 @@ OPERATORS = {
     '=': eq,
 }
 
-SYMBOLS = [':']
+SYMBOLS = [',', ':']
