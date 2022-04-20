@@ -317,6 +317,24 @@ def procedureStmt(tokens):
     }
     return stmt
 
+def callStmt(tokens):
+    name = identifier(tokens)
+    args = []
+    if match(tokens, '('):
+        arg = expression(tokens)
+        args += [arg]
+        while match(tokens, ','):
+            arg = expression(tokens)
+            args += [arg]
+        expectElseError(tokens, ')')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'call',
+        'name': name,
+        'args': args,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -336,6 +354,8 @@ def statement(tokens):
         return forStmt(tokens)
     if match(tokens, 'PROCEDURE'):
         return procedureStmt(tokens)
+    if match(tokens, 'CALL'):
+        return callStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
