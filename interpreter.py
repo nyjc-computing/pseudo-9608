@@ -57,7 +57,7 @@ def execWhile(frame, stmt):
 def execRepeat(frame, stmt):
     for loopstmt in stmt['stmts']:
         execute(frame, loopstmt)
-    while evaluate(stmt['cond'], frame) is True:
+    while evaluate(stmt['cond'], frame) is False:
         for loopstmt in stmt['stmts']:
             execute(frame, loopstmt)
 
