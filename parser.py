@@ -1,4 +1,4 @@
-from builtin import ParseError, get
+from builtin import ParseError, get, lte, add
 from scanner import makeToken
 
 
@@ -231,6 +231,53 @@ def repeatStmt(tokens):
     return stmt
 
 def forStmt(tokens):
+    name = identifier(tokens)
+    expectElseError(tokens, '<-')
+    start = value(tokens)
+    expectElseError(tokens, 'TO')
+    end = value(tokens)
+    step = {
+        'type': 'integer',
+        'word': '1',
+        'value': 1,
+    }
+    if match(tokens, 'STEP'):
+        step = value(tokens)
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] in ('ENDFOR',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDFOR')
+    expectElseError(tokens, '\n')
+    # Initialise name to start
+    init = assignStmt([
+        name,
+        {'type': 'keyword', 'word': '<-', 'value': None},
+        start,
+        {'type': 'keyword', 'word': '\n', 'value': None},
+    ])
+    # Generate loop cond
+    cond = statement([
+        value([name]),
+        {'type': 'symbol', 'word': '<=', 'value': lte},
+        end,
+        {'type': 'keyword', 'word': '\n', 'value': None},
+    ])
+    # Add increment statement
+    incr = assignStmt([
+        name,
+        {'type': 'keyword', 'word': '<-', 'value': None},
+        name,
+        {'type': 'keyword', 'word': '+', 'value': add},
+        step,
+        {'type': 'keyword', 'word': '\n', 'value': None},
+    ])
+    stmt = {
+        'rule': 'for',
+        'init': init,
+        'cond': cond,
+        'stmts': stmts + [incr],
+    }
     return stmt
 
 def statement(tokens):
