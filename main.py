@@ -28,7 +28,6 @@ ENDWHILE
 # DECLARE i : INTEGER
 # FOR i <- 1 TO 10
 #     OUTPUT i
-#     i <- i + 1
 # ENDFOR
 # '''
 
