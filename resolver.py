@@ -83,6 +83,10 @@ def verifyWhile(frame, stmt):
     for loopstmt in stmt['stmts']:
         verify(frame, loopstmt)
 
+def verifyProcedure(frame, stmt):
+    for procstmt in stmt['stmts']:
+        verify(frame, procstmt)
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -97,6 +101,8 @@ def verify(frame, stmt):
         verifyCase(frame, stmt)
     elif stmt['rule'] == 'if':
         verifyIf(frame, stmt)
+    elif stmt['rule'] == 'procedure':
+        verifyProcedure(frame, stmt)
     elif stmt['rule'] in ('while', 'repeat'):
         verifyWhile(frame, stmt)
 
