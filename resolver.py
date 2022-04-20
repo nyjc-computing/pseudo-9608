@@ -41,7 +41,7 @@ def verifyOutput(frame, stmt):
         resolve(frame, expr)
 
 def verifyInput(frame, stmt):
-    name = resolve(stmt['name'])
+    name = resolve(frame, stmt['name'])
     if name not in frame:
         raise LogicError(f'{name}: Name not declared')
 
