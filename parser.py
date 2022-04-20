@@ -318,7 +318,7 @@ def procedureStmt(tokens):
     return stmt
 
 def callStmt(tokens):
-    name = identifier(tokens)
+    name = value(tokens)
     args = []
     if match(tokens, '('):
         arg = expression(tokens)
