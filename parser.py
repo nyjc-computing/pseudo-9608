@@ -202,7 +202,7 @@ def whileStmt(tokens):
     expectElseError(tokens, 'DO')
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] in ('ENDWHILE',):
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDWHILE',):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'ENDWHILE')
     expectElseError(tokens, '\n')
@@ -217,7 +217,7 @@ def whileStmt(tokens):
 def repeatStmt(tokens):
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] in ('UNTIL',):
+    while not atEnd(tokens) and check(tokens)['word'] not in ('UNTIL',):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'UNTIL')
     cond = expression(tokens)
@@ -245,7 +245,7 @@ def forStmt(tokens):
         step = value(tokens)
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] in ('ENDFOR',):
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFOR',):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'ENDFOR')
     expectElseError(tokens, '\n')
@@ -257,8 +257,8 @@ def forStmt(tokens):
         {'type': 'keyword', 'word': '\n', 'value': None},
     ])
     # Generate loop cond
-    cond = statement([
-        value([name]),
+    cond = expression([
+        name,
         {'type': 'symbol', 'word': '<=', 'value': lte},
         end,
         {'type': 'keyword', 'word': '\n', 'value': None},
