@@ -214,6 +214,18 @@ def whileStmt(tokens):
     return stmt
 
 def repeatStmt(tokens):
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] in ('UNTIL',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'UNTIL')
+    cond = expression(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'repeat',
+        'cond': cond,
+        'stmts': stmts
+    }
     return stmt
 
 def forStmt(tokens):
