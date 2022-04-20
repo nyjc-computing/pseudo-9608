@@ -47,6 +47,12 @@ def execIf(frame, stmt):
         for substmt in stmt['fallback']:
             execute(frame, substmt)
 
+def execWhile(frame, stmt):
+    pass
+
+def execRepeat(frame, stmt):
+    pass
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -58,6 +64,10 @@ def execute(frame, stmt):
         execCase(frame, stmt)
     if stmt['rule'] == 'if':
         execIf(frame, stmt)
+    if stmt['rule'] == 'while':
+        execWhile(frame, stmt)
+    if stmt['rule'] == 'repeat':
+        execRepeat(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
