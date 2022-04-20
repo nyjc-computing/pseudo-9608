@@ -22,6 +22,10 @@ def execOutput(frame, stmt):
         print(str(evaluate(expr, frame)), end='')
     print('')  # Add \n
 
+def execInput(frame, stmt):
+    name = evaluate(stmt['name'], frame)
+    frame[name]['value'] = input()
+
 def execDeclare(frame, stmt):
     name = evaluate(stmt['name'], frame)
     type_ = evaluate(stmt['type'], frame)
@@ -64,6 +68,8 @@ def execRepeat(frame, stmt):
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
+    if stmt['rule'] == 'input':
+        execInput(frame, stmt)
     if stmt['rule'] == 'declare':
         execDeclare(frame, stmt)
     if stmt['rule'] == 'assign':

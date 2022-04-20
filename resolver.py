@@ -40,6 +40,11 @@ def verifyOutput(frame, stmt):
     for expr in stmt['exprs']:
         resolve(frame, expr)
 
+def verifyInput(frame, stmt):
+    name = resolve(frame, stmt['name'])
+    if name not in frame:
+        raise LogicError(f'{name}: Name not declared')
+
 def verifyDeclare(frame, stmt):
     name = resolve(frame, stmt['name'])
     type_ = resolve(frame, stmt['type'])
@@ -82,6 +87,8 @@ def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
         verifyOutput(frame, stmt)
+    if stmt['rule'] == 'input':
+        verifyInput(frame, stmt)
     elif stmt['rule'] == 'declare':
         verifyDeclare(frame, stmt)
     elif stmt['rule'] == 'assign':
