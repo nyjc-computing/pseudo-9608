@@ -9,18 +9,28 @@ import interpreter
 
 
 src = '''
-DECLARE Index : INTEGER
-Index <- 5
-CASE OF Index
-    5: OUTPUT "Five"
-    4: OUTPUT "Four"
-    3: OUTPUT "Three"
-    2: OUTPUT "Two"
-    1: OUTPUT "One"
-    0: OUTPUT "I don't know!"
-    OTHERWISE OUTPUT "I can't count beyond five"
-ENDCASE
+DECLARE i : INTEGER
+i <- 1
+WHILE i < 10 DO
+    OUTPUT i
+    i <- i + 1
+ENDWHILE
 '''
+# src = '''
+# DECLARE i : INTEGER
+# i <- 1
+# REPEAT
+#     OUTPUT i
+#     i <- i + 1
+# UNTIL i >= 10
+# '''
+# src = '''
+# DECLARE i : INTEGER
+# FOR i <- 1 TO 10
+#     OUTPUT i
+#     i <- i + 1
+# ENDFOR
+# '''
 
 
 
