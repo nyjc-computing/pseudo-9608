@@ -205,6 +205,7 @@ def whileStmt(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('ENDWHILE',):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'ENDWHILE')
+    expectElseError(tokens, '\n')
     stmt = {
         'rule': 'while',
         'cond': cond,
