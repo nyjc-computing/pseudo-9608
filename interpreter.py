@@ -69,7 +69,7 @@ def execProcedure(frame, stmt):
     name = evaluate(stmt['name'], frame)
     frame[name] = {
         'type': 'procedure',
-        'args': stmt['args'],
+        'params': stmt['params'],
         'stmts': stmt['stmts'],
     }
 

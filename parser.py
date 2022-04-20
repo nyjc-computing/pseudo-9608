@@ -291,17 +291,17 @@ def forStmt(tokens):
 
 def procedureStmt(tokens):
     name = identifier(tokens)
-    args = {}
+    params = {}
     if match(tokens, '('):
         var = identifier(tokens)
         expectElseError(tokens, ':')
         typetoken = consume(tokens)
-        args[var['word']] = {'type': typetoken, 'value': None}
+        params[var['word']] = {'type': typetoken, 'value': None}
         while match(tokens, ','):
             var = identifier(tokens)
             expectElseError(tokens, ':')
             typetoken = consume(tokens)
-            args[var['word']] = {'type': typetoken, 'value': None}
+            params[var['word']] = {'type': typetoken, 'value': None}
         expectElseError(tokens, ')')
     expectElseError(tokens, '\n')
     stmts = []
@@ -312,7 +312,7 @@ def procedureStmt(tokens):
     stmt = {
         'rule': 'procedure',
         'name': name,
-        'args': args,
+        'params': params,
         'stmts': stmts,
     }
     return stmt
