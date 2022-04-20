@@ -82,6 +82,8 @@ def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
         verifyOutput(frame, stmt)
+    if stmt['rule'] == 'input':
+        pass
     elif stmt['rule'] == 'declare':
         verifyDeclare(frame, stmt)
     elif stmt['rule'] == 'assign':
