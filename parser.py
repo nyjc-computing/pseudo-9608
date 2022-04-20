@@ -123,6 +123,12 @@ def outputStmt(tokens):
     return stmt
 
 def inputStmt(tokens):
+    name = identifier(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'input',
+        'name': name,
+    }
     return stmt
 
 def declareStmt(tokens):
