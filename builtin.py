@@ -54,7 +54,10 @@ KEYWORDS = [
     'IF', 'THEN', 'ELSE', 'ENDIF',
     'WHILE', 'DO', 'ENDWHILE',
     'REPEAT', 'UNTIL',
-    'FOR', 'STEP', 'ENDFOR',
+    'FOR', 'TO', 'STEP', 'ENDFOR',
+    'PROCEDURE', 'ENDPROCEDURE', 'CALL',
+    'FUNCTION', 'RETURNS', 'ENDFUNCTION', 'RETURN',
+    'BYREF', 'BYVALUE',
 ]
 
 TYPES = ['INTEGER', 'STRING']
