@@ -48,10 +48,18 @@ def execIf(frame, stmt):
             execute(frame, substmt)
 
 def execWhile(frame, stmt):
-    pass
+    if stmt['init']:
+        execute(frame, stmt['init'])
+    while evaluate(stmt['cond'], frame) is True:
+        for loopstmt in stmt['stmts']:
+            execute(frame, loopstmt)
 
 def execRepeat(frame, stmt):
-    pass
+    for loopstmt in stmt['stmts']:
+        execute(frame, loopstmt)
+    while evaluate(stmt['cond'], frame) is True:
+        for loopstmt in stmt['stmts']:
+            execute(frame, loopstmt)
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
