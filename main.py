@@ -9,27 +9,11 @@ import interpreter
 
 
 src = '''
-DECLARE i : INTEGER
-i <- 1
-WHILE i < 10 DO
-    OUTPUT i
-    i <- i + 1
-ENDWHILE
+DECLARE Result : STRING
+OUTPUT "Enter some text: "
+INPUT Result
+OUTPUT "You entered: ", Result
 '''
-# src = '''
-# DECLARE i : INTEGER
-# i <- 1
-# REPEAT
-#     OUTPUT i
-#     i <- i + 1
-# UNTIL i >= 10
-# '''
-# src = '''
-# DECLARE i : INTEGER
-# FOR i <- 1 TO 10
-#     OUTPUT i
-# ENDFOR
-# '''
 
 
 
