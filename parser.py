@@ -122,6 +122,15 @@ def outputStmt(tokens):
     }
     return stmt
 
+def inputStmt(tokens):
+    name = identifier(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'input',
+        'name': name,
+    }
+    return stmt
+
 def declareStmt(tokens):
     name = identifier(tokens)
     expectElseError(tokens, ':')
@@ -283,6 +292,8 @@ def forStmt(tokens):
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
+    if match(tokens, 'INPUT'):
+        return inputStmt(tokens)
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
     if match(tokens, 'CASE'):
