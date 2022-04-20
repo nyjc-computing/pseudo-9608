@@ -273,7 +273,7 @@ def forStmt(tokens):
         {'type': 'keyword', 'word': '\n', 'value': None},
     ])
     stmt = {
-        'rule': 'for',
+        'rule': 'while',
         'init': init,
         'cond': cond,
         'stmts': stmts + [incr],
