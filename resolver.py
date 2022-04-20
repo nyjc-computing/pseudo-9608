@@ -87,6 +87,13 @@ def verifyProcedure(frame, stmt):
     for procstmt in stmt['stmts']:
         verify(frame, procstmt)
 
+def verifyCall(frame, stmt):
+    # Insert frame for get exprs (procedure, args)
+    # Type-check called procedure
+    # Type-check args against param types
+    # Verify statements
+    pass
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -103,6 +110,8 @@ def verify(frame, stmt):
         verifyIf(frame, stmt)
     elif stmt['rule'] == 'procedure':
         verifyProcedure(frame, stmt)
+    elif stmt['rule'] == 'call':
+        verifyCall(frame, stmt)
     elif stmt['rule'] in ('while', 'repeat'):
         verifyWhile(frame, stmt)
 
