@@ -48,9 +48,13 @@ def get(frame, name):
 # Token types
 
 KEYWORDS = [
-    'DECLARE', 'OUTPUT',
-    'WHILE', 'DO', 'ENDWHILE',
+    'DECLARE', '<-',
+    'OUTPUT', 'INPUT',
     'CASE', 'OF', 'OTHERWISE', 'ENDCASE',
+    'IF', 'THEN', 'ELSE', 'ENDIF',
+    'WHILE', 'DO', 'ENDWHILE',
+    'REPEAT', 'UNTIL',
+    'FOR', 'STEP', 'ENDFOR',
 ]
 
 TYPES = ['INTEGER', 'STRING']
