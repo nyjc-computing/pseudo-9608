@@ -69,6 +69,15 @@ def verifyIf(frame, stmt):
         for falsestmt in stmt['fallback']:
             verify(frame, falsestmt)
 
+def verifyWhile(frame, stmt):
+    if stmt['init']:
+        verify(frame, stmt['init'])
+    condtype = resolve(frame, stmt['cond'])
+    if condtype != 'BOOLEAN':
+        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
+    for loopstmt in stmt['stmts']:
+        verify(frame, loopstmt)
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -81,6 +90,8 @@ def verify(frame, stmt):
         verifyCase(frame, stmt)
     elif stmt['rule'] == 'if':
         verifyIf(frame, stmt)
+    elif stmt['rule'] in ('while', 'repeat'):
+        verifyWhile(frame, stmt)
 
 def inspect(statements):
     frame = {}

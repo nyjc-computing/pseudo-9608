@@ -47,6 +47,20 @@ def execIf(frame, stmt):
         for substmt in stmt['fallback']:
             execute(frame, substmt)
 
+def execWhile(frame, stmt):
+    if stmt['init']:
+        execute(frame, stmt['init'])
+    while evaluate(stmt['cond'], frame) is True:
+        for loopstmt in stmt['stmts']:
+            execute(frame, loopstmt)
+
+def execRepeat(frame, stmt):
+    for loopstmt in stmt['stmts']:
+        execute(frame, loopstmt)
+    while evaluate(stmt['cond'], frame) is False:
+        for loopstmt in stmt['stmts']:
+            execute(frame, loopstmt)
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -58,6 +72,10 @@ def execute(frame, stmt):
         execCase(frame, stmt)
     if stmt['rule'] == 'if':
         execIf(frame, stmt)
+    if stmt['rule'] == 'while':
+        execWhile(frame, stmt)
+    if stmt['rule'] == 'repeat':
+        execRepeat(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:

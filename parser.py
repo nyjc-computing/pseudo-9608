@@ -1,4 +1,4 @@
-from builtin import ParseError, get
+from builtin import ParseError, get, lte, add
 from scanner import makeToken
 
 
@@ -151,7 +151,7 @@ def caseStmt(tokens):
     cond = value(tokens)
     expectElseError(tokens, '\n')
     stmts = {}
-    while not check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
+    while not atEnd(tokens) and check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens)['value']
         expectElseError(tokens, ':')
         stmt = statement(tokens)
@@ -177,14 +177,14 @@ def ifStmt(tokens):
     expectElseError(tokens, '\n')
     stmts = {}
     true = []
-    while not check(tokens)['word'] in ('ELSE', 'ENDIF'):
+    while not atEnd(tokens) and check(tokens)['word'] in ('ELSE', 'ENDIF'):
         true += [statement(tokens)]
     stmts[True] = true
     fallback = None
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n')
         false = []
-        while not check(tokens)['word'] in ('ENDIF',):
+        while not atEnd(tokens) and check(tokens)['word'] in ('ENDIF',):
             false += [statement(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF')
@@ -197,6 +197,89 @@ def ifStmt(tokens):
     }
     return stmt
 
+def whileStmt(tokens):
+    cond = expression(tokens)
+    expectElseError(tokens, 'DO')
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDWHILE',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDWHILE')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'while',
+        'init': None,
+        'cond': cond,
+        'stmts': stmts,
+    }
+    return stmt
+
+def repeatStmt(tokens):
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] not in ('UNTIL',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'UNTIL')
+    cond = expression(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'repeat',
+        'init': None,
+        'cond': cond,
+        'stmts': stmts
+    }
+    return stmt
+
+def forStmt(tokens):
+    name = identifier(tokens)
+    expectElseError(tokens, '<-')
+    start = value(tokens)
+    expectElseError(tokens, 'TO')
+    end = value(tokens)
+    step = {
+        'type': 'integer',
+        'word': '1',
+        'value': 1,
+    }
+    if match(tokens, 'STEP'):
+        step = value(tokens)
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFOR',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDFOR')
+    expectElseError(tokens, '\n')
+    # Initialise name to start
+    init = assignStmt([
+        name,
+        {'type': 'keyword', 'word': '<-', 'value': None},
+        start,
+        {'type': 'keyword', 'word': '\n', 'value': None},
+    ])
+    # Generate loop cond
+    cond = expression([
+        name,
+        {'type': 'symbol', 'word': '<=', 'value': lte},
+        end,
+        {'type': 'keyword', 'word': '\n', 'value': None},
+    ])
+    # Add increment statement
+    incr = assignStmt([
+        name,
+        {'type': 'keyword', 'word': '<-', 'value': None},
+        name,
+        {'type': 'keyword', 'word': '+', 'value': add},
+        step,
+        {'type': 'keyword', 'word': '\n', 'value': None},
+    ])
+    stmt = {
+        'rule': 'while',
+        'init': init,
+        'cond': cond,
+        'stmts': stmts + [incr],
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -206,6 +289,12 @@ def statement(tokens):
         return caseStmt(tokens)
     if match(tokens, 'IF'):
         return ifStmt(tokens)
+    if match(tokens, 'WHILE'):
+        return whileStmt(tokens)
+    if match(tokens, 'REPEAT'):
+        return repeatStmt(tokens)
+    if match(tokens, 'FOR'):
+        return forStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
