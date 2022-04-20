@@ -70,7 +70,13 @@ def verifyIf(frame, stmt):
             verify(frame, falsestmt)
 
 def verifyWhile(frame, stmt):
-    pass
+    if stmt['init']:
+        verify(frame, stmt['init'])
+    condtype = resolve(frame, stmt['cond'])
+    if condtype != 'BOOLEAN':
+        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
+    for loopstmt in stmt['stmts']:
+        verify(frame, loopstmt)
 
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
