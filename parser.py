@@ -208,6 +208,7 @@ def whileStmt(tokens):
     expectElseError(tokens, '\n')
     stmt = {
         'rule': 'while',
+        'init': None,
         'cond': cond,
         'stmts': stmts,
     }
@@ -223,6 +224,7 @@ def repeatStmt(tokens):
     expectElseError(tokens, '\n')
     stmt = {
         'rule': 'repeat',
+        'init': None,
         'cond': cond,
         'stmts': stmts
     }
