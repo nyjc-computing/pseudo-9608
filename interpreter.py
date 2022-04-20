@@ -65,6 +65,14 @@ def execRepeat(frame, stmt):
         for loopstmt in stmt['stmts']:
             execute(frame, loopstmt)
 
+def execProcedure(frame, stmt):
+    name = evaluate(stmt['name'], frame)
+    frame[name] = {
+        'type': 'procedure',
+        'args': stmt['args'],
+        'stmts': stmt['stmts'],
+    }
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -82,6 +90,8 @@ def execute(frame, stmt):
         execWhile(frame, stmt)
     if stmt['rule'] == 'repeat':
         execRepeat(frame, stmt)
+    if stmt['rule'] == 'procedure':
+        execProcedure(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:

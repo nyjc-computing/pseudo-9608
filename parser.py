@@ -289,6 +289,34 @@ def forStmt(tokens):
     }
     return stmt
 
+def procedureStmt(tokens):
+    name = identifier(tokens)
+    args = {}
+    if match(tokens, '('):
+        var = identifier(tokens)
+        expectElseError(tokens, ':')
+        typetoken = consume(tokens)
+        args[var['word']] = {'type': typetoken, 'value': None}
+        while match(tokens, ','):
+            var = identifier(tokens)
+            expectElseError(tokens, ':')
+            typetoken = consume(tokens)
+            args[var['word']] = {'type': typetoken, 'value': None}
+        expectElseError(tokens, ')')
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDPROCEDURE',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDPROCEDURE')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'procedure',
+        'name': name,
+        'args': args,
+        'stmts': stmts,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -306,6 +334,8 @@ def statement(tokens):
         return repeatStmt(tokens)
     if match(tokens, 'FOR'):
         return forStmt(tokens)
+    if match(tokens, 'PROCEDURE'):
+        return procedureStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
