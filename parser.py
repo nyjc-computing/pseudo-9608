@@ -289,6 +289,9 @@ def forStmt(tokens):
     }
     return stmt
 
+def procedureStmt(tokens):
+    pass
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -306,6 +309,8 @@ def statement(tokens):
         return repeatStmt(tokens)
     if match(tokens, 'FOR'):
         return forStmt(tokens)
+    if match(tokens, 'PROCEDURE'):
+        return procedureStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
