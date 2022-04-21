@@ -95,6 +95,8 @@ def verifyProcedure(frame, stmt):
 
 def verifyCall(frame, stmt):
     # Type-check procedure
+    # Insert frame
+    stmt['name']['left'] = frame
     # resolve() would return the expr type, but we need the name
     name = resolve(frame, stmt['name']['right'])
     proc = frame[name]
