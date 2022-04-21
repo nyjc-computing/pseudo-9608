@@ -107,10 +107,9 @@ def verifyCall(frame, stmt):
     for arg, name, param in zip(args, params.keys(), params.values()):
         # Insert frame
         argtype = resolve(frame, arg)
-        paramtype = resolve(frame, param['type'])
         # Type-check args against param types
-        if argtype != paramtype:
-            raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
+        if argtype != param['type']:
+            raise LogicError(f"Expect {param['type']} for {name}, got {argtype}")
 
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
