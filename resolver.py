@@ -86,6 +86,12 @@ def verifyWhile(frame, stmt):
 def verifyProcedure(frame, stmt):
     for procstmt in stmt['stmts']:
         verify(frame, procstmt)
+    name = resolve(stmt['name'])
+    frame[name] = {
+        'type': 'procedure',
+        'params': stmt['params'],
+        'stmts': stmt['stmts'],
+    }
 
 def verifyCall(frame, stmt):
     # Type-check procedure
