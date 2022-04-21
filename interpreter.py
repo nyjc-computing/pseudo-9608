@@ -27,9 +27,7 @@ def execInput(frame, stmt):
     frame[name]['value'] = input()
 
 def execDeclare(frame, stmt):
-    name = evaluate(stmt['name'], frame)
-    type_ = evaluate(stmt['type'], frame)
-    frame[name] = {'type': type_, 'value': None}
+    pass
 
 def execAssign(frame, stmt):
     name = evaluate(stmt['name'], frame)
@@ -66,12 +64,7 @@ def execRepeat(frame, stmt):
             execute(frame, loopstmt)
 
 def execProcedure(frame, stmt):
-    name = evaluate(stmt['name'], frame)
-    frame[name] = {
-        'type': 'procedure',
-        'params': stmt['params'],
-        'stmts': stmt['stmts'],
-    }
+    pass
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
