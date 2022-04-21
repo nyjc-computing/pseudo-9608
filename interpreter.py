@@ -66,6 +66,16 @@ def execRepeat(frame, stmt):
 def execProcedure(frame, stmt):
     pass
 
+def execCall(frame, stmt):
+    # Get procedure from frame
+    proc = evaluate(stmt['name'], frame)
+    # Assign args into frame with param names
+    args, params = stmt['args'], proc['params']
+    for arg, var, param in zip(args, params.keys(), params.values()):
+        frame[var]['value'] = evaluate(frame, arg)
+    for callstmt in proc['stmts']:
+        execute(frame, callstmt)
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -85,6 +95,8 @@ def execute(frame, stmt):
         execRepeat(frame, stmt)
     if stmt['rule'] == 'procedure':
         execProcedure(frame, stmt)
+    if stmt['rule'] == 'call':
+        execCall(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
