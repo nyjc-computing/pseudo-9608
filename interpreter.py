@@ -72,7 +72,7 @@ def execCall(frame, stmt):
     # Assign args into frame with param names
     args, params = stmt['args'], proc['params']
     for arg, var, param in zip(args, params.keys(), params.values()):
-        frame[var]['value'] = evaluate(frame, arg)
+        frame[var]['value'] = evaluate(arg, frame)
     for callstmt in proc['stmts']:
         execute(frame, callstmt)
 
