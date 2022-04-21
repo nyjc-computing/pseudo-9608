@@ -1,4 +1,6 @@
-from builtin import ParseError, get, lte, add
+from builtin import TYPES
+from builtin import ParseError
+from builtin import get, lte, add
 from scanner import makeToken
 
 
