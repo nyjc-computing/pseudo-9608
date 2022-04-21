@@ -297,8 +297,10 @@ def procedureStmt(tokens):
     if match(tokens, '('):
         var = identifier(tokens)
         expectElseError(tokens, ':')
-        typetoken = consume(tokens)
-        params[var['word']] = {'type': typetoken, 'value': None}
+        type_ = consume(tokens)['word']
+        if type_ not in TYPES:
+            raise ParseError('Invalid param type {repr(type_)}')
+        params[var['word']] = {'type': type_, 'value': None}
         while match(tokens, ','):
             var = identifier(tokens)
             expectElseError(tokens, ':')
