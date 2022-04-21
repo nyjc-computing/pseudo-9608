@@ -13,6 +13,7 @@ DECLARE Person : STRING
 PROCEDURE SayHi(Person : STRING)
     OUTPUT "Hi, ", Person, "!"
 ENDPROCEDURE
+CALL SayHi("John")
 '''
 
 
