@@ -91,7 +91,6 @@ def verifyCall(frame, stmt):
     # Insert frame for get exprs (procedure, args)
     # Type-check called procedure
     # Type-check args against param types
-    # Verify statements
     pass
 
 def verify(frame, stmt):
