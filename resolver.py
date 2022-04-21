@@ -104,7 +104,7 @@ def verifyCall(frame, stmt):
     proc = frame[name]
     if proc['type'] != 'procedure':
         raise LogicError(f"CALL {proc['name']} is not a procedure")
-    params = proc['params']
+    params = proc['value']['params']
     args = stmt['args']
     if len(args) != len(params):
         raise LogicError(f'Expected {len(params)} args, got {len(args)}')
