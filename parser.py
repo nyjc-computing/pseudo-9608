@@ -1,4 +1,6 @@
-from builtin import ParseError, get, lte, add
+from builtin import TYPES
+from builtin import ParseError
+from builtin import get, lte, add
 from scanner import makeToken
 
 
@@ -291,17 +293,19 @@ def forStmt(tokens):
 
 def procedureStmt(tokens):
     name = identifier(tokens)
-    args = {}
+    params = {}
     if match(tokens, '('):
         var = identifier(tokens)
         expectElseError(tokens, ':')
-        typetoken = consume(tokens)
-        args[var['word']] = {'type': typetoken, 'value': None}
+        type_ = consume(tokens)['word']
+        if type_ not in TYPES:
+            raise ParseError('Invalid param type {repr(type_)}')
+        params[var['word']] = {'type': type_, 'value': None}
         while match(tokens, ','):
             var = identifier(tokens)
             expectElseError(tokens, ':')
             typetoken = consume(tokens)
-            args[var['word']] = {'type': typetoken, 'value': None}
+            params[var['word']] = {'type': typetoken, 'value': None}
         expectElseError(tokens, ')')
     expectElseError(tokens, '\n')
     stmts = []
@@ -312,8 +316,26 @@ def procedureStmt(tokens):
     stmt = {
         'rule': 'procedure',
         'name': name,
-        'args': args,
+        'params': params,
         'stmts': stmts,
+    }
+    return stmt
+
+def callStmt(tokens):
+    name = value(tokens)
+    args = []
+    if match(tokens, '('):
+        arg = expression(tokens)
+        args += [arg]
+        while match(tokens, ','):
+            arg = expression(tokens)
+            args += [arg]
+        expectElseError(tokens, ')')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'call',
+        'name': name,
+        'args': args,
     }
     return stmt
 
@@ -336,6 +358,8 @@ def statement(tokens):
         return forStmt(tokens)
     if match(tokens, 'PROCEDURE'):
         return procedureStmt(tokens)
+    if match(tokens, 'CALL'):
+        return callStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:

@@ -1,4 +1,5 @@
 import sys
+from pprint import PrettyPrinter
 
 from builtin import ParseError, RuntimeError, LogicError
 import scanner
@@ -13,11 +14,13 @@ DECLARE Person : STRING
 PROCEDURE SayHi(Person : STRING)
     OUTPUT "Hi, ", Person, "!"
 ENDPROCEDURE
+CALL SayHi("John")
 '''
 
 
 
 def main():
+    pp = PrettyPrinter(indent=2, compact=True)
     try:
         tokens = scanner.scan(src)
         statements = parser.parse(tokens)
@@ -27,7 +30,7 @@ def main():
         sys.exit(65)
     try:
         frame = interpreter.interpret(statements, frame)
-        print(frame)
+        pp.pprint(frame)
     except RuntimeError as err:
         print(err)
         sys.exit(70)

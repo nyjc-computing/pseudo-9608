@@ -86,6 +86,34 @@ def verifyWhile(frame, stmt):
 def verifyProcedure(frame, stmt):
     for procstmt in stmt['stmts']:
         verify(frame, procstmt)
+    name = resolve(frame, stmt['name'])
+    frame[name] = {
+        'type': 'procedure',
+        'value': {
+            'params': stmt['params'],
+            'stmts': stmt['stmts'],
+        }
+    }
+
+def verifyCall(frame, stmt):
+    # Type-check procedure
+    # Insert frame
+    stmt['name']['left'] = frame
+    # resolve() would return the expr type, but we need the name
+    name = resolve(frame, stmt['name']['right'])
+    proc = frame[name]
+    if proc['type'] != 'procedure':
+        raise LogicError(f"CALL {proc['name']} is not a procedure")
+    params = proc['value']['params']
+    args = stmt['args']
+    if len(args) != len(params):
+        raise LogicError(f'Expected {len(params)} args, got {len(args)}')
+    for arg, name, param in zip(args, params.keys(), params.values()):
+        # Insert frame
+        argtype = resolve(frame, arg)
+        # Type-check args against param types
+        if argtype != param['type']:
+            raise LogicError(f"Expect {param['type']} for {name}, got {argtype}")
 
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
@@ -103,6 +131,8 @@ def verify(frame, stmt):
         verifyIf(frame, stmt)
     elif stmt['rule'] == 'procedure':
         verifyProcedure(frame, stmt)
+    elif stmt['rule'] == 'call':
+        verifyCall(frame, stmt)
     elif stmt['rule'] in ('while', 'repeat'):
         verifyWhile(frame, stmt)
 
