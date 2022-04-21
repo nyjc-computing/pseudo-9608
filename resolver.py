@@ -108,7 +108,6 @@ def verifyCall(frame, stmt):
         # Insert frame
         argtype = resolve(frame, arg)
         paramtype = resolve(frame, param['type'])
-        breakpoint()
         # Type-check args against param types
         if argtype != paramtype:
             raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
