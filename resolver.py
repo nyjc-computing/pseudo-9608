@@ -86,7 +86,7 @@ def verifyWhile(frame, stmt):
 def verifyProcedure(frame, stmt):
     for procstmt in stmt['stmts']:
         verify(frame, procstmt)
-    name = resolve(stmt['name'])
+    name = resolve(frame, stmt['name'])
     frame[name] = {
         'type': 'procedure',
         'params': stmt['params'],
@@ -95,7 +95,9 @@ def verifyProcedure(frame, stmt):
 
 def verifyCall(frame, stmt):
     # Type-check procedure
-    proc = frame[stmt['name']]
+    # resolve() would return the expr type, but we need the name
+    name = resolve(frame, stmt['name']['right'])
+    proc = frame[name]
     if proc['type'] != 'procedure':
         raise LogicError(f"CALL {proc['name']} is not a procedure")
     params = proc['params']
