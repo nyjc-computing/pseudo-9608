@@ -89,8 +89,10 @@ def verifyProcedure(frame, stmt):
     name = resolve(frame, stmt['name'])
     frame[name] = {
         'type': 'procedure',
-        'params': stmt['params'],
-        'stmts': stmt['stmts'],
+        'value': {
+            'params': stmt['params'],
+            'stmts': stmt['stmts'],
+        }
     }
 
 def verifyCall(frame, stmt):
