@@ -67,14 +67,18 @@ def execProcedure(frame, stmt):
     pass
 
 def execCall(frame, stmt):
+    # Set up local frame
+    local = {}
+    for var, typevalue in frame.items():
+        local[var] = typevalue.copy()
     # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
-    # Assign args into frame with param names
+    # Assign args into local with param names
     args, params = stmt['args'], proc['params']
     for arg, var, param in zip(args, params.keys(), params.values()):
-        frame[var]['value'] = evaluate(frame, arg)
+        local[var]['value'] = evaluate(frame, arg)
     for callstmt in proc['stmts']:
-        execute(frame, callstmt)
+        execute(local, callstmt)
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
