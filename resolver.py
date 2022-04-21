@@ -88,11 +88,20 @@ def verifyProcedure(frame, stmt):
         verify(frame, procstmt)
 
 def verifyCall(frame, stmt):
-    # Insert frame for get exprs (procedure, args)
-    # Type-check called procedure
-    # Type-check args against param types
-    # Verify statements
-    pass
+    # Type-check procedure
+    proc = frame[stmt['name']]
+    if proc['type'] != 'procedure':
+        raise LogicError(f"CALL {proc['name']} is not a procedure")
+    params = proc['params']
+    args = stmt['args']
+    if len(args) != len(params):
+        raise LogicError(f'Expected {len(params)} args, got {len(args)}')
+    for arg, name, param in zip(args, params.keys(), params.values()):
+        # Insert frame
+        argtype = resolve(frame, arg)
+        # Type-check args against param types
+        if argtype != param['type']:
+            raise LogicError(f"Expect {param['type']} for {name}, got {argtype}")
 
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
