@@ -94,11 +94,12 @@ def verifyProcedure(frame, stmt):
         elif passby == 'BYREF':
             name = resolve(frame, var['name'])
             globvar = frame[name]
+            vartype = resolve(frame, var['type'])
             # Type-check local against global
-            if var['type'] != globvar['type']:
+            if vartype != globvar['type']:
                 raise LogicError(
                     f"Expect {globvar['type']} for BYREF {name},"
-                    f" got {var['type']}"
+                    f" got {vartype}"
                 )
             # Reference global vars in local
             local[name] = globvar
