@@ -159,10 +159,9 @@ def verifyFunction(frame, stmt):
     returns = resolve(frame, stmt['returns'])
     for procstmt in stmt['stmts']:
         returntype = verify(local, procstmt)
-        breakpoint()
         if returntype and (returntype != returns):
             raise LogicError(f"Expect {returns} for {name}, got {returntype}")
-    # Declare procedure in frame
+    # Declare function in frame
     frame[name] = {
         'type': returns,
         'value': {
