@@ -306,7 +306,7 @@ def procedureStmt(tokens):
     params = []
     if match(tokens, '('):
         passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
-        if match(tokens, 'BYVALUE', 'BYREF'):
+        if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)
         var = declare(tokens)
         params += [var]

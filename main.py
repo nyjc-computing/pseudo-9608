@@ -11,7 +11,7 @@ import interpreter
 
 src = '''
 DECLARE Person : STRING
-PROCEDURE SayHi(Person : STRING)
+PROCEDURE SayHi(BYREF Person : STRING)
     OUTPUT "Hi, ", Person, "!"
 ENDPROCEDURE
 CALL SayHi("John")
