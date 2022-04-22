@@ -64,7 +64,8 @@ def value(tokens):
                 arg = expression(tokens)
                 args += [arg]
             expectElseError(tokens, ')')
-            expr = makeExpr(expr, call, args)
+            oper = {'type': 'symbol', 'word': '', 'value': call}
+            expr = makeExpr(expr, oper, args)
         return expr
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
