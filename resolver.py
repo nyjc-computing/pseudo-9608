@@ -146,6 +146,11 @@ def verifyCall(frame, stmt):
     # Type-check arguments
     local = proc['value']['frame']
     for arg, param in zip(args, params):
+        if stmt['passby']['word'] == 'BYREF':
+            # Only names allowed for BYREF arguments
+            # Check for a get expr
+            if arg['oper']['value'] is not get:
+                raise LogicError('BYREF arg must be a name, not expression')
         argtype = resolve(frame, arg)
         paramtype = resolve(local, param['type'])
         # Type-check args against param types
