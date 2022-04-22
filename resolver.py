@@ -154,13 +154,12 @@ def verifyFunction(frame, stmt):
     # Declare procedure in frame
     name = resolve(frame, stmt['name'])
     frame[name] = {
-        'type': 'function',
+        'type': resolve(frame, stmt['returns']),
         'value': {
             'frame': local,
             'passby': 'BYVALUE',
             'params': stmt['params'],
             'stmts': stmt['stmts'],
-            'returns': stmt['returns'],
         }
     }
 
