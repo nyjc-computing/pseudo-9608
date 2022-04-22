@@ -347,6 +347,36 @@ def callStmt(tokens):
     }
     return stmt
 
+def functionStmt(tokens):
+    name = identifier(tokens)
+    params = []
+    if match(tokens, '('):
+        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        var = declare(tokens)
+        params += [var]
+        while match(tokens, ','):
+            var = declare(tokens)
+            params += [var]
+        expectElseError(tokens, ')')
+    expectElseError(tokens, 'RETURNS')
+    typetoken = consume(tokens)
+    if typetoken['word'] not in TYPES:
+        raise ParseError(f"Invalid type {typetoken['word']}")
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFUNCTION',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDFUNCTION')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'function',
+        'name': name,
+        'passby': passby,
+        'params': params,
+        'stmts': stmts,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -368,6 +398,8 @@ def statement(tokens):
         return procedureStmt(tokens)
     if match(tokens, 'CALL'):
         return callStmt(tokens)
+    if match(tokens, 'FUNCTION'):
+        return functionStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
