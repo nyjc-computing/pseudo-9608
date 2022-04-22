@@ -295,6 +295,9 @@ def procedureStmt(tokens):
     name = identifier(tokens)
     params = {}
     if match(tokens, '('):
+        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        if match(tokens, 'BYVALUE', 'BYREF'):
+            passby = consume(tokens)
         var = identifier(tokens)
         expectElseError(tokens, ':')
         type_ = consume(tokens)['word']
@@ -316,6 +319,7 @@ def procedureStmt(tokens):
     stmt = {
         'rule': 'procedure',
         'name': name,
+        'passby': passby,
         'params': params,
         'stmts': stmts,
     }
