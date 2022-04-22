@@ -71,6 +71,7 @@ def execCall(frame, stmt):
     #     'type': 'procedure',
     #     'value': {
     #         'frame': local,
+    #         'passby': stmt['passby']['word'],
     #         'params': stmt['params'],
     #         'stmts': stmt['stmts'],
     #     }
@@ -78,11 +79,12 @@ def execCall(frame, stmt):
     # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
     # Set up local frame
-    local = proc['value']['frame'].copy()
+    local = {name: var for name, var in proc['frame'].items()}
     # Assign args into local with param names
-    args, params = stmt['args'], proc['value']['params']
+    args, params = stmt['args'], proc['params']
     for arg, param in zip(args, params):
-        local[param['name']]['value'] = evaluate(frame, arg)
+        name = evaluate(local, param['name'])
+        local[name]['value'] = evaluate(frame, arg)
     for callstmt in proc['stmts']:
         execute(local, callstmt)
 
