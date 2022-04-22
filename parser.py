@@ -374,6 +374,7 @@ def functionStmt(tokens):
         'passby': passby,
         'params': params,
         'stmts': stmts,
+        'returns': typetoken,
     }
     return stmt
 
