@@ -27,6 +27,10 @@ def resolve(frame, expr):
     if oper is call:
         # Insert frame into get expr
         resolve(frame, expr['left'])
+        # Insert frame into args
+        args = expr['right']
+        for arg in args:
+            resolve(frame, arg)
         # Return function type
         functype = resolve(frame, expr['left'])
         return functype
