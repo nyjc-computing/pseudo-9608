@@ -107,6 +107,7 @@ def verifyProcedure(frame, stmt):
     frame[name] = {
         'type': 'procedure',
         'value': {
+            'frame': local,
             'params': stmt['params'],
             'stmts': stmt['stmts'],
         }
