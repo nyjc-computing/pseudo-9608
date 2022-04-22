@@ -142,6 +142,28 @@ def verifyCall(frame, stmt):
         if argtype != paramtype:
             raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
 
+def verifyFunction(frame, stmt):
+    # Set up local frame
+    local = {}
+    for var in stmt['params']:
+        # Declare vars in local
+        verifyDeclare(local, var)
+    # Resolve procedure statements using local
+    for procstmt in stmt['stmts']:
+        verify(local, procstmt)
+    # Declare procedure in frame
+    name = resolve(frame, stmt['name'])
+    frame[name] = {
+        'type': 'function',
+        'value': {
+            'frame': local,
+            'passby': 'BYVALUE',
+            'params': stmt['params'],
+            'stmts': stmt['stmts'],
+            'returns': stmt['returns'],
+        }
+    }
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -162,6 +184,8 @@ def verify(frame, stmt):
         verifyCall(frame, stmt)
     elif stmt['rule'] in ('while', 'repeat'):
         verifyWhile(frame, stmt)
+    elif stmt['rule'] == 'function':
+        verifyFunction(frame, stmt)
 
 def inspect(statements):
     frame = {}
