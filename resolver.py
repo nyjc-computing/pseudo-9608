@@ -5,6 +5,13 @@ from builtin import LogicError
 
 
 
+# Helper functions
+
+def expectTypeElseError(frame, expr, expected):
+    exprtype = resolve(frame, expr)
+    if expected != exprtype:
+        raise LogicError(f"Expected {repr(expected)}, got {repr(exprtype)}")
+
 def resolve(frame, expr):
     # Resolving tokens
     if 'type' in expr:
