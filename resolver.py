@@ -1,4 +1,4 @@
-from builtin import get
+from builtin import get, call
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
@@ -15,8 +15,7 @@ def resolve(frame, expr):
         else:
             # internal error
             raise TypeError(f'Cannot resolve type for {expr}')
-    # Resolving gets requires special handling
-    # of expr's left and right
+    # Resolving get expressions
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
@@ -24,6 +23,13 @@ def resolve(frame, expr):
         if name not in frame:
             raise LogicError(f'{name}: Name not declared')
         return frame[name]['type']
+    # Resolving function calls
+    if oper is call:
+        # Insert frame into get expr
+        resolve(frame, expr['left'])
+        # Return function type
+        functype = resolve(frame, expr['left'])
+        return functype
     # Resolving other exprs
     lefttype = resolve(frame, expr['left'])
     righttype = resolve(frame, expr['right'])
