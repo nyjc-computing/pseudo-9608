@@ -133,15 +133,25 @@ def inputStmt(tokens):
     }
     return stmt
 
-def declareStmt(tokens):
+def declare(tokens):
     name = identifier(tokens)
     expectElseError(tokens, ':')
     typetoken = consume(tokens)
+    if typetoken['word'] not in TYPES:
+        raise ParseError(f"Invalid type {typetoken['word']}")
+    var = {
+        'name': name,
+        'type': typetoken,
+    }
+    return var
+    
+def declareStmt(tokens):
+    var = declare(tokens)
     expectElseError(tokens, '\n')
     stmt = {
         'rule': 'declare',
-        'name': name,
-        'type': typetoken,
+        'name': var['name'],
+        'type': var['type'],
     }
     return stmt
 
