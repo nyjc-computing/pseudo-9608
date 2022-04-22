@@ -108,6 +108,7 @@ def verifyProcedure(frame, stmt):
         'type': 'procedure',
         'value': {
             'frame': local,
+            'passby': stmt['passby']['word'],
             'params': stmt['params'],
             'stmts': stmt['stmts'],
         }
