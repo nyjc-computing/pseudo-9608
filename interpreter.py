@@ -144,7 +144,7 @@ def execute(frame, stmt):
     if stmt['rule'] == 'call':
         execCall(frame, stmt)
     if stmt['rule'] == 'return':
-        execReturn(frame, stmt)
+        return execReturn(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
