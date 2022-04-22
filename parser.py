@@ -1,6 +1,6 @@
 from builtin import TYPES
 from builtin import ParseError
-from builtin import get, lte, add
+from builtin import get, lte, add, call
 from scanner import makeToken
 
 
@@ -64,6 +64,7 @@ def value(tokens):
                 arg = expression(tokens)
                 args += [arg]
             expectElseError(tokens, ')')
+            expr = makeExpr(expr, call, args)
         return expr
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
