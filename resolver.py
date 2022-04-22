@@ -169,6 +169,12 @@ def verifyFunction(frame, stmt):
         }
     }
 
+def verifyReturn(local, stmt):
+    # This will typically be verify()ed within
+    # verifyFunction(), so frame is expected to
+    # be local
+    return resolve(local, stmt['expr'])
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -191,6 +197,8 @@ def verify(frame, stmt):
         verifyWhile(frame, stmt)
     elif stmt['rule'] == 'function':
         verifyFunction(frame, stmt)
+    elif stmt['rule'] == 'return':
+        verifyReturn(frame, stmt)
 
 def inspect(statements):
     frame = {}
