@@ -18,10 +18,6 @@ def evaluate(frame, expr):
         left = evaluate(frame, expr['left'])
         right = expr['right']
         func, args = oper(left, right)
-            # 'frame': local,
-            # 'passby': 'BYVALUE',
-            # 'params': stmt['params'],
-            # 'stmts': stmt['stmts'],
         local = func['frame']
         # Assign args into local with param names
         for arg, param in zip(args, func['params']):
@@ -88,15 +84,6 @@ def execFunction(frame, stmt):
     pass
 
 def execCall(frame, stmt):
-    # frame[name] = {
-    #     'type': 'procedure',
-    #     'value': {
-    #         'frame': local,
-    #         'passby': str,
-    #         'params': stmt['params'],
-    #         'stmts': stmt['stmts'],
-    #     }
-    # }
     # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
     # Note: for BYREF variables, the procedure's frame
@@ -119,7 +106,6 @@ def execReturn(local, stmt):
     # to be local
     return evaluate(local, stmt['expr'])
 
-
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -139,10 +125,10 @@ def execute(frame, stmt):
         execRepeat(frame, stmt)
     if stmt['rule'] == 'procedure':
         execProcedure(frame, stmt)
-    if stmt['rule'] == 'function':
-        execFunction(frame, stmt)
     if stmt['rule'] == 'call':
         execCall(frame, stmt)
+    if stmt['rule'] == 'function':
+        execFunction(frame, stmt)
     if stmt['rule'] == 'return':
         return execReturn(frame, stmt)
 

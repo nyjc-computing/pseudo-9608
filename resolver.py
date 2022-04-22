@@ -196,12 +196,12 @@ def verify(frame, stmt):
         verifyCase(frame, stmt)
     elif stmt['rule'] == 'if':
         verifyIf(frame, stmt)
+    elif stmt['rule'] in ('while', 'repeat'):
+        verifyWhile(frame, stmt)
     elif stmt['rule'] == 'procedure':
         verifyProcedure(frame, stmt)
     elif stmt['rule'] == 'call':
         verifyCall(frame, stmt)
-    elif stmt['rule'] in ('while', 'repeat'):
-        verifyWhile(frame, stmt)
     elif stmt['rule'] == 'function':
         verifyFunction(frame, stmt)
     elif stmt['rule'] == 'return':
