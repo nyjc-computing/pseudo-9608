@@ -84,36 +84,63 @@ def verifyWhile(frame, stmt):
         verify(frame, loopstmt)
 
 def verifyProcedure(frame, stmt):
+    passby = stmt['passby']['word']
+    # Set up local frame
+    local = {}
+    for var in stmt['params']:
+        # Declare vars in local
+        if passby == 'BYVALUE':
+            verifyDeclare(local, var)
+        elif passby == 'BYREF':
+            name = resolve(frame, var['name'])
+            globvar = frame[name]
+            vartype = resolve(frame, var['type'])
+            # Type-check local against global
+            if vartype != globvar['type']:
+                raise LogicError(
+                    f"Expect {globvar['type']} for BYREF {name},"
+                    f" got {vartype}"
+                )
+            # Reference global vars in local
+            local[name] = globvar
+        else:
+            # Internal error
+            raise TypeError(f"str expected for passby, got {passby}")
+    # Resolve procedure statements using local
     for procstmt in stmt['stmts']:
-        verify(frame, procstmt)
+        verify(local, procstmt)
+    # Declare procedure in frame
     name = resolve(frame, stmt['name'])
     frame[name] = {
         'type': 'procedure',
         'value': {
+            'frame': local,
+            'passby': passby,
             'params': stmt['params'],
             'stmts': stmt['stmts'],
         }
     }
 
 def verifyCall(frame, stmt):
-    # Type-check procedure
     # Insert frame
     stmt['name']['left'] = frame
     # resolve() would return the expr type, but we need the name
     name = resolve(frame, stmt['name']['right'])
     proc = frame[name]
+    # Type-check procedure
     if proc['type'] != 'procedure':
         raise LogicError(f"CALL {proc['name']} is not a procedure")
-    params = proc['value']['params']
-    args = stmt['args']
+    args, params = stmt['args'], proc['value']['params']
     if len(args) != len(params):
         raise LogicError(f'Expected {len(params)} args, got {len(args)}')
-    for arg, name, param in zip(args, params.keys(), params.values()):
-        # Insert frame
+    # Type-check arguments
+    local = proc['value']['frame']
+    for arg, param in zip(args, params):
         argtype = resolve(frame, arg)
+        paramtype = resolve(local, param['type'])
         # Type-check args against param types
-        if argtype != param['type']:
-            raise LogicError(f"Expect {param['type']} for {name}, got {argtype}")
+        if argtype != paramtype:
+            raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
 
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()

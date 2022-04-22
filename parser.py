@@ -133,15 +133,25 @@ def inputStmt(tokens):
     }
     return stmt
 
-def declareStmt(tokens):
+def declare(tokens):
     name = identifier(tokens)
     expectElseError(tokens, ':')
     typetoken = consume(tokens)
+    if typetoken['word'] not in TYPES:
+        raise ParseError(f"Invalid type {typetoken['word']}")
+    var = {
+        'name': name,
+        'type': typetoken,
+    }
+    return var
+    
+def declareStmt(tokens):
+    var = declare(tokens)
     expectElseError(tokens, '\n')
     stmt = {
         'rule': 'declare',
-        'name': name,
-        'type': typetoken,
+        'name': var['name'],
+        'type': var['type'],
     }
     return stmt
 
@@ -293,19 +303,16 @@ def forStmt(tokens):
 
 def procedureStmt(tokens):
     name = identifier(tokens)
-    params = {}
+    params = []
     if match(tokens, '('):
-        var = identifier(tokens)
-        expectElseError(tokens, ':')
-        type_ = consume(tokens)['word']
-        if type_ not in TYPES:
-            raise ParseError('Invalid param type {repr(type_)}')
-        params[var['word']] = {'type': type_, 'value': None}
+        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
+            passby = consume(tokens)
+        var = declare(tokens)
+        params += [var]
         while match(tokens, ','):
-            var = identifier(tokens)
-            expectElseError(tokens, ':')
-            typetoken = consume(tokens)
-            params[var['word']] = {'type': typetoken, 'value': None}
+            var = declare(tokens)
+            params += [var]
         expectElseError(tokens, ')')
     expectElseError(tokens, '\n')
     stmts = []
@@ -316,6 +323,7 @@ def procedureStmt(tokens):
     stmt = {
         'rule': 'procedure',
         'name': name,
+        'passby': passby,
         'params': params,
         'stmts': stmts,
     }

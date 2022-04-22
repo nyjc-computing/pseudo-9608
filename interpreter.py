@@ -67,14 +67,30 @@ def execProcedure(frame, stmt):
     pass
 
 def execCall(frame, stmt):
+    # frame[name] = {
+    #     'type': 'procedure',
+    #     'value': {
+    #         'frame': local,
+    #         'passby': str,
+    #         'params': stmt['params'],
+    #         'stmts': stmt['stmts'],
+    #     }
+    # }
     # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
-    # Assign args into frame with param names
+    # Note: for BYREF variables, the procedure's frame
+    # may still contain values from previous calls.
+    # Do not evaluate any get exprs for local frame
+    # before assigning local variables from args.
+    local = proc['frame']
+    
+    # Assign args into local with param names
     args, params = stmt['args'], proc['params']
-    for arg, var, param in zip(args, params.keys(), params.values()):
-        frame[var]['value'] = evaluate(frame, arg)
+    for arg, param in zip(args, params):
+        name = evaluate(local, param['name'])
+        local[name]['value'] = evaluate(frame, arg)
     for callstmt in proc['stmts']:
-        execute(frame, callstmt)
+        execute(local, callstmt)
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
