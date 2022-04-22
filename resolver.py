@@ -159,6 +159,7 @@ def verifyFunction(frame, stmt):
     returns = resolve(frame, stmt['returns'])
     for procstmt in stmt['stmts']:
         returntype = verify(local, procstmt)
+        breakpoint()
         if returntype and (returntype != returns):
             raise LogicError(f"Expect {returns} for {name}, got {returntype}")
     # Declare procedure in frame
@@ -201,7 +202,7 @@ def verify(frame, stmt):
     elif stmt['rule'] == 'function':
         verifyFunction(frame, stmt)
     elif stmt['rule'] == 'return':
-        verifyReturn(frame, stmt)
+        return verifyReturn(frame, stmt)
 
 def inspect(statements):
     frame = {}
