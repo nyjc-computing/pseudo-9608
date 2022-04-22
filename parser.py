@@ -54,6 +54,14 @@ def value(tokens):
         frame = None
         name = identifier(tokens)
         oper = {'type': 'symbol', 'word': '', 'value': get}
+        args = []
+        if match(tokens, '('):
+            arg = expression(tokens)
+            args += [arg]
+            while match(tokens, ','):
+                arg = expression(tokens)
+                args += [arg]
+        expectElseError(tokens, ')')
         return makeExpr(frame, oper, name)
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
@@ -103,7 +111,7 @@ def expectElseError(tokens, word):
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
-    raise ParseError(f"Expected {word}")
+    raise ParseError(fr"Expected {word}")
 
 def match(tokens, *words):
     if check(tokens)['word'] in words:
