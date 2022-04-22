@@ -84,8 +84,25 @@ def verifyWhile(frame, stmt):
         verify(frame, loopstmt)
 
 def verifyProcedure(frame, stmt):
+    # Set up local frame
+    local = {}
+    # Declare vars in local
+    for var in stmt['params']:
+        verifyDeclare(local, var)
+    # Type-check local against global for BYREF
+    if stmt['passby'] == 'BYREF':
+        for varname, var in local.items():
+            frametype = frame[varname]['type']
+            localtype = var['type']
+            if localtype != frametype:
+                raise LogicError(
+                    f"Expect {frametype} for BYREF param {varname},"
+                    f" got {localtype}"
+                )
+    # Resolve procedure statements using local
     for procstmt in stmt['stmts']:
-        verify(frame, procstmt)
+        verify(local, procstmt)
+    # Declare procedure in frame
     name = resolve(frame, stmt['name'])
     frame[name] = {
         'type': 'procedure',
