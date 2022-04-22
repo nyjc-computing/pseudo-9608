@@ -113,6 +113,13 @@ def execCall(frame, stmt):
     for callstmt in proc['stmts']:
         execute(local, callstmt)
 
+def execReturn(local, stmt):
+    # This will typically be execute()ed within
+    # evaluate() in a function call, so frame is expected
+    # to be local
+    return evaluate(local, stmt['expr'])
+
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -136,6 +143,8 @@ def execute(frame, stmt):
         execFunction(frame, stmt)
     if stmt['rule'] == 'call':
         execCall(frame, stmt)
+    if stmt['rule'] == 'return':
+        execReturn(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
