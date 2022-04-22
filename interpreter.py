@@ -66,6 +66,9 @@ def execRepeat(frame, stmt):
 def execProcedure(frame, stmt):
     pass
 
+def execFunction(frame, stmt):
+    pass
+
 def execCall(frame, stmt):
     # frame[name] = {
     #     'type': 'procedure',
@@ -111,6 +114,8 @@ def execute(frame, stmt):
         execRepeat(frame, stmt)
     if stmt['rule'] == 'procedure':
         execProcedure(frame, stmt)
+    if stmt['rule'] == 'function':
+        execFunction(frame, stmt)
     if stmt['rule'] == 'call':
         execCall(frame, stmt)
 
