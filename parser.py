@@ -55,14 +55,16 @@ def value(tokens):
         name = identifier(tokens)
         oper = {'type': 'symbol', 'word': '', 'value': get}
         args = []
+        expr = makeExpr(frame, oper, name)
+        # Function call
         if match(tokens, '('):
             arg = expression(tokens)
             args += [arg]
             while match(tokens, ','):
                 arg = expression(tokens)
                 args += [arg]
-        expectElseError(tokens, ')')
-        return makeExpr(frame, oper, name)
+            expectElseError(tokens, ')')
+        return expr
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
 
