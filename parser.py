@@ -303,22 +303,16 @@ def forStmt(tokens):
 
 def procedureStmt(tokens):
     name = identifier(tokens)
-    params = {}
+    params = []
     if match(tokens, '('):
         passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
         if match(tokens, 'BYVALUE', 'BYREF'):
             passby = consume(tokens)
-        var = identifier(tokens)
-        expectElseError(tokens, ':')
-        type_ = consume(tokens)['word']
-        if type_ not in TYPES:
-            raise ParseError('Invalid param type {repr(type_)}')
-        params[var['word']] = {'type': type_, 'value': None}
+        var = declare(tokens)
+        params += [var]
         while match(tokens, ','):
-            var = identifier(tokens)
-            expectElseError(tokens, ':')
-            typetoken = consume(tokens)
-            params[var['word']] = {'type': typetoken, 'value': None}
+            var = declare(tokens)
+            params += [var]
         expectElseError(tokens, ')')
     expectElseError(tokens, '\n')
     stmts = []
