@@ -18,8 +18,19 @@ def evaluate(frame, expr):
         left = evaluate(frame, expr['left'])
         right = expr['right']
         func, args = oper(left, right)
-        # ...
-        # return result
+            # 'frame': local,
+            # 'passby': 'BYVALUE',
+            # 'params': stmt['params'],
+            # 'stmts': stmt['stmts'],
+        local = func['frame']
+        # Assign args into local with param names
+        for arg, param in zip(args, func['params']):
+            name = evaluate(local, param['name'])
+            local[name]['value'] = evaluate(frame, arg)
+        for funcstmt in func['stmts']:
+            returnval = execute(local, funcstmt)
+            if returnval:
+                return returnval
     left = evaluate(frame, expr['left'])
     right = evaluate(frame, expr['right'])
     return oper(left, right)
