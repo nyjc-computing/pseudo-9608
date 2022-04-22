@@ -1,3 +1,4 @@
+from builtin import call
 from builtin import RuntimeError
 
 
@@ -13,6 +14,12 @@ def evaluate(frame, expr):
         return expr
     # Evaluating exprs
     oper = expr['oper']['value']
+    if oper is call:
+        left = evaluate(frame, expr['left'])
+        right = expr['right']
+        func, args = oper(left, right)
+        # ...
+        # return result
     left = evaluate(frame, expr['left'])
     right = evaluate(frame, expr['right'])
     return oper(left, right)
