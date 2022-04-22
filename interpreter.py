@@ -1,3 +1,4 @@
+from builtin import call
 from builtin import RuntimeError
 
 
@@ -13,6 +14,19 @@ def evaluate(frame, expr):
         return expr
     # Evaluating exprs
     oper = expr['oper']['value']
+    if oper is call:
+        left = evaluate(frame, expr['left'])
+        right = expr['right']
+        func, args = oper(left, right)
+        local = func['frame']
+        # Assign args into local with param names
+        for arg, param in zip(args, func['params']):
+            name = evaluate(local, param['name'])
+            local[name]['value'] = evaluate(frame, arg)
+        for funcstmt in func['stmts']:
+            returnval = execute(local, funcstmt)
+            if returnval:
+                return returnval
     left = evaluate(frame, expr['left'])
     right = evaluate(frame, expr['right'])
     return oper(left, right)
@@ -66,16 +80,10 @@ def execRepeat(frame, stmt):
 def execProcedure(frame, stmt):
     pass
 
+def execFunction(frame, stmt):
+    pass
+
 def execCall(frame, stmt):
-    # frame[name] = {
-    #     'type': 'procedure',
-    #     'value': {
-    #         'frame': local,
-    #         'passby': str,
-    #         'params': stmt['params'],
-    #         'stmts': stmt['stmts'],
-    #     }
-    # }
     # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
     # Note: for BYREF variables, the procedure's frame
@@ -91,6 +99,12 @@ def execCall(frame, stmt):
         local[name]['value'] = evaluate(frame, arg)
     for callstmt in proc['stmts']:
         execute(local, callstmt)
+
+def execReturn(local, stmt):
+    # This will typically be execute()ed within
+    # evaluate() in a function call, so frame is expected
+    # to be local
+    return evaluate(local, stmt['expr'])
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
@@ -113,6 +127,10 @@ def execute(frame, stmt):
         execProcedure(frame, stmt)
     if stmt['rule'] == 'call':
         execCall(frame, stmt)
+    if stmt['rule'] == 'function':
+        execFunction(frame, stmt)
+    if stmt['rule'] == 'return':
+        return execReturn(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:

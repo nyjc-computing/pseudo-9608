@@ -1,4 +1,4 @@
-from builtin import get
+from builtin import get, call
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
@@ -15,8 +15,7 @@ def resolve(frame, expr):
         else:
             # internal error
             raise TypeError(f'Cannot resolve type for {expr}')
-    # Resolving gets requires special handling
-    # of expr's left and right
+    # Resolving get expressions
     oper = expr['oper']['value']
     if oper is get:
         expr['left'] = frame
@@ -24,6 +23,17 @@ def resolve(frame, expr):
         if name not in frame:
             raise LogicError(f'{name}: Name not declared')
         return frame[name]['type']
+    # Resolving function calls
+    if oper is call:
+        # Insert frame into get expr
+        resolve(frame, expr['left'])
+        # Insert frame into args
+        args = expr['right']
+        for arg in args:
+            resolve(frame, arg)
+        # Return function type
+        functype = resolve(frame, expr['left'])
+        return functype
     # Resolving other exprs
     lefttype = resolve(frame, expr['left'])
     righttype = resolve(frame, expr['right'])
@@ -142,6 +152,36 @@ def verifyCall(frame, stmt):
         if argtype != paramtype:
             raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
 
+def verifyFunction(frame, stmt):
+    # Set up local frame
+    local = {}
+    for var in stmt['params']:
+        # Declare vars in local
+        verifyDeclare(local, var)
+    # Resolve procedure statements using local
+    name = resolve(frame, stmt['name'])
+    returns = resolve(frame, stmt['returns'])
+    for procstmt in stmt['stmts']:
+        returntype = verify(local, procstmt)
+        if returntype and (returntype != returns):
+            raise LogicError(f"Expect {returns} for {name}, got {returntype}")
+    # Declare function in frame
+    frame[name] = {
+        'type': returns,
+        'value': {
+            'frame': local,
+            'passby': 'BYVALUE',
+            'params': stmt['params'],
+            'stmts': stmt['stmts'],
+        }
+    }
+
+def verifyReturn(local, stmt):
+    # This will typically be verify()ed within
+    # verifyFunction(), so frame is expected to
+    # be local
+    return resolve(local, stmt['expr'])
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -156,12 +196,16 @@ def verify(frame, stmt):
         verifyCase(frame, stmt)
     elif stmt['rule'] == 'if':
         verifyIf(frame, stmt)
+    elif stmt['rule'] in ('while', 'repeat'):
+        verifyWhile(frame, stmt)
     elif stmt['rule'] == 'procedure':
         verifyProcedure(frame, stmt)
     elif stmt['rule'] == 'call':
         verifyCall(frame, stmt)
-    elif stmt['rule'] in ('while', 'repeat'):
-        verifyWhile(frame, stmt)
+    elif stmt['rule'] == 'function':
+        verifyFunction(frame, stmt)
+    elif stmt['rule'] == 'return':
+        return verifyReturn(frame, stmt)
 
 def inspect(statements):
     frame = {}

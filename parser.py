@@ -1,6 +1,6 @@
 from builtin import TYPES
 from builtin import ParseError
-from builtin import get, lte, add
+from builtin import get, lte, add, call
 from scanner import makeToken
 
 
@@ -54,7 +54,19 @@ def value(tokens):
         frame = None
         name = identifier(tokens)
         oper = {'type': 'symbol', 'word': '', 'value': get}
-        return makeExpr(frame, oper, name)
+        args = []
+        expr = makeExpr(frame, oper, name)
+        # Function call
+        if match(tokens, '('):
+            arg = expression(tokens)
+            args += [arg]
+            while match(tokens, ','):
+                arg = expression(tokens)
+                args += [arg]
+            expectElseError(tokens, ')')
+            oper = {'type': 'symbol', 'word': '', 'value': call}
+            expr = makeExpr(expr, oper, args)
+        return expr
     else:
         raise ParseError(f"Unexpected token {repr(token['word'])}")
 
@@ -103,7 +115,7 @@ def expectElseError(tokens, word):
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
-    raise ParseError(f"Expected {word}")
+    raise ParseError(fr"Expected {word}")
 
 def match(tokens, *words):
     if check(tokens)['word'] in words:
@@ -347,6 +359,46 @@ def callStmt(tokens):
     }
     return stmt
 
+def functionStmt(tokens):
+    name = identifier(tokens)
+    params = []
+    if match(tokens, '('):
+        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        var = declare(tokens)
+        params += [var]
+        while match(tokens, ','):
+            var = declare(tokens)
+            params += [var]
+        expectElseError(tokens, ')')
+    expectElseError(tokens, 'RETURNS')
+    typetoken = consume(tokens)
+    if typetoken['word'] not in TYPES:
+        raise ParseError(f"Invalid type {typetoken['word']}")
+    expectElseError(tokens, '\n')
+    stmts = []
+    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFUNCTION',):
+        stmts += [statement(tokens)]
+    expectElseError(tokens, 'ENDFUNCTION')
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'function',
+        'name': name,
+        'passby': passby,
+        'params': params,
+        'stmts': stmts,
+        'returns': typetoken,
+    }
+    return stmt
+
+def returnStmt(tokens):
+    expr = expression(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'return',
+        'expr': expr,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -368,6 +420,10 @@ def statement(tokens):
         return procedureStmt(tokens)
     if match(tokens, 'CALL'):
         return callStmt(tokens)
+    if match(tokens, 'FUNCTION'):
+        return functionStmt(tokens)
+    if match(tokens, 'RETURN'):
+        return returnStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
