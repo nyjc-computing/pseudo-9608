@@ -10,13 +10,12 @@ import interpreter
 
 
 src = '''
-DECLARE Person : STRING
-PROCEDURE SayHi(BYREF Person : STRING)
-    OUTPUT "Hi, ", Person, "!"
-    Person <- "Mary"
-ENDPROCEDURE
-CALL SayHi("John")
-OUTPUT Person
+DECLARE Five : INTEGER
+FUNCTION AddOne(Num : INTEGER) RETURNS INTEGER
+    RETURN Num + 1
+ENDFUNCTION
+Five <- 5
+OUTPUT "5 + 1 is ", AddOne(Five)
 '''
 
 

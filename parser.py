@@ -378,6 +378,15 @@ def functionStmt(tokens):
     }
     return stmt
 
+def returnStmt(tokens):
+    expr = expression(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'return',
+        'expr': expr,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -401,6 +410,8 @@ def statement(tokens):
         return callStmt(tokens)
     if match(tokens, 'FUNCTION'):
         return functionStmt(tokens)
+    if match(tokens, 'RETURN'):
+        return returnStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
