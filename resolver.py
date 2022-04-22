@@ -155,12 +155,15 @@ def verifyFunction(frame, stmt):
         # Declare vars in local
         verifyDeclare(local, var)
     # Resolve procedure statements using local
-    for procstmt in stmt['stmts']:
-        verify(local, procstmt)
-    # Declare procedure in frame
     name = resolve(frame, stmt['name'])
+    returns = resolve(frame, stmt['returns'])
+    for procstmt in stmt['stmts']:
+        returntype = verify(local, procstmt)
+        if returntype and (returntype != returns):
+            raise LogicError(f"Expect {returns} for {name}, got {returntype}")
+    # Declare procedure in frame
     frame[name] = {
-        'type': resolve(frame, stmt['returns']),
+        'type': returns,
         'value': {
             'frame': local,
             'passby': 'BYVALUE',
