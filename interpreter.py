@@ -28,9 +28,10 @@ def evaluate(frame, expr):
     # Evaluating exprs
     oper = expr['oper']['value']
     if oper is call:
-        func = evaluate(frame, expr['left'])
-        assignArgsParams(frame, expr['right'], func)
-        return executeStmts(frame, func['stmts'])
+        return execCall(
+            frame,
+            {'name': expr['left'], 'args': expr['right']},
+        )
     left = evaluate(frame, expr['left'])
     right = evaluate(frame, expr['right'])
     return oper(left, right)
@@ -84,12 +85,8 @@ def execFunction(frame, stmt):
 
 def execCall(frame, stmt):
     proc = evaluate(frame, stmt['name'])
-    # Note: for BYREF variables, the procedure's frame
-    # may still contain values from previous calls.
-    # Do not evaluate any get exprs for local frame
-    # before assigning local variables from args.
     assignArgsParams(frame, stmt['args'], proc)
-    executeStmts(frame, proc['stmts'])
+    return executeStmts(frame, proc['stmts'])
 
 def execReturn(local, stmt):
     # This will typically be execute()ed within
