@@ -58,7 +58,10 @@ def symbol(code):
 # Main scanning loop
 
 def scan(src):
-    code = {'src': src + '\n'}
+    code = {
+        'src': src + '\n',
+        'line': 1,
+    }
     tokens = []
     while not atEnd(code):
         char = check(code)
@@ -68,6 +71,7 @@ def scan(src):
         elif char == '\n':
             text = consume(code)
             token = makeToken('keyword', text, None)
+            code['line'] += 1
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
