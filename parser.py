@@ -26,11 +26,12 @@ def makeExpr(left, oper, right):
         'right': right,
     }
 
-def expectElseError(tokens, word):
+def expectElseError(tokens, word, addmsg=None):
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
-    raise ParseError("Expected", check(tokens))
+    msg = "Expected {addmsg}" if addmsg else "Expected"
+    raise ParseError(msg, check(tokens))
 
 def match(tokens, *words):
     if check(tokens)['word'] in words:
