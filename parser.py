@@ -30,7 +30,7 @@ def expectElseError(tokens, word):
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
-    raise ParseError(fr"Expected {word}")
+    raise ParseError("Expected", check(tokens))
 
 def match(tokens, *words):
     if check(tokens)['word'] in words:
