@@ -231,7 +231,7 @@ def whileStmt(tokens):
     expectElseError(tokens, 'DO')
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDWHILE',):
+    while not atEnd(tokens) and match(tokens, 'ENDWHILE'):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'ENDWHILE')
     expectElseError(tokens, '\n')
@@ -246,9 +246,8 @@ def whileStmt(tokens):
 def repeatStmt(tokens):
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('UNTIL',):
+    while not atEnd(tokens) and not match(tokens, 'UNTIL'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'UNTIL')
     cond = expression(tokens)
     expectElseError(tokens, '\n')
     stmt = {
@@ -274,7 +273,7 @@ def forStmt(tokens):
         step = value(tokens)
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFOR',):
+    while not atEnd(tokens) and not match(tokens, 'ENDFOR'):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'ENDFOR')
     expectElseError(tokens, '\n')
