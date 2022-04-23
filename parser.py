@@ -26,6 +26,18 @@ def makeExpr(left, oper, right):
         'right': right,
     }
 
+def expectElseError(tokens, word):
+    if check(tokens)['word'] == word:
+        consume(tokens)
+        return True
+    raise ParseError(fr"Expected {word}")
+
+def match(tokens, *words):
+    if check(tokens)['word'] in words:
+        consume(tokens)
+        return True
+    return False
+
 # Precedence parsers
 
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
@@ -109,20 +121,6 @@ def equality(tokens):
 def expression(tokens):
     expr = equality(tokens)
     return expr
-
-# Statement parsing helpers
-
-def expectElseError(tokens, word):
-    if check(tokens)['word'] == word:
-        consume(tokens)
-        return True
-    raise ParseError(fr"Expected {word}")
-
-def match(tokens, *words):
-    if check(tokens)['word'] in words:
-        consume(tokens)
-        return True
-    return False
 
 # Statement parsers
 
