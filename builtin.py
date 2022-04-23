@@ -10,6 +10,9 @@ class PseudoError(Exception):
         else:
             self.line = token['line']
 
+    def msg(self):
+        return self.args[0]
+
 class ParseError(PseudoError):
     """Custom error raised by scanner and parser."""
     def report(self):
@@ -17,7 +20,7 @@ class ParseError(PseudoError):
             token = self.token['word']
         else:
             token = self.token
-        return f"[{self.line}] {repr(token)}: {self.args[0]}"
+        return f"[{self.line}] {repr(token)}: {self.msg()}"
 
 class RuntimeError(Exception):
     """Custom error raised by interpreter."""
