@@ -1,0 +1,6 @@
+DECLARE Five : INTEGER
+FUNCTION AddOne(Num : INTEGER) RETURNS INTEGER
+    RETURN Num + 1
+ENDFUNCTION
+Five <- 5
+OUTPUT "5 + 1 is ", AddOne(Five)
