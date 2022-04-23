@@ -16,8 +16,9 @@ def consume(code):
     code['src'] = code['src'][1:]
     return char
 
-def makeToken(tokentype, word, value):
+def makeToken(line, tokentype, word, value):
     return {
+        'line': line,
         'type': tokentype,
         'word': word,
         'value': value,
@@ -70,24 +71,24 @@ def scan(src):
             continue
         elif char == '\n':
             text = consume(code)
-            token = makeToken('keyword', text, None)
+            token = makeToken(code['line'], 'keyword', text, None)
             code['line'] += 1
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
-                token = makeToken('keyword', text, None)
+                token = makeToken(code['line'], 'keyword', text, None)
             else:
-                token = makeToken('name', text, None)
+                token = makeToken(code['line'], 'name', text, None)
         elif char.isdigit():
             text = integer(code)
-            token = makeToken('integer', text, int(text))
+            token = makeToken(code['line'], 'integer', text, int(text))
         elif char == '"':
             text = string(code)
-            token = makeToken('string', text, text[1:-1])
+            token = makeToken(code['line'], 'string', text, text[1:-1])
         elif char in '()[]:,.+-/*=<>':
             text = symbol(code)
             oper = OPERATORS.get(text, None)
-            token = makeToken('symbol', text, oper)
+            token = makeToken(code['line'], 'symbol', text, oper)
         else:
             raise ParseError(f"Unrecognised character {repr(char)}.")
         tokens += [token]

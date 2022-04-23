@@ -53,18 +53,19 @@ def value(tokens):
     elif token['type'] == 'name':
         frame = None
         name = identifier(tokens)
-        oper = {'type': 'symbol', 'word': '', 'value': get}
+        oper = makeToken(name['line'], 'symbol', '', get)
         args = []
         expr = makeExpr(frame, oper, name)
         # Function call
         if match(tokens, '('):
+            thisline = tokens[0]['line']
             arg = expression(tokens)
             args += [arg]
             while match(tokens, ','):
                 arg = expression(tokens)
                 args += [arg]
             expectElseError(tokens, ')')
-            oper = {'type': 'symbol', 'word': '', 'value': call}
+            oper = makeToken(thisline, 'symbol', '', call)
             expr = makeExpr(expr, oper, args)
         return expr
     else:
@@ -285,25 +286,25 @@ def forStmt(tokens):
     # Initialise name to start
     init = assignStmt([
         name,
-        {'type': 'keyword', 'word': '<-', 'value': None},
+        makeToken(name['line'], 'keyword', '<-', None),
         start,
-        {'type': 'keyword', 'word': '\n', 'value': None},
+        makeToken(end['line'], 'keyword', '\n', None),
     ])
     # Generate loop cond
     cond = expression([
         name,
-        {'type': 'symbol', 'word': '<=', 'value': lte},
+        makeToken(name['line'], 'symbol', '<=', lte),
         end,
-        {'type': 'keyword', 'word': '\n', 'value': None},
+        makeToken(start['line'], 'keyword', '\n', None),
     ])
     # Add increment statement
     incr = assignStmt([
         name,
-        {'type': 'keyword', 'word': '<-', 'value': None},
+        makeToken(name['line'], 'keyword', '<-', None),
         name,
-        {'type': 'keyword', 'word': '+', 'value': add},
+        makeToken(name['line'], 'keyword', '+', add),
         step,
-        {'type': 'keyword', 'word': '\n', 'value': None},
+        makeToken(end['line'], 'keyword', '\n', None),
     ])
     stmt = {
         'rule': 'while',
@@ -317,7 +318,7 @@ def procedureStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        passby = makeToken(name['line'], 'keyword', 'BYVALUE', None)
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)
         var = declare(tokens)
@@ -363,7 +364,7 @@ def functionStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        passby = makeToken(name['line'], 'keyword', 'BYVALUE', None)
         var = declare(tokens)
         params += [var]
         while match(tokens, ','):
@@ -432,7 +433,8 @@ def statement(tokens):
 # Main parsing loop
 
 def parse(tokens):
-    tokens.append(makeToken('EOF', "", None))
+    lastline = tokens[-1]['line']
+    tokens += [makeToken(lastline, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
         while match(tokens, '\n'):
