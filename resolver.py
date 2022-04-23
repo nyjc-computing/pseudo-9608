@@ -44,8 +44,7 @@ def resolve(frame, expr):
         resolve(frame, expr['left'])
         # Insert frame into args
         args = expr['right']
-        for arg in args:
-            resolve(frame, arg)
+        resolveExprs(frame, args)
         # Return function type
         functype = resolve(frame, expr['left'])
         return functype
@@ -58,8 +57,7 @@ def resolve(frame, expr):
         return 'INTEGER'
 
 def verifyOutput(frame, stmt):
-    for expr in stmt['exprs']:
-        resolve(frame, expr)
+    resolveExprs(frame, stmt['exprs'])
 
 def verifyInput(frame, stmt):
     name = resolve(frame, stmt['name'])
@@ -77,25 +75,21 @@ def verifyAssign(frame, stmt):
 
 def verifyCase(frame, stmt):
     resolve(frame, stmt['cond'])
-    for value, casestmt in stmt['stmts'].items():
-        verify(frame, casestmt)
+    verifyStmts(frame, stmt['stmts'].values())
     if stmt['fallback']:
         verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
-    for truestmt in stmt['stmts'][True]:
-        verify(frame, truestmt)
+    verifyStmts(frame, stmt['stmts'][True])
     if stmt['fallback']:
-        for falsestmt in stmt['fallback']:
-            verify(frame, falsestmt)
+        verifyStmts(frame, stmt['fallback'])
 
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
-    for loopstmt in stmt['stmts']:
-        verify(frame, loopstmt)
+    verifyStmts(frame, stmt['stmts'])
 
 def verifyProcedure(frame, stmt):
     passby = stmt['passby']['word']
@@ -115,8 +109,7 @@ def verifyProcedure(frame, stmt):
             # Internal error
             raise TypeError(f"str expected for passby, got {passby}")
     # Resolve procedure statements using local
-    for procstmt in stmt['stmts']:
-        verify(local, procstmt)
+    verifyStmts(local, stmt['stmts'])
     # Declare procedure in frame
     name = resolve(frame, stmt['name'])
     frame[name] = {
@@ -209,6 +202,5 @@ def verify(frame, stmt):
 
 def inspect(statements):
     frame = {}
-    for stmt in statements:
-        verify(frame, stmt)
+    verifyStmts(frame, statements)
     return statements, frame
