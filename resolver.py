@@ -5,6 +5,21 @@ from builtin import LogicError
 
 
 
+# Helper functions
+
+def expectTypeElseError(frame, expr, expected):
+    exprtype = resolve(frame, expr)
+    if expected != exprtype:
+        raise LogicError(f"Expected {repr(expected)}, got {repr(exprtype)}")
+
+def resolveExprs(frame, exprs):
+    for expr in exprs:
+        resolve(frame, expr)
+
+def verifyStmts(frame, stmts):
+    for stmt in stmts:
+        verify(frame, stmt)
+
 def resolve(frame, expr):
     # Resolving tokens
     if 'type' in expr:
@@ -29,26 +44,20 @@ def resolve(frame, expr):
         resolve(frame, expr['left'])
         # Insert frame into args
         args = expr['right']
-        for arg in args:
-            resolve(frame, arg)
+        resolveExprs(frame, args)
         # Return function type
         functype = resolve(frame, expr['left'])
         return functype
     # Resolving other exprs
-    lefttype = resolve(frame, expr['left'])
-    righttype = resolve(frame, expr['right'])
     if oper in (lt, lte, gt, gte, ne, eq):
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
-        if lefttype != 'INTEGER':
-            raise LogicError(f"{expr['left']} Expected number, got {lefttype}")
-        if righttype != 'INTEGER':
-            raise LogicError(f"{expr['right']} Expected number, got {righttype}")
+        expectTypeElseError(frame, expr['left'], 'INTEGER')
+        expectTypeElseError(frame, expr['right'], 'INTEGER')
         return 'INTEGER'
 
 def verifyOutput(frame, stmt):
-    for expr in stmt['exprs']:
-        resolve(frame, expr)
+    resolveExprs(frame, stmt['exprs'])
 
 def verifyInput(frame, stmt):
     name = resolve(frame, stmt['name'])
@@ -62,36 +71,25 @@ def verifyDeclare(frame, stmt):
 
 def verifyAssign(frame, stmt):
     name = resolve(frame, stmt['name'])
-    valuetype = resolve(frame, stmt['expr'])
-    frametype = frame[name]['type']
-    if frametype != valuetype:
-        raise LogicError(f'Expected {frametype}, got {valuetype}')
+    expectTypeElseError(frame, stmt['expr'], frame[name]['type'])
 
 def verifyCase(frame, stmt):
     resolve(frame, stmt['cond'])
-    for value, casestmt in stmt['stmts'].items():
-        verify(frame, casestmt)
+    verifyStmts(frame, stmt['stmts'].values())
     if stmt['fallback']:
         verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
-    condtype = resolve(frame, stmt['cond'])
-    if condtype != 'BOOLEAN':
-        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
-    for truestmt in stmt['stmts'][True]:
-        verify(frame, truestmt)
+    expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
+    verifyStmts(frame, stmt['stmts'][True])
     if stmt['fallback']:
-        for falsestmt in stmt['fallback']:
-            verify(frame, falsestmt)
+        verifyStmts(frame, stmt['fallback'])
 
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
-    condtype = resolve(frame, stmt['cond'])
-    if condtype != 'BOOLEAN':
-        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
-    for loopstmt in stmt['stmts']:
-        verify(frame, loopstmt)
+    expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
+    verifyStmts(frame, stmt['stmts'])
 
 def verifyProcedure(frame, stmt):
     passby = stmt['passby']['word']
@@ -104,21 +102,14 @@ def verifyProcedure(frame, stmt):
         elif passby == 'BYREF':
             name = resolve(frame, var['name'])
             globvar = frame[name]
-            vartype = resolve(frame, var['type'])
-            # Type-check local against global
-            if vartype != globvar['type']:
-                raise LogicError(
-                    f"Expect {globvar['type']} for BYREF {name},"
-                    f" got {vartype}"
-                )
+            expectTypeElseError(frame, var['type'], globvar['type'])
             # Reference global vars in local
             local[name] = globvar
         else:
             # Internal error
             raise TypeError(f"str expected for passby, got {passby}")
     # Resolve procedure statements using local
-    for procstmt in stmt['stmts']:
-        verify(local, procstmt)
+    verifyStmts(local, stmt['stmts'])
     # Declare procedure in frame
     name = resolve(frame, stmt['name'])
     frame[name] = {
@@ -146,11 +137,13 @@ def verifyCall(frame, stmt):
     # Type-check arguments
     local = proc['value']['frame']
     for arg, param in zip(args, params):
-        argtype = resolve(frame, arg)
+        if stmt['passby']['word'] == 'BYREF':
+            # Only names allowed for BYREF arguments
+            # Check for a get expr
+            if arg['oper']['value'] is not get:
+                raise LogicError('BYREF arg must be a name, not expression')
         paramtype = resolve(local, param['type'])
-        # Type-check args against param types
-        if argtype != paramtype:
-            raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
+        expectTypeElseError(frame, arg, paramtype)
 
 def verifyFunction(frame, stmt):
     # Set up local frame
@@ -209,6 +202,5 @@ def verify(frame, stmt):
 
 def inspect(statements):
     frame = {}
-    for stmt in statements:
-        verify(frame, stmt)
+    verifyStmts(frame, statements)
     return statements, frame

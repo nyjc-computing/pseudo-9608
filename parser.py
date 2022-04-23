@@ -45,7 +45,7 @@ def value(tokens):
     #  A grouping
     elif token['word'] == '(':
         consume(tokens)  # (
-        expr = expression()
+        expr = expression(tokens)
         if not check(tokens)['word'] == ')':
             raise ParseError(f"')' expected at end of expression")
         consume(tokens)  # )

@@ -3,6 +3,19 @@ from builtin import RuntimeError
 
 
 
+# Helper functions
+
+def executeStmts(frame, stmts):
+    for stmt in stmts:
+        returnval = execute(frame, stmt)
+        if returnval:
+                return returnval
+
+def assignArgsParams(frame, args, callable):
+    for arg, param in zip(args, callable['params']):
+        name = evaluate(callable['frame'], param['name'])
+        callable['frame'][name]['value'] = evaluate(frame, arg)
+
 def evaluate(frame, expr):
     # Evaluating tokens
     if 'type' in expr:
@@ -15,18 +28,10 @@ def evaluate(frame, expr):
     # Evaluating exprs
     oper = expr['oper']['value']
     if oper is call:
-        left = evaluate(frame, expr['left'])
-        right = expr['right']
-        func, args = oper(left, right)
-        local = func['frame']
-        # Assign args into local with param names
-        for arg, param in zip(args, func['params']):
-            name = evaluate(local, param['name'])
-            local[name]['value'] = evaluate(frame, arg)
-        for funcstmt in func['stmts']:
-            returnval = execute(local, funcstmt)
-            if returnval:
-                return returnval
+        return execCall(
+            frame,
+            {'name': expr['left'], 'args': expr['right']},
+        )
     left = evaluate(frame, expr['left'])
     right = evaluate(frame, expr['right'])
     return oper(left, right)
@@ -57,25 +62,20 @@ def execCase(frame, stmt):
 
 def execIf(frame, stmt):
     if evaluate(frame, stmt['cond']):
-        for substmt in stmt['stmts'][True]:
-            execute(frame, substmt)
+        executeStmts(frame, stmt['stmts'][True])
     elif stmt['fallback']:
-        for substmt in stmt['fallback']:
-            execute(frame, substmt)
+        executeStmts(frame, stmt['fallback'])
 
 def execWhile(frame, stmt):
     if stmt['init']:
         execute(frame, stmt['init'])
     while evaluate(frame, stmt['cond']) is True:
-        for loopstmt in stmt['stmts']:
-            execute(frame, loopstmt)
+        executeStmts(frame, stmt['stmts'])
 
 def execRepeat(frame, stmt):
-    for loopstmt in stmt['stmts']:
-        execute(frame, loopstmt)
+    executeStmts(frame, stmt['stmts'])
     while evaluate(frame, stmt['cond']) is False:
-        for loopstmt in stmt['stmts']:
-            execute(frame, loopstmt)
+        executeStmts(frame, stmt['stmts'])
 
 def execProcedure(frame, stmt):
     pass
@@ -84,21 +84,9 @@ def execFunction(frame, stmt):
     pass
 
 def execCall(frame, stmt):
-    # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
-    # Note: for BYREF variables, the procedure's frame
-    # may still contain values from previous calls.
-    # Do not evaluate any get exprs for local frame
-    # before assigning local variables from args.
-    local = proc['frame']
-    
-    # Assign args into local with param names
-    args, params = stmt['args'], proc['params']
-    for arg, param in zip(args, params):
-        name = evaluate(local, param['name'])
-        local[name]['value'] = evaluate(frame, arg)
-    for callstmt in proc['stmts']:
-        execute(local, callstmt)
+    assignArgsParams(frame, stmt['args'], proc)
+    return executeStmts(frame, proc['stmts'])
 
 def execReturn(local, stmt):
     # This will typically be execute()ed within
@@ -135,6 +123,5 @@ def execute(frame, stmt):
 def interpret(statements, frame=None):
     if frame is None:
         frame = {}
-    for stmt in statements:
-        execute(frame, stmt)
+    executeStmts(frame, statements)
     return frame
