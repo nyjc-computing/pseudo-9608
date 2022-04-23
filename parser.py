@@ -47,7 +47,7 @@ def identifier(tokens):
     if token['type'] == 'name':
         return consume(tokens)
     else:
-        raise ParseError(f"Expected variable name, got {repr(token['word'])}")
+        raise ParseError(f"Expected variable name", token)
 
 def value(tokens):
     token = check(tokens)
@@ -55,12 +55,9 @@ def value(tokens):
     if token['type'] in ['integer', 'string']:
         return consume(tokens)
     #  A grouping
-    elif token['word'] == '(':
-        consume(tokens)  # (
+    elif match(tokens, '('):
         expr = expression(tokens)
-        if not check(tokens)['word'] == ')':
-            raise ParseError(f"')' expected at end of expression")
-        consume(tokens)  # )
+        expectElseError(tokens, ')')
         return expr        
     elif token['type'] == 'name':
         frame = None
@@ -81,12 +78,12 @@ def value(tokens):
             expr = makeExpr(expr, oper, args)
         return expr
     else:
-        raise ParseError(f"Unexpected token {repr(token['word'])}")
+        raise ParseError("Unexpected token", token)
 
 def muldiv(tokens):
     # *, /
     expr = value(tokens)
-    while check(tokens)['word'] in ['*', '/']:
+    while match(tokens, '*', '/'):
         oper = consume(tokens)
         right = value(tokens)
         expr = makeExpr(expr, oper, right)
@@ -94,7 +91,7 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    while check(tokens)['word'] in ['+', '-']:
+    while match(tokens, '+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
         expr = makeExpr(expr, oper, right)
@@ -103,7 +100,7 @@ def addsub(tokens):
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    while check(tokens)['word'] in ['<', '<=', '>', '>=']:
+    while match(tokens, '<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
         expr = makeExpr(expr, oper, right)
@@ -112,7 +109,7 @@ def comparison(tokens):
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    while check(tokens)['word'] in ['<>', '=']:
+    while match(tokens, '<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
         expr = makeExpr(expr, oper, right)
@@ -149,7 +146,7 @@ def declare(tokens):
     expectElseError(tokens, ':')
     typetoken = consume(tokens)
     if typetoken['word'] not in TYPES:
-        raise ParseError(f"Invalid type {typetoken['word']}")
+        raise ParseError("Invalid type", typetoken)
     var = {
         'name': name,
         'type': typetoken,
@@ -372,12 +369,11 @@ def functionStmt(tokens):
     expectElseError(tokens, 'RETURNS')
     typetoken = consume(tokens)
     if typetoken['word'] not in TYPES:
-        raise ParseError(f"Invalid type {typetoken['word']}")
+        raise ParseError("Invalid type", typetoken)
     expectElseError(tokens, '\n')
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFUNCTION',):
+    while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDFUNCTION')
     expectElseError(tokens, '\n')
     stmt = {
         'rule': 'function',
@@ -426,7 +422,7 @@ def statement(tokens):
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
-        raise ParseError(f"Unrecognised token {check(tokens)}")
+        raise ParseError("Unrecognised token", check(tokens))
 
 # Main parsing loop
 
