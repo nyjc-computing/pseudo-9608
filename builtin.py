@@ -20,7 +20,7 @@ class ParseError(PseudoError):
             token = self.token['word']
         else:
             token = self.token
-        return f"[{self.line}] {repr(token)}: {self.msg()}"
+        return f"[Line {self.line}] {repr(token)}: {self.msg()}"
 
 class RuntimeError(Exception):
     """Custom error raised by interpreter."""
