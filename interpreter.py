@@ -3,6 +3,13 @@ from builtin import RuntimeError
 
 
 
+# Helper functions
+
+def assignArgsParams(frame, args, local, params):
+    for arg, param in zip(args, params):
+        name = evaluate(local, param['name'])
+        local[name]['value'] = evaluate(frame, arg)
+
 def evaluate(frame, expr):
     # Evaluating tokens
     if 'type' in expr:
@@ -17,10 +24,7 @@ def evaluate(frame, expr):
     if oper is call:
         func = evaluate(frame, expr['left'])
         local = func['frame']
-        args, params = expr['right'], func['params']
-        for arg, param in zip(args, params):
-            name = evaluate(local, param['name'])
-            local[name]['value'] = evaluate(frame, arg)
+        assignArgsParams(frame, expr['right'], func['frame'], func['params'])
         for funcstmt in func['stmts']:
             returnval = execute(local, funcstmt)
             if returnval:
@@ -88,10 +92,7 @@ def execCall(frame, stmt):
     # Do not evaluate any get exprs for local frame
     # before assigning local variables from args.
     local = proc['frame']
-    args, params = stmt['args'], proc['params']
-    for arg, param in zip(args, params):
-        name = evaluate(local, param['name'])
-        local[name]['value'] = evaluate(frame, arg)
+    assignArgsParams(frame, stmt['args'], proc['frame'], proc['params'])
     for callstmt in proc['stmts']:
         execute(local, callstmt)
 
