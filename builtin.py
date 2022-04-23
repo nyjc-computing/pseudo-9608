@@ -12,6 +12,12 @@ class PseudoError(Exception):
 
 class ParseError(PseudoError):
     """Custom error raised by scanner and parser."""
+    def report(self):
+        if type(self.token) is dict:
+            token = self.token['word']
+        else:
+            token = self.token
+        return f"[{self.line}] {repr(token)}: {self.args[0]}"
 
 class RuntimeError(Exception):
     """Custom error raised by interpreter."""
