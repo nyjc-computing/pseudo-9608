@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 from pprint import PrettyPrinter
 
@@ -10,7 +11,12 @@ import interpreter
 
 
 def main():
-    with open('main.pseudo', 'r') as f:
+    breakpoint()
+    if len(sys.argv) == 1:
+        srcfile = 'main.pseudo'
+    else:
+        srcfile = sys.argv[1]
+    with open(srcfile, 'r') as f:
         src = f.read()
     pp = PrettyPrinter(indent=2, compact=True)
     try:
