@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import sys
 from pprint import PrettyPrinter
 
@@ -11,7 +10,6 @@ import interpreter
 
 
 def main():
-    breakpoint()
     if len(sys.argv) == 1:
         srcfile = 'main.pseudo'
     else:
