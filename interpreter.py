@@ -7,7 +7,9 @@ from builtin import RuntimeError
 
 def executeStmts(frame, stmts):
     for stmt in stmts:
-        execute(frame, stmt)
+        returnval = execute(frame, stmt)
+        if returnval:
+                return returnval
 
 def assignArgsParams(frame, args, callable):
     for arg, param in zip(args, callable['params']):
