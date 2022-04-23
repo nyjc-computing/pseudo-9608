@@ -24,3 +24,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [12b Procedure calls](https://github.com/nyjc-computing/pseudo/pull/22)
 - [12c Passing by reference](https://github.com/nyjc-computing/pseudo/pull/24)
 - [13a Functions](https://github.com/nyjc-computing/pseudo/pull/25)
+- [13b Loose ends](https://github.com/nyjc-computing/pseudo/pull/26)
