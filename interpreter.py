@@ -29,12 +29,8 @@ def evaluate(frame, expr):
     oper = expr['oper']['value']
     if oper is call:
         func = evaluate(frame, expr['left'])
-        local = func['frame']
         assignArgsParams(frame, expr['right'], func)
-        for funcstmt in func['stmts']:
-            returnval = execute(local, funcstmt)
-            if returnval:
-                return returnval
+        return executeStmts(frame, func['stmts'])
     left = evaluate(frame, expr['left'])
     right = evaluate(frame, expr['right'])
     return oper(left, right)
@@ -65,25 +61,20 @@ def execCase(frame, stmt):
 
 def execIf(frame, stmt):
     if evaluate(frame, stmt['cond']):
-        for substmt in stmt['stmts'][True]:
-            execute(frame, substmt)
+        executeStmts(frame, stmt['stmts'][True])
     elif stmt['fallback']:
-        for substmt in stmt['fallback']:
-            execute(frame, substmt)
+        executeStmts(frame, stmt['fallback'])
 
 def execWhile(frame, stmt):
     if stmt['init']:
         execute(frame, stmt['init'])
     while evaluate(frame, stmt['cond']) is True:
-        for loopstmt in stmt['stmts']:
-            execute(frame, loopstmt)
+        executeStmts(frame, stmt['stmts'])
 
 def execRepeat(frame, stmt):
-    for loopstmt in stmt['stmts']:
-        execute(frame, loopstmt)
+    executeStmts(frame, stmt['stmts'])
     while evaluate(frame, stmt['cond']) is False:
-        for loopstmt in stmt['stmts']:
-            execute(frame, loopstmt)
+        executeStmts(frame, stmt['stmts'])
 
 def execProcedure(frame, stmt):
     pass
@@ -97,10 +88,8 @@ def execCall(frame, stmt):
     # may still contain values from previous calls.
     # Do not evaluate any get exprs for local frame
     # before assigning local variables from args.
-    local = proc['frame']
     assignArgsParams(frame, stmt['args'], proc)
-    for callstmt in proc['stmts']:
-        execute(local, callstmt)
+    executeStmts(frame, proc['stmts'])
 
 def execReturn(local, stmt):
     # This will typically be execute()ed within
@@ -137,6 +126,5 @@ def execute(frame, stmt):
 def interpret(statements, frame=None):
     if frame is None:
         frame = {}
-    for stmt in statements:
-        execute(frame, stmt)
+    executeStmts(frame, statements)
     return frame
