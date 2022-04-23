@@ -9,18 +9,9 @@ import interpreter
 
 
 
-src = '''
-DECLARE Five : INTEGER
-FUNCTION AddOne(Num : INTEGER) RETURNS INTEGER
-    RETURN Num + 1
-ENDFUNCTION
-Five <- 5
-OUTPUT "5 + 1 is ", AddOne(Five)
-'''
-
-
-
 def main():
+    with open('main.pseudo', 'r') as f:
+        src = f.read()
     pp = PrettyPrinter(indent=2, compact=True)
     try:
         tokens = scanner.scan(src)
