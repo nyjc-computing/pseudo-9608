@@ -1,10 +1,22 @@
 # Errors
 
-class ParseError(Exception): pass
+class ParseError(Exception):
+    def __init__(self, msg, token):
+        super().__init__(msg)
+        self.token = token
+        self.line = token['line']
 
-class RuntimeError(Exception): pass
+class RuntimeError(Exception):
+    def __init__(self, msg, token):
+        super().__init__(msg)
+        self.token = token
+        self.line = token['line']
 
-class LogicError(Exception): pass
+class LogicError(Exception):
+    def __init__(self, msg, token):
+        super().__init__(msg)
+        self.token = token
+        self.line = token['line']
 
 
 
