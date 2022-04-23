@@ -5,6 +5,10 @@ from builtin import RuntimeError
 
 # Helper functions
 
+def executeStmts(frame, stmts):
+    for stmt in stmts:
+        execute(frame, stmt)
+
 def assignArgsParams(frame, args, callable):
     for arg, param in zip(args, callable['params']):
         name = evaluate(callable['frame'], param['name'])
