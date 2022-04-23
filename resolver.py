@@ -12,6 +12,14 @@ def expectTypeElseError(frame, expr, expected):
     if expected != exprtype:
         raise LogicError(f"Expected {repr(expected)}, got {repr(exprtype)}")
 
+def resolveExprs(frame, exprs):
+    for expr in exprs:
+        resolve(frame, expr)
+
+def verifyStmts(frame, stmts):
+    for stmt in stmts:
+        verify(frame, stmt)
+
 def resolve(frame, expr):
     # Resolving tokens
     if 'type' in expr:
