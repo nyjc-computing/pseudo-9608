@@ -90,6 +90,10 @@ def scan(src):
             oper = OPERATORS.get(text, None)
             token = makeToken(code['line'], 'symbol', text, oper)
         else:
-            raise ParseError(f"Unrecognised character {repr(char)}.")
+            raise ParseError(
+                f"Unrecognised character {repr(char)}.",
+                token=char,
+                line=code['line'],
+            )
         tokens += [token]
     return tokens
