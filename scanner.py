@@ -91,7 +91,7 @@ def scan(src):
             token = makeToken(code['line'], 'symbol', text, oper)
         else:
             raise ParseError(
-                f"Unrecognised character {repr(char)}.",
+                f"Unrecognised character",
                 token=char,
                 line=code['line'],
             )
