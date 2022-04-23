@@ -264,11 +264,7 @@ def forStmt(tokens):
     start = value(tokens)
     expectElseError(tokens, 'TO')
     end = value(tokens)
-    step = {
-        'type': 'integer',
-        'word': '1',
-        'value': 1,
-    }
+    step = makeToken(tokens[0]['line'], 'integer', '1', 1)
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n')
