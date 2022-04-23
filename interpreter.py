@@ -15,12 +15,10 @@ def evaluate(frame, expr):
     # Evaluating exprs
     oper = expr['oper']['value']
     if oper is call:
-        left = evaluate(frame, expr['left'])
-        right = expr['right']
-        func, args = oper(left, right)
+        func = evaluate(frame, expr['left'])
         local = func['frame']
-        # Assign args into local with param names
-        for arg, param in zip(args, func['params']):
+        args, params = expr['right'], func['params']
+        for arg, param in zip(args, params):
             name = evaluate(local, param['name'])
             local[name]['value'] = evaluate(frame, arg)
         for funcstmt in func['stmts']:
@@ -84,15 +82,12 @@ def execFunction(frame, stmt):
     pass
 
 def execCall(frame, stmt):
-    # Get procedure from frame
     proc = evaluate(frame, stmt['name'])
     # Note: for BYREF variables, the procedure's frame
     # may still contain values from previous calls.
     # Do not evaluate any get exprs for local frame
     # before assigning local variables from args.
     local = proc['frame']
-    
-    # Assign args into local with param names
     args, params = stmt['args'], proc['params']
     for arg, param in zip(args, params):
         name = evaluate(local, param['name'])
