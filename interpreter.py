@@ -5,10 +5,10 @@ from builtin import RuntimeError
 
 # Helper functions
 
-def assignArgsParams(frame, args, local, params):
-    for arg, param in zip(args, params):
-        name = evaluate(local, param['name'])
-        local[name]['value'] = evaluate(frame, arg)
+def assignArgsParams(frame, args, callable):
+    for arg, param in zip(args, callable['params']):
+        name = evaluate(callable['frame'], param['name'])
+        callable['frame'][name]['value'] = evaluate(frame, arg)
 
 def evaluate(frame, expr):
     # Evaluating tokens
@@ -24,7 +24,7 @@ def evaluate(frame, expr):
     if oper is call:
         func = evaluate(frame, expr['left'])
         local = func['frame']
-        assignArgsParams(frame, expr['right'], func['frame'], func['params'])
+        assignArgsParams(frame, expr['right'], func)
         for funcstmt in func['stmts']:
             returnval = execute(local, funcstmt)
             if returnval:
@@ -92,7 +92,7 @@ def execCall(frame, stmt):
     # Do not evaluate any get exprs for local frame
     # before assigning local variables from args.
     local = proc['frame']
-    assignArgsParams(frame, stmt['args'], proc['frame'], proc['params'])
+    assignArgsParams(frame, stmt['args'], proc)
     for callstmt in proc['stmts']:
         execute(local, callstmt)
 
