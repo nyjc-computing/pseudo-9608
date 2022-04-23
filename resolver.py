@@ -42,15 +42,11 @@ def resolve(frame, expr):
         functype = resolve(frame, expr['left'])
         return functype
     # Resolving other exprs
-    lefttype = resolve(frame, expr['left'])
-    righttype = resolve(frame, expr['right'])
     if oper in (lt, lte, gt, gte, ne, eq):
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
-        if lefttype != 'INTEGER':
-            raise LogicError(f"{expr['left']} Expected number, got {lefttype}")
-        if righttype != 'INTEGER':
-            raise LogicError(f"{expr['right']} Expected number, got {righttype}")
+        expectTypeElseError(frame, expr['left'], 'INTEGER')
+        expectTypeElseError(frame, expr['right'], 'INTEGER')
         return 'INTEGER'
 
 def verifyOutput(frame, stmt):
@@ -69,10 +65,7 @@ def verifyDeclare(frame, stmt):
 
 def verifyAssign(frame, stmt):
     name = resolve(frame, stmt['name'])
-    valuetype = resolve(frame, stmt['expr'])
-    frametype = frame[name]['type']
-    if frametype != valuetype:
-        raise LogicError(f'Expected {frametype}, got {valuetype}')
+    expectTypeElseError(frame, stmt['expr'], frame[name]['type'])
 
 def verifyCase(frame, stmt):
     resolve(frame, stmt['cond'])
@@ -82,9 +75,7 @@ def verifyCase(frame, stmt):
         verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
-    condtype = resolve(frame, stmt['cond'])
-    if condtype != 'BOOLEAN':
-        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
+    expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     for truestmt in stmt['stmts'][True]:
         verify(frame, truestmt)
     if stmt['fallback']:
@@ -94,9 +85,7 @@ def verifyIf(frame, stmt):
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
-    condtype = resolve(frame, stmt['cond'])
-    if condtype != 'BOOLEAN':
-        raise LogicError(f'IF condition must be a BOOLEAN expression, not {condtype}')
+    expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     for loopstmt in stmt['stmts']:
         verify(frame, loopstmt)
 
@@ -111,13 +100,7 @@ def verifyProcedure(frame, stmt):
         elif passby == 'BYREF':
             name = resolve(frame, var['name'])
             globvar = frame[name]
-            vartype = resolve(frame, var['type'])
-            # Type-check local against global
-            if vartype != globvar['type']:
-                raise LogicError(
-                    f"Expect {globvar['type']} for BYREF {name},"
-                    f" got {vartype}"
-                )
+            expectTypeElseError(frame, var['type'], globvar['type'])
             # Reference global vars in local
             local[name] = globvar
         else:
@@ -158,11 +141,8 @@ def verifyCall(frame, stmt):
             # Check for a get expr
             if arg['oper']['value'] is not get:
                 raise LogicError('BYREF arg must be a name, not expression')
-        argtype = resolve(frame, arg)
         paramtype = resolve(local, param['type'])
-        # Type-check args against param types
-        if argtype != paramtype:
-            raise LogicError(f"Expect {paramtype} for {name}, got {argtype}")
+        expectTypeElseError(frame, arg, paramtype)
 
 def verifyFunction(frame, stmt):
     # Set up local frame
