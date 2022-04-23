@@ -2,10 +2,13 @@
 
 class PseudoError(Exception):
     """Base exception class for all Psuedo errors."""
-    def __init__(self, msg, token):
+    def __init__(self, msg, token, line=None):
         super().__init__(msg)
         self.token = token
-        self.line = token['line']
+        if line is not None:
+            self.line = line
+        else:
+            self.line = token['line']
 
 class ParseError(PseudoError):
     """Custom error raised by scanner and parser."""
