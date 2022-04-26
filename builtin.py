@@ -9,6 +9,7 @@ class PseudoError(Exception):
             self.line = line
         else:
             self.line = token['line']
+        self.col = token['col']
 
     def msg(self):
         return self.args[0]
