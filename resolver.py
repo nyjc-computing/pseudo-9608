@@ -46,7 +46,7 @@ def resolve(frame, expr):
         name = resolve(frame, expr['right'])
         if name not in frame:
             raise LogicError(
-                f'{name}: Name not declared',
+                f'Name not declared',
                 expr['right'],
             )
         return frame[name]['type']
@@ -75,7 +75,7 @@ def verifyInput(frame, stmt):
     name = resolve(frame, stmt['name'])
     if name not in frame:
         raise LogicError(
-            f'{name}: Name not declared',
+            f'Name not declared',
             stmt['name'],
         )
 
@@ -146,12 +146,15 @@ def verifyCall(frame, stmt):
     # Type-check procedure
     if proc['type'] != 'procedure':
         raise LogicError(
-            f"CALL {proc['name']} is not a procedure",
+            f"Not a procedure",
             stmt['name']['right'],
         )
     args, params = stmt['args'], proc['value']['params']
     if len(args) != len(params):
-        raise LogicError(f'Expected {len(params)} args, got {len(args)}', stmt['name']['right'])
+        raise LogicError(
+            f'Expected {len(params)} args, got {len(args)}',
+            stmt['name']['right'],
+        )
     # Type-check arguments
     local = proc['value']['frame']
     for arg, param in zip(args, params):
@@ -179,7 +182,7 @@ def verifyFunction(frame, stmt):
         returntype = verify(local, procstmt)
         if returntype and (returntype != returns):
             raise LogicError(
-                f"Expect {returns} for {name}, got {returntype}",
+                f"Expect {returns}, got {returntype}",
                 stmt['name'],
             )
     # Declare function in frame
