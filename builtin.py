@@ -22,10 +22,10 @@ class ParseError(PseudoError):
             token = self.token
         return f"[Line {self.line}] {repr(token)}: {self.msg()}"
 
-class RuntimeError(Exception):
+class RuntimeError(PseudoError):
     """Custom error raised by interpreter."""
 
-class LogicError(Exception):
+class LogicError(PseudoError):
     """Custom error raised by resolver."""
 
 
