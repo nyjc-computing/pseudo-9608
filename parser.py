@@ -84,7 +84,7 @@ def value(tokens):
 def muldiv(tokens):
     # *, /
     expr = value(tokens)
-    while match(tokens, '*', '/'):
+    while not atEnd(tokens) and check(tokens)['word'] in ('*', '/'):
         oper = consume(tokens)
         right = value(tokens)
         expr = makeExpr(expr, oper, right)
@@ -92,7 +92,8 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    while match(tokens, '+', '-'):
+    breakpoint()
+    while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
         expr = makeExpr(expr, oper, right)
@@ -101,7 +102,7 @@ def addsub(tokens):
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    while match(tokens, '<', '<=', '>', '>='):
+    while not atEnd(tokens) and check(tokens)['word'] in ('<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
         expr = makeExpr(expr, oper, right)
@@ -110,7 +111,7 @@ def comparison(tokens):
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    while match(tokens, '<>', '='):
+    while not atEnd(tokens) and check(tokens)['word'] in ('<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
         expr = makeExpr(expr, oper, right)
