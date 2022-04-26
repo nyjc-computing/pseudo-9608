@@ -16,9 +16,10 @@ def consume(code):
     code['cursor'] += 1
     return char
 
-def makeToken(line, tokentype, word, value):
+def makeToken(line, column, tokentype, word, value):
     return {
         'line': line,
+        'col': column,
         'type': tokentype,
         'word': word,
         'value': value,
@@ -77,7 +78,13 @@ def scan(src):
             continue
         elif char == '\n':
             text = consume(code)
-            token = makeToken(code['line'], 'keyword', text, None)
+            token = makeToken(
+                code['line'],
+                code['cursor'] - code['lineStart'],
+                'keyword',
+                text,
+                None,
+            )
             start, end = code['lineStart'], code['cursor'] - 1
             code['lines'] += [code['src'][start:end]]
             code['line'] += 1
@@ -85,19 +92,49 @@ def scan(src):
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
-                token = makeToken(code['line'], 'keyword', text, None)
+                token = makeToken(
+                    code['line'],
+                    code['cursor'] - code['lineStart'],
+                    'keyword',
+                    text,
+                    None,
+                )
             else:
-                token = makeToken(code['line'], 'name', text, None)
+                token = makeToken(
+                    code['line'],
+                    code['cursor'] - code['lineStart'],
+                    'name',
+                    text,
+                    None,
+                )
         elif char.isdigit():
             text = integer(code)
-            token = makeToken(code['line'], 'integer', text, int(text))
+            token = makeToken(
+                code['line'],
+                code['cursor'] - code['lineStart'],
+                'integer',
+                text,
+                int(text),
+            )
         elif char == '"':
             text = string(code)
-            token = makeToken(code['line'], 'string', text, text[1:-1])
+            token = makeToken(
+                code['line'],
+                code['cursor'] - code['lineStart'],
+                'string',
+                text,
+                text[1:-1],
+            )
         elif char in '()[]:,.+-/*=<>':
             text = symbol(code)
             oper = OPERATORS.get(text, None)
-            token = makeToken(code['line'], 'symbol', text, oper)
+            token = makeToken(
+                code['line'],
+                code['cursor'] - code['lineStart'],
+                'symbol',
+                text,
+                oper,
+            )
         else:
             raise ParseError(
                 f"Unrecognised character",
