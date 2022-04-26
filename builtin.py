@@ -13,8 +13,6 @@ class PseudoError(Exception):
     def msg(self):
         return self.args[0]
 
-class ParseError(PseudoError):
-    """Custom error raised by scanner and parser."""
     def report(self):
         if type(self.token) is dict:
             token = self.token['word']
@@ -22,14 +20,14 @@ class ParseError(PseudoError):
             token = self.token
         return f"{repr(token)}: {self.msg()}"
 
+class ParseError(PseudoError):
+    """Custom error raised by scanner and parser."""
+
 class RuntimeError(PseudoError):
     """Custom error raised by interpreter."""
 
 class LogicError(PseudoError):
     """Custom error raised by resolver."""
-    def report(self):
-        token = self.token['word']
-        return f"{repr(token)}: {self.msg()}"
 
 
 
