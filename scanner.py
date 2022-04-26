@@ -64,6 +64,8 @@ def scan(src):
         'length': len(src),
         'cursor': 0,
         'line': 1,
+        'lineStart': 0,
+        'lines': [],
     }
     tokens = []
     while not atEnd(code):
@@ -74,7 +76,10 @@ def scan(src):
         elif char == '\n':
             text = consume(code)
             token = makeToken(code['line'], 'keyword', text, None)
+            start, end = code['lineStart'], code['cursor'] - 1
+            code['lines'] += [code['src'][start:end]]
             code['line'] += 1
+            code['lineStart'] = code['cursor']
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
@@ -98,4 +103,4 @@ def scan(src):
                 line=code['line'],
             )
         tokens += [token]
-    return tokens
+    return tokens, code['lines']

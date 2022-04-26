@@ -18,7 +18,7 @@ def main():
         src = f.read()
     pp = PrettyPrinter(indent=2, compact=True)
     try:
-        tokens = scanner.scan(src)
+        tokens, lines = scanner.scan(src)
         statements = parser.parse(tokens)
         statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
