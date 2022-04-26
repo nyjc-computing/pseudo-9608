@@ -80,7 +80,7 @@ def scan(src):
             text = consume(code)
             token = makeToken(
                 code['line'],
-                code['cursor'] - code['lineStart'],
+                code['cursor'] - code['lineStart'] - len(text),
                 'keyword',
                 text,
                 None,
@@ -94,7 +94,7 @@ def scan(src):
             if text in KEYWORDS:
                 token = makeToken(
                     code['line'],
-                    code['cursor'] - code['lineStart'],
+                    code['cursor'] - code['lineStart'] - len(text),
                     'keyword',
                     text,
                     None,
@@ -102,7 +102,7 @@ def scan(src):
             else:
                 token = makeToken(
                     code['line'],
-                    code['cursor'] - code['lineStart'],
+                    code['cursor'] - code['lineStart'] - len(text),
                     'name',
                     text,
                     None,
@@ -111,7 +111,7 @@ def scan(src):
             text = integer(code)
             token = makeToken(
                 code['line'],
-                code['cursor'] - code['lineStart'],
+                code['cursor'] - code['lineStart'] - len(text),
                 'integer',
                 text,
                 int(text),
@@ -120,7 +120,7 @@ def scan(src):
             text = string(code)
             token = makeToken(
                 code['line'],
-                code['cursor'] - code['lineStart'],
+                code['cursor'] - code['lineStart'] - len(text),
                 'string',
                 text,
                 text[1:-1],
@@ -130,7 +130,7 @@ def scan(src):
             oper = OPERATORS.get(text, None)
             token = makeToken(
                 code['line'],
-                code['cursor'] - code['lineStart'],
+                code['cursor'] - code['lineStart'] - len(text),
                 'symbol',
                 text,
                 oper,
