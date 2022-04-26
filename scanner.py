@@ -6,14 +6,14 @@ from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
 # Helper functions
 
 def atEnd(code):
-    return (len(code['src']) == 0)
+    return code['cursor'] >= code['length']
 
 def check(code):
-    return code['src'][0]
+    return code['src'][code['cursor']]
 
 def consume(code):
     char = check(code)
-    code['src'] = code['src'][1:]
+    code['cursor'] += 1
     return char
 
 def makeToken(line, tokentype, word, value):
@@ -61,6 +61,8 @@ def symbol(code):
 def scan(src):
     code = {
         'src': src + '\n',
+        'length': len(src),
+        'cursor': 0,
         'line': 1,
     }
     tokens = []
