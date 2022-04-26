@@ -16,7 +16,6 @@ def expectTypeElseError(frame, expr, expected):
             token = expr['left']
         elif 'line' in expr['right']:
             token = expr['right']
-        breakpoint()
         raise LogicError(f"Expected {repr(expected)}, got {repr(exprtype)}", token)
 
 def resolveExprs(frame, exprs):
