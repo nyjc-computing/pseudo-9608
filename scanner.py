@@ -59,8 +59,10 @@ def symbol(code):
 # Main scanning loop
 
 def scan(src):
+    if not src.endswith('\n'):
+        src = src + '\n'
     code = {
-        'src': src + '\n',
+        'src': src,
         'length': len(src),
         'cursor': 0,
         'line': 1,
