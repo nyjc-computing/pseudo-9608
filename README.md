@@ -27,3 +27,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [13b Loose ends](https://github.com/nyjc-computing/pseudo/pull/26)
 - [14a Reading from source](https://github.com/nyjc-computing/pseudo/pull/28)
 - [14b Line numbers](https://github.com/nyjc-computing/pseudo/pull/29)
+- [14c Referencing source code](https://github.com/nyjc-computing/pseudo/pull/30)
