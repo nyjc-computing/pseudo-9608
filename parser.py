@@ -92,7 +92,6 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    breakpoint()
     while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
