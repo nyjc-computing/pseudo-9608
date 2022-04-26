@@ -18,10 +18,11 @@ def main():
         src = f.read()
     pp = PrettyPrinter(indent=2, compact=True)
     try:
-        tokens = scanner.scan(src)
+        tokens, lines = scanner.scan(src)
         statements = parser.parse(tokens)
         statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
+        print(f"[Line {err.line}]", lines[err.line - 1])
         print(err.report())
         sys.exit(65)
     try:

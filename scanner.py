@@ -6,14 +6,14 @@ from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
 # Helper functions
 
 def atEnd(code):
-    return (len(code['src']) == 0)
+    return code['cursor'] >= code['length']
 
 def check(code):
-    return code['src'][0]
+    return code['src'][code['cursor']]
 
 def consume(code):
     char = check(code)
-    code['src'] = code['src'][1:]
+    code['cursor'] += 1
     return char
 
 def makeToken(line, tokentype, word, value):
@@ -59,9 +59,15 @@ def symbol(code):
 # Main scanning loop
 
 def scan(src):
+    if not src.endswith('\n'):
+        src = src + '\n'
     code = {
-        'src': src + '\n',
+        'src': src,
+        'length': len(src),
+        'cursor': 0,
         'line': 1,
+        'lineStart': 0,
+        'lines': [],
     }
     tokens = []
     while not atEnd(code):
@@ -72,7 +78,10 @@ def scan(src):
         elif char == '\n':
             text = consume(code)
             token = makeToken(code['line'], 'keyword', text, None)
+            start, end = code['lineStart'], code['cursor'] - 1
+            code['lines'] += [code['src'][start:end]]
             code['line'] += 1
+            code['lineStart'] = code['cursor']
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
@@ -96,4 +105,4 @@ def scan(src):
                 line=code['line'],
             )
         tokens += [token]
-    return tokens
+    return tokens, code['lines']

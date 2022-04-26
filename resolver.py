@@ -10,7 +10,16 @@ from builtin import LogicError
 def expectTypeElseError(frame, expr, expected):
     exprtype = resolve(frame, expr)
     if expected != exprtype:
-        raise LogicError(f"Expected {repr(expected)}, got {repr(exprtype)}")
+        if 'line' in expr:
+            token = expr
+        elif 'line' in expr['left']:
+            token = expr['left']
+        elif 'line' in expr['right']:
+            token = expr['right']
+        raise LogicError(
+            f"Expected {repr(expected)}, got {repr(exprtype)}",
+            token,
+        )
 
 def resolveExprs(frame, exprs):
     for expr in exprs:
@@ -36,7 +45,10 @@ def resolve(frame, expr):
         expr['left'] = frame
         name = resolve(frame, expr['right'])
         if name not in frame:
-            raise LogicError(f'{name}: Name not declared')
+            raise LogicError(
+                f'Name not declared',
+                expr['right'],
+            )
         return frame[name]['type']
     # Resolving function calls
     if oper is call:
@@ -62,7 +74,10 @@ def verifyOutput(frame, stmt):
 def verifyInput(frame, stmt):
     name = resolve(frame, stmt['name'])
     if name not in frame:
-        raise LogicError(f'{name}: Name not declared')
+        raise LogicError(
+            f'Name not declared',
+            stmt['name'],
+        )
 
 def verifyDeclare(frame, stmt):
     name = resolve(frame, stmt['name'])
@@ -107,7 +122,7 @@ def verifyProcedure(frame, stmt):
             local[name] = globvar
         else:
             # Internal error
-            raise TypeError(f"str expected for passby, got {passby}")
+            raise TypeError(stmt['passby'], f"str expected for passby, got {passby}")
     # Resolve procedure statements using local
     verifyStmts(local, stmt['stmts'])
     # Declare procedure in frame
@@ -128,12 +143,13 @@ def verifyCall(frame, stmt):
     # resolve() would return the expr type, but we need the name
     name = resolve(frame, stmt['name']['right'])
     proc = frame[name]
-    # Type-check procedure
-    if proc['type'] != 'procedure':
-        raise LogicError(f"CALL {proc['name']} is not a procedure")
+    expectTypeElseError(frame, proc, 'procedure')
     args, params = stmt['args'], proc['value']['params']
     if len(args) != len(params):
-        raise LogicError(f'Expected {len(params)} args, got {len(args)}')
+        raise LogicError(
+            f'Expected {len(params)} args, got {len(args)}',
+            stmt['name']['right'],
+        )
     # Type-check arguments
     local = proc['value']['frame']
     for arg, param in zip(args, params):
@@ -141,7 +157,10 @@ def verifyCall(frame, stmt):
             # Only names allowed for BYREF arguments
             # Check for a get expr
             if arg['oper']['value'] is not get:
-                raise LogicError('BYREF arg must be a name, not expression')
+                raise LogicError(
+                    'BYREF arg must be a name, not expression',
+                    stmt['passby'],
+                )
         paramtype = resolve(local, param['type'])
         expectTypeElseError(frame, arg, paramtype)
 
@@ -157,7 +176,10 @@ def verifyFunction(frame, stmt):
     for procstmt in stmt['stmts']:
         returntype = verify(local, procstmt)
         if returntype and (returntype != returns):
-            raise LogicError(f"Expect {returns} for {name}, got {returntype}")
+            raise LogicError(
+                f"Expect {returns}, got {returntype}",
+                stmt['name'],
+            )
     # Declare function in frame
     frame[name] = {
         'type': returns,
