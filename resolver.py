@@ -143,12 +143,7 @@ def verifyCall(frame, stmt):
     # resolve() would return the expr type, but we need the name
     name = resolve(frame, stmt['name']['right'])
     proc = frame[name]
-    # Type-check procedure
-    if proc['type'] != 'procedure':
-        raise LogicError(
-            f"Not a procedure",
-            stmt['name']['right'],
-        )
+    expectTypeElseError(frame, proc, 'procedure')
     args, params = stmt['args'], proc['value']['params']
     if len(args) != len(params):
         raise LogicError(
