@@ -1,10 +1,32 @@
 # Errors
 
-class ParseError(Exception): pass
+class PseudoError(Exception):
+    """Base exception class for all Psuedo errors."""
+    def __init__(self, msg, token, line=None):
+        super().__init__(msg)
+        self.token = token
+        if line is not None:
+            self.line = line
+        else:
+            self.line = token['line']
 
-class RuntimeError(Exception): pass
+    def msg(self):
+        return self.args[0]
 
-class LogicError(Exception): pass
+class ParseError(PseudoError):
+    """Custom error raised by scanner and parser."""
+    def report(self):
+        if type(self.token) is dict:
+            token = self.token['word']
+        else:
+            token = self.token
+        return f"[Line {self.line}] {repr(token)}: {self.msg()}"
+
+class RuntimeError(Exception):
+    """Custom error raised by interpreter."""
+
+class LogicError(Exception):
+    """Custom error raised by resolver."""
 
 
 

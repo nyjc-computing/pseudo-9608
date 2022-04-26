@@ -26,6 +26,19 @@ def makeExpr(left, oper, right):
         'right': right,
     }
 
+def expectElseError(tokens, word, addmsg=None):
+    if check(tokens)['word'] == word:
+        consume(tokens)
+        return True
+    msg = "Expected {addmsg}" if addmsg else "Expected"
+    raise ParseError(msg, check(tokens))
+
+def match(tokens, *words):
+    if check(tokens)['word'] in words:
+        consume(tokens)
+        return True
+    return False
+
 # Precedence parsers
 
 # Expr: {'left': ..., 'oper': ..., 'right': ...}
@@ -35,7 +48,7 @@ def identifier(tokens):
     if token['type'] == 'name':
         return consume(tokens)
     else:
-        raise ParseError(f"Expected variable name, got {repr(token['word'])}")
+        raise ParseError(f"Expected variable name", token)
 
 def value(tokens):
     token = check(tokens)
@@ -43,37 +56,35 @@ def value(tokens):
     if token['type'] in ['integer', 'string']:
         return consume(tokens)
     #  A grouping
-    elif token['word'] == '(':
-        consume(tokens)  # (
+    elif match(tokens, '('):
         expr = expression(tokens)
-        if not check(tokens)['word'] == ')':
-            raise ParseError(f"')' expected at end of expression")
-        consume(tokens)  # )
+        expectElseError(tokens, ')', "after '('")
         return expr        
     elif token['type'] == 'name':
         frame = None
         name = identifier(tokens)
-        oper = {'type': 'symbol', 'word': '', 'value': get}
+        oper = makeToken(name['line'], 'symbol', '', get)
         args = []
         expr = makeExpr(frame, oper, name)
         # Function call
         if match(tokens, '('):
+            thisline = tokens[0]['line']
             arg = expression(tokens)
             args += [arg]
             while match(tokens, ','):
                 arg = expression(tokens)
                 args += [arg]
-            expectElseError(tokens, ')')
-            oper = {'type': 'symbol', 'word': '', 'value': call}
+            expectElseError(tokens, ')', "after '('")
+            oper = makeToken(thisline, 'symbol', '', call)
             expr = makeExpr(expr, oper, args)
         return expr
     else:
-        raise ParseError(f"Unexpected token {repr(token['word'])}")
+        raise ParseError("Unexpected token", token)
 
 def muldiv(tokens):
     # *, /
     expr = value(tokens)
-    while check(tokens)['word'] in ['*', '/']:
+    while not atEnd(tokens) and check(tokens)['word'] in ('*', '/'):
         oper = consume(tokens)
         right = value(tokens)
         expr = makeExpr(expr, oper, right)
@@ -81,7 +92,7 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    while check(tokens)['word'] in ['+', '-']:
+    while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
         expr = makeExpr(expr, oper, right)
@@ -90,7 +101,7 @@ def addsub(tokens):
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    while check(tokens)['word'] in ['<', '<=', '>', '>=']:
+    while not atEnd(tokens) and check(tokens)['word'] in ('<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
         expr = makeExpr(expr, oper, right)
@@ -99,7 +110,7 @@ def comparison(tokens):
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    while check(tokens)['word'] in ['<>', '=']:
+    while not atEnd(tokens) and check(tokens)['word'] in ('<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
         expr = makeExpr(expr, oper, right)
@@ -109,27 +120,13 @@ def expression(tokens):
     expr = equality(tokens)
     return expr
 
-# Statement parsing helpers
-
-def expectElseError(tokens, word):
-    if check(tokens)['word'] == word:
-        consume(tokens)
-        return True
-    raise ParseError(fr"Expected {word}")
-
-def match(tokens, *words):
-    if check(tokens)['word'] in words:
-        consume(tokens)
-        return True
-    return False
-
 # Statement parsers
 
 def outputStmt(tokens):
     exprs = [expression(tokens)]
     while match(tokens, ','):
         exprs += [expression(tokens)]
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after statement")
     stmt = {
         'rule': 'output',
         'exprs': exprs,
@@ -138,7 +135,7 @@ def outputStmt(tokens):
 
 def inputStmt(tokens):
     name = identifier(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after statement")
     stmt = {
         'rule': 'input',
         'name': name,
@@ -147,10 +144,10 @@ def inputStmt(tokens):
 
 def declare(tokens):
     name = identifier(tokens)
-    expectElseError(tokens, ':')
+    expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
     if typetoken['word'] not in TYPES:
-        raise ParseError(f"Invalid type {typetoken['word']}")
+        raise ParseError("Invalid type", typetoken)
     var = {
         'name': name,
         'type': typetoken,
@@ -159,7 +156,7 @@ def declare(tokens):
     
 def declareStmt(tokens):
     var = declare(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after statement")
     stmt = {
         'rule': 'declare',
         'name': var['name'],
@@ -169,9 +166,9 @@ def declareStmt(tokens):
 
 def assignStmt(tokens):
     name = identifier(tokens)
-    expectElseError(tokens, '<-')
+    expectElseError(tokens, '<-', "after name")
     expr = expression(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after statement")
     stmt = {
         'rule': 'assign',
         'name': name,
@@ -180,20 +177,20 @@ def assignStmt(tokens):
     return stmt
 
 def caseStmt(tokens):
-    expectElseError(tokens, 'OF')
+    expectElseError(tokens, 'OF', "after CASE")
     cond = value(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
     while not atEnd(tokens) and check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens)['value']
-        expectElseError(tokens, ':')
+        expectElseError(tokens, ':', "after CASE value")
         stmt = statement(tokens)
         stmts[val] = stmt
     fallback = None
     if match(tokens, 'OTHERWISE'):
         fallback = statement(tokens)
-    expectElseError(tokens, 'ENDCASE')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDCASE', "at end of CASE")
+    expectElseError(tokens, '\n', "after ENDCASE")
     stmt = {
         'rule': 'case',
         'cond': cond,
@@ -204,10 +201,9 @@ def caseStmt(tokens):
 
 def ifStmt(tokens):
     cond = expression(tokens)
-    if match(tokens, '\n'):
-        pass  # optional line break
-    expectElseError(tokens, 'THEN')
-    expectElseError(tokens, '\n')
+    match(tokens, '\n')  # optional line break
+    expectElseError(tokens, 'THEN', "after IF")
+    expectElseError(tokens, '\n', "after THEN")
     stmts = {}
     true = []
     while not atEnd(tokens) and check(tokens)['word'] in ('ELSE', 'ENDIF'):
@@ -215,13 +211,13 @@ def ifStmt(tokens):
     stmts[True] = true
     fallback = None
     if match(tokens, 'ELSE'):
-        expectElseError(tokens, '\n')
+        expectElseError(tokens, '\n', "after ELSE")
         false = []
         while not atEnd(tokens) and check(tokens)['word'] in ('ENDIF',):
             false += [statement(tokens)]
         fallback = false
-    expectElseError(tokens, 'ENDIF')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDIF', "at end of IF")
+    expectElseError(tokens, '\n', "after statement")
     stmt = {
         'rule': 'if',
         'cond': cond,
@@ -232,13 +228,13 @@ def ifStmt(tokens):
 
 def whileStmt(tokens):
     cond = expression(tokens)
-    expectElseError(tokens, 'DO')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, 'DO', "after WHILE condition")
+    expectElseError(tokens, '\n', "after DO")
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDWHILE',):
+    while not atEnd(tokens) and match(tokens, 'ENDWHILE'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDWHILE')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDWHILE', "at end of WHILE")
+    expectElseError(tokens, '\n', "after ENDWHILE")
     stmt = {
         'rule': 'while',
         'init': None,
@@ -248,13 +244,12 @@ def whileStmt(tokens):
     return stmt
 
 def repeatStmt(tokens):
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after REPEAT")
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('UNTIL',):
+    while not atEnd(tokens) and not match(tokens, 'UNTIL'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'UNTIL')
     cond = expression(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "at end of UNTIL")
     stmt = {
         'rule': 'repeat',
         'init': None,
@@ -265,45 +260,41 @@ def repeatStmt(tokens):
 
 def forStmt(tokens):
     name = identifier(tokens)
-    expectElseError(tokens, '<-')
+    expectElseError(tokens, '<-', "after name")
     start = value(tokens)
-    expectElseError(tokens, 'TO')
+    expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = {
-        'type': 'integer',
-        'word': '1',
-        'value': 1,
-    }
+    step = makeToken(tokens[0]['line'], 'integer', '1', 1)
     if match(tokens, 'STEP'):
         step = value(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "at end of FOR")
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFOR',):
+    while not atEnd(tokens) and not match(tokens, 'ENDFOR'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDFOR')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDFOR', "at end of FOR")
+    expectElseError(tokens, '\n', "after ENDFOR")
     # Initialise name to start
     init = assignStmt([
         name,
-        {'type': 'keyword', 'word': '<-', 'value': None},
+        makeToken(name['line'], 'keyword', '<-', None),
         start,
-        {'type': 'keyword', 'word': '\n', 'value': None},
+        makeToken(end['line'], 'keyword', '\n', None),
     ])
     # Generate loop cond
     cond = expression([
         name,
-        {'type': 'symbol', 'word': '<=', 'value': lte},
+        makeToken(name['line'], 'symbol', '<=', lte),
         end,
-        {'type': 'keyword', 'word': '\n', 'value': None},
+        makeToken(start['line'], 'keyword', '\n', None),
     ])
     # Add increment statement
     incr = assignStmt([
         name,
-        {'type': 'keyword', 'word': '<-', 'value': None},
+        makeToken(name['line'], 'keyword', '<-', None),
         name,
-        {'type': 'keyword', 'word': '+', 'value': add},
+        makeToken(name['line'], 'keyword', '+', add),
         step,
-        {'type': 'keyword', 'word': '\n', 'value': None},
+        makeToken(end['line'], 'keyword', '\n', None),
     ])
     stmt = {
         'rule': 'while',
@@ -317,7 +308,7 @@ def procedureStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        passby = makeToken(name['line'], 'keyword', 'BYVALUE', None)
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)
         var = declare(tokens)
@@ -325,13 +316,13 @@ def procedureStmt(tokens):
         while match(tokens, ','):
             var = declare(tokens)
             params += [var]
-        expectElseError(tokens, ')')
-    expectElseError(tokens, '\n')
+        expectElseError(tokens, ')', "at end of parameters")
+    expectElseError(tokens, '\n', "after parameters")
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDPROCEDURE',):
+    while not atEnd(tokens) and not match(tokens, 'ENDPROCEDURE'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDPROCEDURE')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDPROCEDURE', "at end of PROCEDURE")
+    expectElseError(tokens, '\n', "after ENDPROCEDURE")
     stmt = {
         'rule': 'procedure',
         'name': name,
@@ -350,8 +341,8 @@ def callStmt(tokens):
         while match(tokens, ','):
             arg = expression(tokens)
             args += [arg]
-        expectElseError(tokens, ')')
-    expectElseError(tokens, '\n')
+        expectElseError(tokens, ')', "after arguments")
+    expectElseError(tokens, '\n', "at end of CALL")
     stmt = {
         'rule': 'call',
         'name': name,
@@ -363,23 +354,22 @@ def functionStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = {'type': 'keyword', 'word': 'BYVALUE', 'value': None}
+        passby = makeToken(name['line'], 'keyword', 'BYVALUE', None)
         var = declare(tokens)
         params += [var]
         while match(tokens, ','):
             var = declare(tokens)
             params += [var]
-        expectElseError(tokens, ')')
-    expectElseError(tokens, 'RETURNS')
+        expectElseError(tokens, ')', "at end of parameters")
+    expectElseError(tokens, 'RETURNS', "after parameters")
     typetoken = consume(tokens)
     if typetoken['word'] not in TYPES:
-        raise ParseError(f"Invalid type {typetoken['word']}")
-    expectElseError(tokens, '\n')
+        raise ParseError("Invalid type", typetoken)
+    expectElseError(tokens, '\n', "at end of FUNCTION")
     stmts = []
-    while not atEnd(tokens) and check(tokens)['word'] not in ('ENDFUNCTION',):
+    while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDFUNCTION')
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "after ENDFUNCTION")
     stmt = {
         'rule': 'function',
         'name': name,
@@ -392,7 +382,7 @@ def functionStmt(tokens):
 
 def returnStmt(tokens):
     expr = expression(tokens)
-    expectElseError(tokens, '\n')
+    expectElseError(tokens, '\n', "at end of RETURN")
     stmt = {
         'rule': 'return',
         'expr': expr,
@@ -427,12 +417,13 @@ def statement(tokens):
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
-        raise ParseError(f"Unrecognised token {check(tokens)}")
+        raise ParseError("Unrecognised token", check(tokens))
 
 # Main parsing loop
 
 def parse(tokens):
-    tokens.append(makeToken('EOF', "", None))
+    lastline = tokens[-1]['line']
+    tokens += [makeToken(lastline, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
         while match(tokens, '\n'):
