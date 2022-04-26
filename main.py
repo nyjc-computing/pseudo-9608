@@ -22,7 +22,7 @@ def main():
         statements = parser.parse(tokens)
         statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
-        print(f"[Line {err.line}]", lines[err.line])
+        print(f"[Line {err.line}]", lines[err.line - 1])
         print(err.report())
         sys.exit(65)
     try:
