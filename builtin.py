@@ -20,7 +20,7 @@ class ParseError(PseudoError):
             token = self.token['word']
         else:
             token = self.token
-        return f"[Line {self.line}] {repr(token)}: {self.msg()}"
+        return f"{repr(token)}: {self.msg()}"
 
 class RuntimeError(PseudoError):
     """Custom error raised by interpreter."""
@@ -29,7 +29,7 @@ class LogicError(PseudoError):
     """Custom error raised by resolver."""
     def report(self):
         token = self.token['word']
-        return f"[Line {self.line}] {repr(token)}: {self.msg()}"
+        return f"{repr(token)}: {self.msg()}"
 
 
 
