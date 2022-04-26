@@ -27,6 +27,9 @@ class RuntimeError(PseudoError):
 
 class LogicError(PseudoError):
     """Custom error raised by resolver."""
+    def report(self):
+        token = self.token['word']
+        return f"[Line {self.line}] {repr(token)}: {self.msg()}"
 
 
 
