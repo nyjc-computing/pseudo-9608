@@ -231,9 +231,8 @@ def whileStmt(tokens):
     expectElseError(tokens, 'DO', "after WHILE condition")
     expectElseError(tokens, '\n', "after DO")
     stmts = []
-    while not atEnd(tokens) and match(tokens, 'ENDWHILE'):
+    while not atEnd(tokens) and not match(tokens, 'ENDWHILE'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDWHILE', "at end of WHILE")
     expectElseError(tokens, '\n', "after ENDWHILE")
     stmt = {
         'rule': 'while',
