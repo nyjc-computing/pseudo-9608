@@ -98,3 +98,12 @@ class Call(Expr):
     def __init__(self, callable, args):
         self.callable = callable
         self.args = args
+
+    def resolve(self):
+        slot = self.callable.evaluate()
+        return slot['type']
+
+    def evaluate(self):
+        slot = self.callable.evaluate()
+        callable = slot['value']
+        # execute call and return
