@@ -30,6 +30,19 @@ class Literal(Expr):
 
 
 
+class Name(Expr):
+    __slots__ = ('name',)
+    def __init__(self, name):
+        self.name = name
+
+    def resolve(self):
+        return 'NAME'
+
+    def evaluate(self):
+        return self.name['word']
+
+
+
 class Unary(Expr):
     __slots__ = ('oper', 'right')
     def __init__(self, oper, right):
