@@ -62,8 +62,12 @@ def resolve(frame, expr):
         return functype
     # Resolving other exprs
     if oper in (lt, lte, gt, gte, ne, eq):
+        resolve(frame, expr['left'])
+        resolve(frame, expr['right'])
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
+        resolve(frame, expr['left'])
+        resolve(frame, expr['right'])
         expectTypeElseError(frame, expr['left'], 'INTEGER')
         expectTypeElseError(frame, expr['right'], 'INTEGER')
         return 'INTEGER'
@@ -95,6 +99,7 @@ def verifyCase(frame, stmt):
         verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
+    resolve(frame, stmt['cond'])
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'][True])
     if stmt['fallback']:
@@ -103,6 +108,7 @@ def verifyIf(frame, stmt):
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
+    resolve(frame, stmt['cond']['left'])
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'])
 
@@ -197,6 +203,32 @@ def verifyReturn(local, stmt):
     # be local
     return resolve(local, stmt['expr'])
 
+def verifyFile(frame, stmt):
+    # resolve() returns type instead of string value
+    name = stmt['name']['value']
+    if stmt['action'] == 'open':
+        if name in frame:
+            raise LogicError("File already opened", stmt['name'])
+        file = {'type': stmt['mode']['word'], 'value': None}
+        frame[name] = file
+    elif stmt['action'] == 'read':
+        if name not in frame:
+            raise LogicError("File not open", stmt['name'])
+        file = frame[name]
+        if file['type'] != 'READ':
+            raise LogicError("File mode is {file['type']}", stmt['name'])
+    elif stmt['action'] == 'write':
+        resolve(frame, stmt['data'])
+        if name not in frame:
+            raise LogicError("File not open", stmt['name'])
+        file = frame[name]
+        if file['type'] not in ('WRITE', 'APPEND'):
+            raise LogicError("File mode is {file['type']}", stmt['name'])
+    elif stmt['action'] == 'close':
+        if name not in frame:
+            raise LogicError("File not open", stmt['name'])
+        del frame[name]
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -219,6 +251,8 @@ def verify(frame, stmt):
         verifyCall(frame, stmt)
     elif stmt['rule'] == 'function':
         verifyFunction(frame, stmt)
+    elif stmt['rule'] == 'file':
+        verifyFile(frame, stmt)
     elif stmt['rule'] == 'return':
         return verifyReturn(frame, stmt)
 

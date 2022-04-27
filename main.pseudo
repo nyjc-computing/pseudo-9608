@@ -1,6 +1,10 @@
-DECLARE Five : INTEGER
-FUNCTION AddOne(Num : INTEGER) RETURNS INTEGER
-    RETURN Num + 1
-ENDFUNCTION
-Five <- 5
-OUTPUT "5 + 1 is ", AddOne(Five)
+DECLARE Number : INTEGER
+DECLARE Max : INTEGER
+Number <- 0
+Max <- 10
+OPENFILE "data.txt" FOR WRITE
+WHILE Number <= Max DO
+    WRITEFILE "data.txt", Number
+    Number <- Number + 1
+ENDWHILE
+CLOSEFILE "data.txt"

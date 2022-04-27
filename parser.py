@@ -231,9 +231,8 @@ def whileStmt(tokens):
     expectElseError(tokens, 'DO', "after WHILE condition")
     expectElseError(tokens, '\n', "after DO")
     stmts = []
-    while not atEnd(tokens) and match(tokens, 'ENDWHILE'):
+    while not atEnd(tokens) and not match(tokens, 'ENDWHILE'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDWHILE', "at end of WHILE")
     expectElseError(tokens, '\n', "after ENDWHILE")
     stmt = {
         'rule': 'while',
@@ -389,6 +388,62 @@ def returnStmt(tokens):
     }
     return stmt
 
+def openfileStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, 'FOR', "after file identifier")
+    if check(tokens)['word'] not in ('READ', 'WRITE', 'APPEND'):
+        raise ParseError("Invalid file mode", check(tokens))
+    mode = consume(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'open',
+        'name': name,
+        'mode': mode,
+        'data': None,
+    }
+    return stmt
+
+def readfileStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, ',', "after file identifier")
+    data = identifier(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'read',
+        'name': name,
+        'mode': None,
+        'data': data,
+    }
+    return stmt
+
+def writefileStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, ',', "after file identifier")
+    data = expression(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'write',
+        'name': name,
+        'mode': None,
+        'data': data,
+    }
+    return stmt
+
+def closefileStmt(tokens):
+    name = value(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'close',
+        'name': name,
+        'mode': None,
+        'data': None,
+    }
+    return stmt
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -414,6 +469,14 @@ def statement(tokens):
         return functionStmt(tokens)
     if match(tokens, 'RETURN'):
         return returnStmt(tokens)
+    if match(tokens, 'OPENFILE'):
+        return openfileStmt(tokens)
+    if match(tokens, 'READFILE'):
+        return readfileStmt(tokens)
+    if match(tokens, 'WRITEFILE'):
+        return writefileStmt(tokens)
+    if match(tokens, 'CLOSEFILE'):
+        return closefileStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
