@@ -123,7 +123,7 @@ def execute(frame, stmt):
     if stmt['rule'] == 'return':
         return execReturn(frame, stmt)
     if stmt['rule'] == 'file':
-        return execFile(frame, stmt)
+        execFile(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
