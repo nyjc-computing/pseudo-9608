@@ -108,7 +108,6 @@ def verifyIf(frame, stmt):
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
-    breakpoint()
     resolve(frame, stmt['cond']['left'])
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'])
