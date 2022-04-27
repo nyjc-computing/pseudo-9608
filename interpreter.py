@@ -106,10 +106,20 @@ def execFile(frame, stmt):
         frame[name] = file
     elif stmt['action'] == 'read':
         file = frame[name]
+        varname = evaluate(frame, stmt['data'])
+        line = file['value'].readline().rstrip()
+        frame[varname]['value'] = line
     elif stmt['action'] == 'write':
         file = frame[name]
+        writedata = evaluate(frame, stmt['data'])
+        # Move pointer to next line after writing
+        if not writedata.endswith('\n'):
+            writedata += '\n'
+        file['value'].write(writedata)
     elif stmt['action'] == 'close':
         file = frame[name]
+        file['value'].close()
+        del frame[name]
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
