@@ -95,7 +95,21 @@ def execReturn(local, stmt):
     return evaluate(local, stmt['expr'])
 
 def execFile(frame, stmt):
-    pass
+    name = evaluate(frame, stmt['name'])
+    if stmt['action'] == 'open':
+        mode = evaluate(frame, stmt['mode'])
+        assert mode  # Internal check
+        file = {
+            'type': evaluate(frame, stmt['mode']),
+            'value': open(name, mode[0].lower()),
+        }
+        frame[name] = file
+    elif stmt['action'] == 'read':
+        file = frame[name]
+    elif stmt['action'] == 'write':
+        file = frame[name]
+    elif stmt['action'] == 'close':
+        file = frame[name]
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
