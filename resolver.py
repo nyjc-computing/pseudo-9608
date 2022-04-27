@@ -62,8 +62,12 @@ def resolve(frame, expr):
         return functype
     # Resolving other exprs
     if oper in (lt, lte, gt, gte, ne, eq):
+        resolve(frame, expr['left'])
+        resolve(frame, expr['right'])
         return 'BOOLEAN'
     elif oper in (add, sub, mul, div):
+        resolve(frame, expr['left'])
+        resolve(frame, expr['right'])
         expectTypeElseError(frame, expr['left'], 'INTEGER')
         expectTypeElseError(frame, expr['right'], 'INTEGER')
         return 'INTEGER'
@@ -104,7 +108,8 @@ def verifyIf(frame, stmt):
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
-    resolve(frame, stmt['cond'])
+    breakpoint()
+    resolve(frame, stmt['cond']['left'])
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'])
 
