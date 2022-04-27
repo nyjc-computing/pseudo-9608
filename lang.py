@@ -16,6 +16,14 @@ class Expr:
 
 
 
+class Literal(Expr):
+    __slots__ = ('type', 'value')
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
+
+
+
 class Unary(Expr):
     __slots__ = ('oper', 'right')
     def __init__(self, oper, right):
