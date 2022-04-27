@@ -8,7 +8,10 @@ from builtin import LogicError
 # Helper functions
 
 def expectTypeElseError(frame, expr, expected):
-    exprtype = resolve(frame, expr)
+    if type(expr) is str:
+        exprtype = expr
+    else:
+        exprtype = resolve(frame, expr)
     if expected != exprtype:
         if 'line' in expr:
             token = expr
@@ -198,7 +201,29 @@ def verifyReturn(local, stmt):
     return resolve(local, stmt['expr'])
 
 def verifyFile(frame, stmt):
-    pass
+    # resolve() returns type instead of string value
+    name = stmt['name']['value']
+    if stmt['action'] == 'open':
+        if name in frame:
+            raise LogicError("File already opened", stmt['name'])
+        file = {'type': stmt['mode']['word'], 'value': None}
+        frame[name] = file
+    elif stmt['action'] == 'read':
+        if name not in frame:
+            raise LogicError("File not open", stmt['name'])
+        file = frame[name]
+        if file['type'] != 'READ':
+            raise LogicError("File mode is {file['type']}", stmt['name'])
+    elif stmt['action'] == 'write':
+        if name not in frame:
+            raise LogicError("File not open", stmt['name'])
+        file = frame[name]
+        if file['type'] not in ('WRITE', 'APPEND'):
+            raise LogicError("File mode is {file['type']}", stmt['name'])
+    elif stmt['action'] == 'close':
+        if name not in frame:
+            raise LogicError("File not open", stmt['name'])
+        del frame[name]
 
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
