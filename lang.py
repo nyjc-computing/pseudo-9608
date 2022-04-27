@@ -8,6 +8,7 @@ class Expr:
 
 
 class Unary(Expr):
+    __slots__ = ('oper', 'right')
     def __init__(self, oper, right):
         self.oper = oper
         self.right = right
@@ -18,6 +19,7 @@ class Unary(Expr):
 
 
 class Binary(Expr):
+    __slots__ = ('left', 'oper', 'right')
     def __init__(self, left, oper, right):
         self.left = left
         self.oper = oper
@@ -29,6 +31,7 @@ class Binary(Expr):
 
 
 class Get(Expr):
+    __slots__ = ('frame', 'name')
     def __init__(self, frame, name):
         self.frame = frame
         self.name = name
@@ -39,6 +42,7 @@ class Get(Expr):
 
 
 class Call(Expr):
+    __slots__ = ('callable', 'args')
     def __init__(self, callable, args):
         self.callable = callable
         self.args = args
