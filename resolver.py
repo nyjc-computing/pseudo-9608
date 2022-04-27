@@ -218,6 +218,7 @@ def verifyFile(frame, stmt):
         if file['type'] != 'READ':
             raise LogicError("File mode is {file['type']}", stmt['name'])
     elif stmt['action'] == 'write':
+        resolve(frame, stmt['data'])
         if name not in frame:
             raise LogicError("File not open", stmt['name'])
         file = frame[name]

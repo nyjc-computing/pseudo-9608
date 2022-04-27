@@ -111,6 +111,7 @@ def execFile(frame, stmt):
         frame[varname]['value'] = line
     elif stmt['action'] == 'write':
         file = frame[name]
+        breakpoint()
         writedata = evaluate(frame, stmt['data'])
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
