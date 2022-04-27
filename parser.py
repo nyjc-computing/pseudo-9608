@@ -2,6 +2,7 @@ from builtin import TYPES
 from builtin import ParseError
 from builtin import get, lte, add, call
 from scanner import makeToken
+from lang import Literal, Name, Unary, Binary, Get, Call
 
 
 
