@@ -395,6 +395,20 @@ def openfileStmt(tokens):
     if check(tokens)['word'] not in ('READ', 'WRITE', 'APPEND'):
         raise ParseError("Invalid file mode", check(tokens))
     mode = consume(tokens)
+    # ...
+    return stmt
+
+def readfileStmt(tokens):
+    # ...
+    return stmt
+
+def writefileStmt(tokens):
+    # ...
+    return stmt
+
+def closefileStmt(tokens):
+    # ...
+    return stmt
 
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
@@ -423,6 +437,12 @@ def statement(tokens):
         return returnStmt(tokens)
     if match(tokens, 'OPENFILE'):
         return openfileStmt(tokens)
+    if match(tokens, 'READFILE'):
+        return readfileStmt(tokens)
+    if match(tokens, 'WRITEFILE'):
+        return writefileStmt(tokens)
+    if match(tokens, 'CLOSEFILE'):
+        return closefileStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
