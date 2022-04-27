@@ -29,3 +29,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [14b Line numbers](https://github.com/nyjc-computing/pseudo/pull/29)
 - [14c Referencing source code](https://github.com/nyjc-computing/pseudo/pull/30)
 - [14d Column info](https://github.com/nyjc-computing/pseudo/pull/31)
+- [15 File IO](https://github.com/nyjc-computing/pseudo/pull/32)
