@@ -395,19 +395,54 @@ def openfileStmt(tokens):
     if check(tokens)['word'] not in ('READ', 'WRITE', 'APPEND'):
         raise ParseError("Invalid file mode", check(tokens))
     mode = consume(tokens)
-    # ...
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'open',
+        'name': name,
+        'mode': mode,
+        'data': None,
+    }
     return stmt
 
 def readfileStmt(tokens):
-    # ...
+    name = value(tokens)
+    expectElseError(tokens, ',', "after file identifier")
+    data = identifier(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'read',
+        'name': name,
+        'mode': None,
+        'data': data,
+    }
     return stmt
 
 def writefileStmt(tokens):
-    # ...
+    name = value(tokens)
+    expectElseError(tokens, ',', "after file identifier")
+    data = expression(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'write',
+        'name': name,
+        'mode': None,
+        'data': data,
+    }
     return stmt
 
 def closefileStmt(tokens):
-    # ...
+    name = value(tokens)
+    expectElseError(tokens, '\n')
+    stmt = {
+        'rule': 'file',
+        'action': 'close',
+        'name': name,
+        'mode': None,
+        'data': None,
+    }
     return stmt
 
 def statement(tokens):
