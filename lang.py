@@ -36,6 +36,12 @@ class Unary(Expr):
         self.oper = oper
         self.right = right
 
+    def resolve(self):
+        return self.right.resolve()
+
+    def evaluate(self):
+        return self.oper(self.right.value)
+
 
 
 class Binary(Expr):
