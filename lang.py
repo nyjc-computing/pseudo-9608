@@ -22,6 +22,12 @@ class Literal(Expr):
         self.type = type
         self.value = value
 
+    def resolve(self):
+        return self.type
+
+    def evaluate(self):
+        return self.value
+
 
 
 class Unary(Expr):
