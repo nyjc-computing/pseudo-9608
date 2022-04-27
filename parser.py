@@ -20,12 +20,23 @@ def consume(tokens):
     token = tokens.pop(0)
     return token
 
-def makeExpr(left, oper, right):
-    return {
-        'left': left,
-        'oper': oper,
-        'right': right,
-    }
+def makeLiteralExpr(type, value):
+    return Literal(type, value)
+
+def makeNameExpr(name):
+    return Name(name)
+
+def makeUnaryExpr(oper, right):
+    return Unary(oper, right)
+
+def makeBinaryExpr(left, oper, right):
+    return Binary(left, oper, right)
+
+def makeGetExpr(frame, name):
+    return Get(frame, name)
+
+def makeCallExpr(callable, args):
+    return Call(callable, args)
 
 def expectElseError(tokens, word, addmsg=None):
     if check(tokens)['word'] == word:
@@ -47,7 +58,7 @@ def match(tokens, *words):
 def identifier(tokens):
     token = check(tokens)
     if token['type'] == 'name':
-        return consume(tokens)
+        return Name(token['word'])
     else:
         raise ParseError(f"Expected variable name", token)
 
@@ -55,7 +66,8 @@ def value(tokens):
     token = check(tokens)
     # A single value
     if token['type'] in ['integer', 'string']:
-        return consume(tokens)
+        expr = makeLiteralExpr(token['type'], token['value'])
+        return expr
     #  A grouping
     elif match(tokens, '('):
         expr = expression(tokens)
@@ -66,7 +78,7 @@ def value(tokens):
         name = identifier(tokens)
         oper = makeToken(name['line'], name['col'], 'symbol', '', get)
         args = []
-        expr = makeExpr(frame, oper, name)
+        expr = makeGetExpr(frame, name)
         # Function call
         if match(tokens, '('):
             thisline = tokens[0]['line']
@@ -77,7 +89,7 @@ def value(tokens):
                 args += [arg]
             expectElseError(tokens, ')', "after '('")
             oper = makeToken(name['line'], name['col'], 'symbol', '', call)
-            expr = makeExpr(expr, oper, args)
+            expr = makeCallExpr(expr, args)
         return expr
     else:
         raise ParseError("Unexpected token", token)
@@ -88,7 +100,7 @@ def muldiv(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('*', '/'):
         oper = consume(tokens)
         right = value(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeBinaryExpr(expr, oper['value'], right)
     return expr
 
 def addsub(tokens):
@@ -96,7 +108,7 @@ def addsub(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeBinaryExpr(expr, oper['value'], right)
     return expr
 
 def comparison(tokens):
@@ -105,7 +117,7 @@ def comparison(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeBinaryExpr(expr, oper['value'], right)
     return expr
 
 def equality(tokens):
@@ -114,7 +126,7 @@ def equality(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeBinaryExpr(expr, oper['value'], right)
     return expr
 
 def expression(tokens):
@@ -183,7 +195,7 @@ def caseStmt(tokens):
     expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
     while not atEnd(tokens) and check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
-        val = value(tokens)['value']
+        val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
         stmt = statement(tokens)
         stmts[val] = stmt
@@ -264,7 +276,7 @@ def forStmt(tokens):
     start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = makeToken(end['line'], end['col'], 'integer', '1', 1)
+    step = makeLiteralExpr('INTEGER', 1)
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n', "at end of FOR")
