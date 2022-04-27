@@ -58,7 +58,7 @@ class Binary(Expr):
         return 'INTEGER'
 
     def evaluate(self):
-        return self.oper(self.left.value, self.right.)
+        return self.oper(self.left.value, self.right.value)
 
 
 
@@ -67,6 +67,16 @@ class Get(Expr):
     def __init__(self, frame, name):
         self.frame = frame
         self.name = name
+
+    def resolve(self):
+        name = self.name.evaluate()
+        slot = self.frame[name]
+        return slot['type']
+
+    def evaluate(self):
+        name = self.name.evaluate()
+        slot = self.frame[name]
+        return slot['value']
 
 
 
