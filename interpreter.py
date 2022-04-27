@@ -94,6 +94,9 @@ def execReturn(local, stmt):
     # to be local
     return evaluate(local, stmt['expr'])
 
+def execFile(frame, stmt):
+    pass
+
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
         execOutput(frame, stmt)
@@ -119,6 +122,8 @@ def execute(frame, stmt):
         execFunction(frame, stmt)
     if stmt['rule'] == 'return':
         return execReturn(frame, stmt)
+    if stmt['rule'] == 'file':
+        return execFile(frame, stmt)
 
 def interpret(statements, frame=None):
     if frame is None:
