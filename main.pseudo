@@ -1,8 +1,8 @@
 DECLARE Number : INTEGER
 DECLARE Max : INTEGER
 Number <- 0
-OPENFILE data.txt FOR WRITE
+OPENFILE "data.txt" FOR WRITE
 WHILE Number <= Max DO
-    WRITEFILE data.txt, Number
+    WRITEFILE "data.txt", Number
     Number <- Number + 1
-CLOSEFILE data.txt
+CLOSEFILE "data.txt"

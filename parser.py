@@ -389,6 +389,10 @@ def returnStmt(tokens):
     }
     return stmt
 
+def openfileStmt(tokens):
+    
+    name = value(tokens)
+
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
@@ -414,6 +418,8 @@ def statement(tokens):
         return functionStmt(tokens)
     if match(tokens, 'RETURN'):
         return returnStmt(tokens)
+    if match(tokens, 'OPENFILE'):
+        return openfileStmt(tokens)
     elif check(tokens)['type'] == 'name':
         return assignStmt(tokens)
     else:
