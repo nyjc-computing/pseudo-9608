@@ -4,4 +4,5 @@ Number <- 0
 OPENFILE data.txt FOR WRITE
 WHILE Number <= Max DO
     WRITEFILE data.txt, Number
+    Number <- Number + 1
 CLOSEFILE data.txt
