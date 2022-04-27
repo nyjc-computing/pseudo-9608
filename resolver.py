@@ -197,6 +197,9 @@ def verifyReturn(local, stmt):
     # be local
     return resolve(local, stmt['expr'])
 
+def verifyFile(frame, stmt):
+    pass
+
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt['rule'] == 'output':
@@ -219,6 +222,8 @@ def verify(frame, stmt):
         verifyCall(frame, stmt)
     elif stmt['rule'] == 'function':
         verifyFunction(frame, stmt)
+    elif stmt['rule'] == 'file':
+        verifyFile(frame, stmt)
     elif stmt['rule'] == 'return':
         return verifyReturn(frame, stmt)
 
