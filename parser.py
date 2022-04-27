@@ -390,8 +390,11 @@ def returnStmt(tokens):
     return stmt
 
 def openfileStmt(tokens):
-    
     name = value(tokens)
+    expectElseError(tokens, 'FOR', "after file identifier")
+    if check(tokens)['word'] not in ('READ', 'WRITE', 'APPEND'):
+        raise ParseError("Invalid file mode", check(tokens))
+    mode = consume(tokens)
 
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
