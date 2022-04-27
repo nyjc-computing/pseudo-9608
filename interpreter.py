@@ -97,7 +97,7 @@ def execReturn(local, stmt):
 def execFile(frame, stmt):
     name = evaluate(frame, stmt['name'])
     if stmt['action'] == 'open':
-        mode = evaluate(frame, stmt['mode'])
+        mode = stmt['mode']['word']
         assert mode  # Internal check
         file = {
             'type': mode,
