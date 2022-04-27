@@ -8,10 +8,7 @@ from builtin import LogicError
 # Helper functions
 
 def expectTypeElseError(frame, expr, expected):
-    if type(expr) is str:
-        exprtype = expr
-    else:
-        exprtype = resolve(frame, expr)
+    exprtype = resolve(frame, expr)
     if expected != exprtype:
         if 'line' in expr:
             token = expr
