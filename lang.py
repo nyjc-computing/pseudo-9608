@@ -12,6 +12,9 @@ class Unary(Expr):
         self.oper = oper
         self.right = right
 
+    def __repr__(self):
+        return f'{type(self).__class__}(oper={self.oper}, right={self.right})'
+
 
 
 class Binary(Expr):
@@ -20,6 +23,9 @@ class Binary(Expr):
         self.oper = oper
         self.right = right
 
+    def __repr__(self):
+        return f'{type(self).__class__}(left={self.left}, oper={self.oper}, right={self.right})'
+
 
 
 class Get(Expr):
@@ -27,9 +33,15 @@ class Get(Expr):
         self.frame = frame
         self.name = name
 
+    def __repr__(self):
+        return f'{type(self).__class__}(name={self.name})'
+
 
 
 class Call(Expr):
     def __init__(self, callable, args):
         self.callable = callable
         self.args = args
+
+    def __repr__(self):
+        return f'{type(self).__class__}(callable={self.callable}, args={self.args})'
