@@ -198,7 +198,7 @@ def verifyReturn(local, stmt):
     # This will typically be verify()ed within
     # verifyFunction(), so frame is expected to
     # be local
-    return resolve(local, stmt['expr'])
+    return stmt['expr'].resolve(local)
 
 def verifyFile(frame, stmt):
     # resolve() returns type instead of string value
