@@ -76,11 +76,11 @@ def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt['exprs'])
 
 def verifyInput(frame, stmt):
-    name = resolve(frame, stmt['name'])
+    name = stmt['name'].resolve()
     if name not in frame:
         raise LogicError(
             f'Name not declared',
-            stmt['name'],
+            stmt['name'].name,
         )
 
 def verifyDeclare(frame, stmt):
