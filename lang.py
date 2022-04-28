@@ -24,7 +24,7 @@ class Literal(Expr):
         self.type = type
         self.value = value
 
-    def resolve(self):
+    def resolve(self, frame=None):
         return self.type
 
     def evaluate(self):
@@ -37,7 +37,7 @@ class Name(Expr):
     def __init__(self, name):
         self.name = name
 
-    def resolve(self):
+    def resolve(self, frame=None):
         return 'NAME'
 
     def evaluate(self):
@@ -51,7 +51,7 @@ class Unary(Expr):
         self.oper = oper
         self.right = right
 
-    def resolve(self):
+    def resolve(self, frame=None):
         return self.right.resolve()
 
     def evaluate(self):
@@ -66,7 +66,7 @@ class Binary(Expr):
         self.oper = oper
         self.right = right
 
-    def resolve(self):
+    def resolve(self, frame=None):
         if self.oper in (lt, lte, gt, gte, ne, eq):
             return 'BOOLEAN'
         elif self.oper in (add, sub, mul, div):
@@ -83,7 +83,7 @@ class Get(Expr):
         self.frame = frame
         self.name = name
 
-    def resolve(self):
+    def resolve(self, frame=None):
         name = self.name.evaluate()
         slot = self.frame[name]
         return slot['type']
@@ -101,7 +101,7 @@ class Call(Expr):
         self.callable = callable
         self.args = args
 
-    def resolve(self):
+    def resolve(self, frame=None):
         slot = self.callable.evaluate()
         return slot['type']
 
