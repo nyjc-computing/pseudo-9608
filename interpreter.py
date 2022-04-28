@@ -7,9 +7,9 @@ from builtin import RuntimeError
 
 def executeStmts(frame, stmts):
     for stmt in stmts:
-        returnval = execute(frame, stmt)
+        returnval = stmt.accept(frame, execute)
         if returnval:
-                return returnval
+            return returnval
 
 def assignArgsParams(frame, args, callable):
     for arg, param in zip(args, callable['params']):
@@ -123,31 +123,31 @@ def execFile(frame, stmt):
 
 def execute(frame, stmt):
     if stmt['rule'] == 'output':
-        execOutput(frame, stmt)
+        stmt.accept(frame, execOutput)
     if stmt['rule'] == 'input':
-        execInput(frame, stmt)
+        stmt.accept(frame, execInput)
     if stmt['rule'] == 'declare':
-        execDeclare(frame, stmt)
+        stmt.accept(frame, execDeclare)
     if stmt['rule'] == 'assign':
-        execAssign(frame, stmt)
+        stmt.accept(frame, execAssign)
     if stmt['rule'] == 'case':
-        execCase(frame, stmt)
+        stmt.accept(frame, execCase)
     if stmt['rule'] == 'if':
-        execIf(frame, stmt)
+        stmt.accept(frame, execIf)
     if stmt['rule'] == 'while':
-        execWhile(frame, stmt)
+        stmt.accept(frame, execWhile)
     if stmt['rule'] == 'repeat':
-        execRepeat(frame, stmt)
+        stmt.accept(frame, execRepeat)
     if stmt['rule'] == 'procedure':
-        execProcedure(frame, stmt)
+        stmt.accept(frame, execProcedure)
     if stmt['rule'] == 'call':
-        execCall(frame, stmt)
+        stmt.accept(frame, execCall)
     if stmt['rule'] == 'function':
-        execFunction(frame, stmt)
+        stmt.accept(frame, execFunction)
     if stmt['rule'] == 'return':
-        return execReturn(frame, stmt)
+        return stmt.accept(frame, execReturn)
     if stmt['rule'] == 'file':
-        execFile(frame, stmt)
+        stmt.accept(frame, execFile)
 
 def interpret(statements, frame=None):
     if frame is None:
