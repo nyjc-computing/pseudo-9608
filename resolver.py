@@ -71,22 +71,17 @@ def verifyWhile(frame, stmt):
     verifyStmts(frame, stmt.stmts)
 
 def verifyProcedure(frame, stmt):
-    passby = stmt.passby
     # Set up local frame
     local = {}
     for var in stmt.params:
-        # Declare vars in local
-        if passby == 'BYVALUE':
-            verifyDeclare(local, var)
-        elif passby == 'BYREF':
+        if stmt.passby == 'BYREF':
             name = var['name'].resolve(frame)
             globvar = frame[name]
             expectTypeElseError(frame, var['type'], globvar['type'])
             # Reference global vars in local
             local[name] = globvar
         else:
-            # Internal error
-            raise TypeError(stmt.passby, f"str expected for passby, got {passby}")
+            verifyDeclare(local, var)
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
