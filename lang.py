@@ -114,5 +114,5 @@ class Call(Expr):
         return self.callable.resolve()
 
     def evaluate(self):
-        callable = self.callable.evaluate()
+        return self.callable.evaluate()
         # execute call and return
