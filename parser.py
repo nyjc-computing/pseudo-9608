@@ -1,6 +1,6 @@
 from builtin import TYPES
 from builtin import ParseError
-from builtin import get, lte, add, call
+from builtin import lte, add
 from scanner import makeToken
 from lang import Literal, Name, Unary, Binary, Get, Call
 
@@ -288,12 +288,7 @@ def forStmt(tokens):
         makeToken(end['line'], end['col'], 'keyword', '\n', None),
     ])
     # Generate loop cond
-    cond = expression([
-        name,
-        makeToken(name['line'], name['col'], 'symbol', '<=', lte),
-        end,
-        makeToken(start['line'], start['col'], 'keyword', '\n', None),
-    ])
+    cond = makeBinaryExpr(makeGetExpr(None, name), lte, end)
     # Add increment statement
     incr = assignStmt([
         name,
