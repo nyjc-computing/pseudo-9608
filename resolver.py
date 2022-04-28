@@ -121,7 +121,7 @@ def verifyProcedure(frame, stmt):
         if passby == 'BYVALUE':
             verifyDeclare(local, var)
         elif passby == 'BYREF':
-            name = resolve(frame, var['name'])
+            name = var['name'].resolve(frame)
             globvar = frame[name]
             expectTypeElseError(frame, var['type'], globvar['type'])
             # Reference global vars in local
@@ -132,7 +132,7 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt['stmts'])
     # Declare procedure in frame
-    name = resolve(frame, stmt['name'])
+    name = stmt['name'].resolve(frame)
     frame[name] = {
         'type': 'procedure',
         'value': {
@@ -177,8 +177,8 @@ def verifyFunction(frame, stmt):
         # Declare vars in local
         verifyDeclare(local, var)
     # Resolve procedure statements using local
-    name = resolve(frame, stmt['name'])
-    returns = resolve(frame, stmt['returns'])
+    name = stmt['name'].resolve(frame)
+    returns = stmt['returns'].resolve(frame)
     for procstmt in stmt['stmts']:
         returntype = verify(local, procstmt)
         if returntype and (returntype != returns):
