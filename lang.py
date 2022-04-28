@@ -250,6 +250,23 @@ class Callable(Stmt):
 
 
 
+class Calling(Stmt):
+    # HACK: Temporary replacement for a lack of an ExprStmt
+    # Should attempt to use Call Expr
+    __slots__ = ('rule', 'callable', 'args')
+    def __init__(self, rule, callable, args):
+        self.rule = rule
+        self.callable = callable
+        self.args = args
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
 class Return(Stmt):
     __slots__ = ('rule', 'expr')
     def __init__(self, rule, expr):
