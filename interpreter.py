@@ -55,14 +55,14 @@ def execAssign(frame, stmt):
 
 def execCase(frame, stmt):
     cond = stmt.cond.evaluate(frame)
-    if cond in stmt.stmts:
-        execute(frame, stmt.stmts[cond])
+    if cond in stmt.stmtMap:
+        execute(frame, stmt.stmtMap[cond])
     elif stmt.fallback:
         execute(frame, stmt.fallback)
 
 def execIf(frame, stmt):
     if stmt.cond.evaluate(frame):
-        executeStmts(frame, stmt.stmts[True])
+        executeStmts(frame, stmt.stmtMap[True])
     elif stmt.fallback:
         executeStmts(frame, stmt.fallback)
 
@@ -84,7 +84,7 @@ def execFunction(frame, stmt):
     pass
 
 def execCall(frame, stmt):
-    proc = stmt.name.evaluate(frame)
+    proc = stmt.callable.evaluate(frame)
     assignArgsParams(frame, stmt.args, proc)
     return executeStmts(frame, proc.stmts)
 
