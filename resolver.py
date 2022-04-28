@@ -54,7 +54,7 @@ def verifyCase(frame, stmt):
     stmt.cond.resolve(frame)
     verifyStmts(frame, stmt.stmts.values())
     if stmt.fallback:
-        stmt.fallback.verify(frame)
+        stmt.fallback.accept(frame, verify)
 
 def verifyIf(frame, stmt):
     stmt.cond.resolve(frame)
@@ -132,13 +132,13 @@ def verifyFunction(frame, stmt):
         # Declare vars in local
         verifyDeclare(local, var)
     name = stmt.name.resolve(frame)
-    returns = stmt.returns
+    returnType = stmt.returnType
     # Resolve procedure statements using local
     for procstmt in stmt.stmts:
-        returntype = procstmt.verify(local)
-        if returntype and (returntype != returns):
+        stmtType = procstmt.accept(local, verify)
+        if stmtType and (stmtType != returnType):
             raise LogicError(
-                f"Expect {returns}, got {returntype}",
+                f"Expect {returnType}, got {stmtType}",
                 stmt.name,
             )
     # Declare function in frame
