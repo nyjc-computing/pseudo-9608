@@ -185,7 +185,6 @@ def verifyFile(frame, stmt):
         del frame[name]
 
 def verify(frame, stmt):
-    if 'rule' not in stmt: breakpoint()
     if stmt.rule == 'output':
         stmt.accept(frame, verifyOutput)
     if stmt.rule == 'input':
