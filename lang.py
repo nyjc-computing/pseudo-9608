@@ -133,9 +133,6 @@ class Stmt:
         # a frame and a Stmt
         return visitor(frame, self)
 
-    def verify(self, frame=None):
-        raise NotImplementedError
-
     def __repr__(self):
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -150,9 +147,6 @@ class Output(Stmt):
         self.rule = rule
         self.exprs = exprs
 
-    def verify(self, frame):
-        pass
-
 
 
 class Input(Stmt):
@@ -160,9 +154,6 @@ class Input(Stmt):
     def __init__(self, rule, name):
         self.rule = rule
         self.name = name
-
-    def verify(self, frame):
-        pass
 
 
 
@@ -173,9 +164,6 @@ class Declare(Stmt):
         self.name = name
         self.type = type
 
-    def verify(self, frame):
-        pass
-
 
 
 class Assign(Stmt):
@@ -184,9 +172,6 @@ class Assign(Stmt):
         self.rule = rule
         self.name = name
         self.expr = expr
-
-    def verify(self, frame):
-        pass
 
 
 
@@ -198,9 +183,6 @@ class Conditional(Stmt):
         self.stmtMap = stmtMap
         self.fallback = fallback
 
-    def verify(self, frame):
-        pass
-
 
 
 class Loop(Stmt):
@@ -210,9 +192,6 @@ class Loop(Stmt):
         self.init = init
         self.cond = cond
         self.stmts = stmts
-
-    def verify(self, frame):
-        pass
 
 
 
@@ -226,9 +205,6 @@ class Callable(Stmt):
         self.stmts = stmts
         self.returnType = returnType
 
-    def verify(self, frame):
-        pass
-
 
 
 class Calling(Stmt):
@@ -240,9 +216,6 @@ class Calling(Stmt):
         self.callable = callable
         self.args = args
 
-    def verify(self, frame):
-        pass
-
 
 
 class Return(Stmt):
@@ -250,9 +223,6 @@ class Return(Stmt):
     def __init__(self, rule, expr):
         self.rule = rule
         self.expr = expr
-
-    def verify(self, frame):
-        pass
 
 
 
@@ -264,6 +234,3 @@ class File(Stmt):
         self.name = name
         self.mode = mode
         self.data = data
-
-    def verify(self, frame):
-        pass
