@@ -93,13 +93,13 @@ def verifyAssign(frame, stmt):
     expectTypeElseError(frame, stmt['expr'], frame[name]['type'])
 
 def verifyCase(frame, stmt):
-    resolve(frame, stmt['cond'])
+    stmt['cond'].resolve(frame)
     verifyStmts(frame, stmt['stmts'].values())
     if stmt['fallback']:
         verify(frame, stmt['fallback'])
 
 def verifyIf(frame, stmt):
-    resolve(frame, stmt['cond'])
+    stmt['cond'].resolve(frame)
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'][True])
     if stmt['fallback']:
@@ -108,7 +108,7 @@ def verifyIf(frame, stmt):
 def verifyWhile(frame, stmt):
     if stmt['init']:
         verify(frame, stmt['init'])
-    resolve(frame, stmt['cond']['left'])
+    stmt['cond'].resolve(frame)
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'])
 
