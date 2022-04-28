@@ -66,13 +66,14 @@ def identifier(tokens):
         raise ParseError(f"Expected variable name", token)
 
 def value(tokens):
-    token = consume(tokens)
+    token = check(tokens)
     # A single value
     if token['type'] in ['integer', 'string']:
         expr = makeExpr(
             type=token['type'],
             value=token['value'],
         )
+        consume(tokens)
         return expr
     #  A grouping
     elif match(tokens, '('):
