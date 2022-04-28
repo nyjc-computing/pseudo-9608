@@ -124,3 +124,18 @@ class Call(Expr):
             returnval = execute(frame, stmt)
             if returnval:
                     return returnval
+
+
+
+class Stmt:
+    def verify(self, frame=None):
+        raise NotImplementedError
+
+    def execute(self, frame=None):
+        raise NotImplementedError
+
+    def __repr__(self):
+        attrstr = ", ".join([
+            repr(getattr(self, attr)) for attr in self.__slots__
+        ])
+        return f'{type(self).__name__}({attrstr})'
