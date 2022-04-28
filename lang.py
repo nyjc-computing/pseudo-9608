@@ -8,7 +8,7 @@ class Expr:
     def resolve(self, frame=None):
         raise NotImplementedError
 
-    def evaluate(self):
+    def evaluate(self, frame=None):
         raise NotImplementedError
 
     def __repr__(self):
@@ -28,7 +28,7 @@ class Literal(Expr):
     def resolve(self, frame=None):
         return self.type
 
-    def evaluate(self):
+    def evaluate(self, frame=None):
         return self.value
 
 
@@ -41,7 +41,7 @@ class Name(Expr):
     def resolve(self, frame=None):
         return self.name
 
-    def evaluate(self):
+    def evaluate(self, frame=None):
         return self.name
 
 
@@ -55,8 +55,8 @@ class Unary(Expr):
     def resolve(self, frame):
         return self.right.resolve(frame)
 
-    def evaluate(self):
-        right = self.right.evaluate()
+    def evaluate(self, frame):
+        right = self.right.evaluate(frame)
         return self.oper(right)
 
 
@@ -76,9 +76,9 @@ class Binary(Expr):
         elif self.oper in (add, sub, mul, div):
             return 'INTEGER'
 
-    def evaluate(self):
-        left = self.left.evaluate()
-        right = self.right.evaluate()
+    def evaluate(self, frame):
+        left = self.left.evaluate(frame)
+        right = self.right.evaluate(frame)
         return self.oper(left, right)
 
 
@@ -96,8 +96,8 @@ class Get(Expr):
         slot = self.frame[name]
         return slot['type']
 
-    def evaluate(self):
-        name = self.name.evaluate()
+    def evaluate(self, frame):
+        name = self.name.evaluate(frame)
         slot = self.frame[name]
         return slot['value']
 
@@ -113,5 +113,5 @@ class Call(Expr):
         self.callable.resolve(frame)
         return self.callable.resolve()
 
-    def evaluate(self):
-        return self.callable.evaluate()
+    def evaluate(self, frame):
+        return self.callable.evaluate(frame)
