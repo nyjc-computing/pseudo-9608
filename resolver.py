@@ -29,7 +29,7 @@ def resolveExprs(frame, exprs):
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
-        stmt.verify(frame)
+        stmt.accept(frame, verify)
 
 def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt.exprs)
@@ -186,29 +186,29 @@ def verifyFile(frame, stmt):
 def verify(frame, stmt):
     if 'rule' not in stmt: breakpoint()
     if stmt.rule == 'output':
-        verifyOutput(frame, stmt)
+        stmt.accept(frame, verifyOutput)
     if stmt.rule == 'input':
-        verifyInput(frame, stmt)
+        stmt.accept(frame, verifyInput)
     elif stmt.rule == 'declare':
-        verifyDeclare(frame, stmt)
+        stmt.accept(frame, verifyDeclare)
     elif stmt.rule == 'assign':
-        verifyAssign(frame, stmt)
+        stmt.accept(frame, verifyAssign)
     elif stmt.rule == 'case':
-        verifyCase(frame, stmt)
+        stmt.accept(frame, verifyCase)
     elif stmt.rule == 'if':
-        verifyIf(frame, stmt)
-    elif stmt.rule in ('while', 'repeat'):
-        verifyWhile(frame, stmt)
+        stmt.accept(frame, verifyIf)
+    elif stmt.rule in ('while', 'repeat', 'for'):
+        stmt.accept(frame, verifyWhile)
     elif stmt.rule == 'procedure':
-        verifyProcedure(frame, stmt)
+        stmt.accept(frame, verifyProcedure)
     elif stmt.rule == 'call':
-        verifyCall(frame, stmt)
+        stmt.accept(frame, verifyCall)
     elif stmt.rule == 'function':
-        verifyFunction(frame, stmt)
+        stmt.accept(frame, verifyFunction)
     elif stmt.rule == 'file':
-        verifyFile(frame, stmt)
+        stmt.accept(frame, verifyFile)
     elif stmt.rule == 'return':
-        return verifyReturn(frame, stmt)
+        return stmt.accept(frame, verifyReturn)
 
 def inspect(statements):
     frame = {}
