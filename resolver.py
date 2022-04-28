@@ -11,13 +11,13 @@ def expectTypeElseError(frame, expr, expected):
     exprtype = expr.resolve(frame)
     if expected != exprtype:
         token = None
-        if type(expr) is dict:
-            if 'line' in expr:
-                token = expr
-            elif 'line' in expr['left']:
-                token = expr['left']
-            elif 'line' in expr['right']:
-                token = expr['right']
+        # if type(expr) is dict:
+        #     if 'line' in expr:
+        #         token = expr
+        #     elif 'line' in expr['left']:
+        #         token = expr['left']
+        #     elif 'line' in expr['right']:
+        #         token = expr['right']
         raise LogicError(
             f"Expected {repr(expected)}, got {repr(exprtype)}",
             token,
