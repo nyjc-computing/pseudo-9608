@@ -29,7 +29,7 @@ def resolveExprs(frame, exprs):
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
-        verify(frame, stmt)
+        stmt.verify(frame)
 
 def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt['exprs'])
@@ -54,7 +54,7 @@ def verifyCase(frame, stmt):
     stmt['cond'].resolve(frame)
     verifyStmts(frame, stmt['stmts'].values())
     if stmt['fallback']:
-        verify(frame, stmt['fallback'])
+        stmt['fallback'].verify(frame)
 
 def verifyIf(frame, stmt):
     stmt['cond'].resolve(frame)
@@ -65,7 +65,7 @@ def verifyIf(frame, stmt):
 
 def verifyWhile(frame, stmt):
     if stmt['init']:
-        verify(frame, stmt['init'])
+        stmt['init'].verify(frame)
     stmt['cond'].resolve(frame)
     expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
     verifyStmts(frame, stmt['stmts'])
@@ -135,7 +135,7 @@ def verifyFunction(frame, stmt):
     returns = stmt['returns'].resolve(frame)
     # Resolve procedure statements using local
     for procstmt in stmt['stmts']:
-        returntype = verify(local, procstmt)
+        returntype = procstmt.verify(local)
         if returntype and (returntype != returns):
             raise LogicError(
                 f"Expect {returns}, got {returntype}",
