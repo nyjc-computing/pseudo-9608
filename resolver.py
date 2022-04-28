@@ -39,7 +39,7 @@ def verifyInput(frame, stmt):
     if name not in frame:
         raise LogicError(
             f'Name not declared',
-            stmt.name.resolve(frame),
+            stmt.name,
         )
 
 def verifyDeclare(frame, stmt):
