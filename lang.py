@@ -128,6 +128,11 @@ class Call(Expr):
 
 
 class Stmt:
+    def accept(self, frame, visitor):
+        # visitor must be a function that takes
+        # a frame and a Stmt
+        return visitor(frame, self)
+
     def verify(self, frame=None):
         raise NotImplementedError
 
