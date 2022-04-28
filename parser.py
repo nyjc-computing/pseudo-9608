@@ -59,14 +59,14 @@ def match(tokens, *words):
 # Precedence parsers
 
 def identifier(tokens):
-    token = check(tokens)
+    token = consume(tokens)
     if token['type'] == 'name':
         return Name(token['word'])
     else:
         raise ParseError(f"Expected variable name", token)
 
 def value(tokens):
-    token = check(tokens)
+    token = consume(tokens)
     # A single value
     if token['type'] in ['integer', 'string']:
         expr = makeExpr(
