@@ -24,8 +24,9 @@ def main():
     except (ParseError, LogicError) as err:
         lineinfo = f"[Line {err.line}]" if err.line else ""
         print(lineinfo, lines[err.line - 1])
-        leftmargin = len(lineinfo) + 1 + err.col
-        print((' ' * leftmargin) + '^')
+        if err.col:
+            leftmargin = len(lineinfo) + 1 + err.col
+            print((' ' * leftmargin) + '^')
         print(err.report())
         sys.exit(65)
     try:

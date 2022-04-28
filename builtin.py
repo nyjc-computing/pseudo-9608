@@ -7,11 +7,11 @@ class PseudoError(Exception):
         self.token = token
         if line is not None:
             self.line = line
-        elif token is not None:
+        elif token:
             self.line = token['line']
         else:
             self.line = None
-        self.col = token['col']
+        self.col = token['col'] if token else None
 
     def msg(self):
         return self.args[0]
