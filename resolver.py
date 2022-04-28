@@ -31,49 +31,6 @@ def verifyStmts(frame, stmts):
     for stmt in stmts:
         verify(frame, stmt)
 
-def resolve(frame, expr):
-    # Resolving tokens
-    if 'type' in expr:
-        if expr['type'] == 'name':
-            return expr['word']
-        elif expr['type'] in ('integer', 'string'):
-            return expr['type'].upper()
-        else:
-            # internal error
-            raise TypeError(f'Cannot resolve type for {expr}')
-    # Resolving get expressions
-    oper = expr['oper']['value']
-    if oper is get:
-        expr['left'] = frame
-        name = resolve(frame, expr['right'])
-        if name not in frame:
-            raise LogicError(
-                f'Name not declared',
-                expr['right'],
-            )
-        return frame[name]['type']
-    # Resolving function calls
-    if oper is call:
-        # Insert frame into get expr
-        resolve(frame, expr['left'])
-        # Insert frame into args
-        args = expr['right']
-        resolveExprs(frame, args)
-        # Return function type
-        functype = resolve(frame, expr['left'])
-        return functype
-    # Resolving other exprs
-    if oper in (lt, lte, gt, gte, ne, eq):
-        resolve(frame, expr['left'])
-        resolve(frame, expr['right'])
-        return 'BOOLEAN'
-    elif oper in (add, sub, mul, div):
-        resolve(frame, expr['left'])
-        resolve(frame, expr['right'])
-        expectTypeElseError(frame, expr['left'], 'INTEGER')
-        expectTypeElseError(frame, expr['right'], 'INTEGER')
-        return 'INTEGER'
-
 def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt['exprs'])
 
