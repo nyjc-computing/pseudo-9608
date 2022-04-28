@@ -116,11 +116,10 @@ def verifyCall(frame, stmt):
     for arg, param in zip(args, params):
         if stmt.passby == 'BYREF':
             # Only names allowed for BYREF arguments
-            # Check for a get expr
-            if arg['oper']['value'] is not get:
+            if not isinstance(arg, Get):
                 raise LogicError(
                     'BYREF arg must be a name, not expression',
-                    stmt.passby,
+                    None,
                 )
         paramtype = param['type']
         expectTypeElseError(frame, arg, paramtype)
