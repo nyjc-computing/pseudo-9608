@@ -84,8 +84,8 @@ def verifyInput(frame, stmt):
         )
 
 def verifyDeclare(frame, stmt):
-    name = resolve(frame, stmt['name'])
-    type_ = resolve(frame, stmt['type'])
+    name = stmt['name'].resolve()
+    type_ = stmt['type']['word']
     frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
