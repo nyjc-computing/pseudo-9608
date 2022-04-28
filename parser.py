@@ -27,7 +27,21 @@ def makeExpr(
     left=None, oper=None, right=None,
     callable=None, args=None,
 ):
-    pass
+    if 'name':
+        if 'frame':
+            return Get(frame, name)
+        else:
+            return Name(name)
+    if type and value:
+        return Literal(type, value)
+    if oper and right:
+        if left:
+            return Binary(left, oper, right)
+        else:
+            return Unary(oper, right)
+    if callable and args:
+        return Call(callable, args)
+    raise ValueError("Could not find valid keyword argument combination")
 
 def makeLiteralExpr(type, value):
     return Literal(type, value)
