@@ -81,14 +81,13 @@ def value(tokens):
         expectElseError(tokens, ')', "after '('")
         return expr        
     elif token['type'] == 'name':
-        frame = NULL
         name = identifier(tokens)
-        args = []
         expr = makeExpr(
-            frame=frame,
+            frame=NULL,
             name=name,
         )
         # Function call
+        args = []
         if match(tokens, '('):
             arg = expression(tokens)
             args += [arg]
