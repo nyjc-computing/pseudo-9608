@@ -136,13 +136,13 @@ def verifyFunction(frame, stmt):
         if stmtType:
             hasReturn = True
             if stmtType != returnType:
-            raise LogicError(
-                f"Expect {returnType}, got {stmtType}",
-                stmt.name,
-            )
+                raise LogicError(
+                    f"Expect {returnType}, got {stmtType}",
+                    stmt.name,
+                )
     if not hasReturn:
-        raise LogicError("No RETURN in function, None)
-    # Declare function in frame
+        raise LogicError("No RETURN in function", None)
+     # Declare function in frame
     frame[name] = {
         'type': returnType,
         'value': {
