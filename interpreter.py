@@ -100,7 +100,7 @@ def execFile(frame, stmt):
         assert stmt.mode  # Internal check
         file = {
             'type': stmt.mode,
-            'value': open(name, mode[0].lower()),
+            'value': open(name, stmt.mode[0].lower()),
         }
         frame[name] = file
     elif stmt.action == 'read':
