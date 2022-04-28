@@ -14,7 +14,7 @@ class Expr:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
         ])
-        return f'{type(self).__class__.__name__}({attrstr})'
+        return f'{type(self).__name__}({attrstr})'
 
 
 
