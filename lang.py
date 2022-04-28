@@ -56,7 +56,8 @@ class Unary(Expr):
         return self.right.resolve(frame)
 
     def evaluate(self):
-        return self.oper(self.right.value)
+        right = self.right.evaluate()
+        return self.oper(right)
 
 
 
@@ -76,7 +77,9 @@ class Binary(Expr):
             return 'INTEGER'
 
     def evaluate(self):
-        return self.oper(self.left.value, self.right.value)
+        left = self.left.evaluate()
+        right = self.right.evaluate()
+        return self.oper(left, right)
 
 
 
