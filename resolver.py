@@ -76,7 +76,7 @@ def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt['exprs'])
 
 def verifyInput(frame, stmt):
-    name = stmt['name'].resolve()
+    name = stmt['name'].resolve(frame)
     if name not in frame:
         raise LogicError(
             f'Name not declared',
@@ -84,7 +84,7 @@ def verifyInput(frame, stmt):
         )
 
 def verifyDeclare(frame, stmt):
-    name = stmt['name'].resolve()
+    name = stmt['name'].resolve(frame)
     type_ = stmt['type']['word']
     frame[name] = {'type': type_, 'value': None}
 
