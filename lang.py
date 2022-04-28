@@ -103,22 +103,6 @@ class Get(Expr):
 
 
 
-def executeStmts(frame, stmts):
-    for stmt in stmts:
-        returnval = execute(frame, stmt)
-        if returnval:
-                return returnval
-
-def assignArgsParams(frame, args, callable):
-    for arg, param in zip(args, callable['params']):
-        name = param['name'].evaluate(callable['frame'])
-        callable['frame'][name]['value'] = arg.evaluate(frame)
-
-def execCall(frame, stmt):
-    proc = stmt['name'].evaluate(frame)
-    assignArgsParams(frame, stmt['args'], proc)
-    return executeStmts(frame, proc['stmts'])
-
 class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(self, callable, args):
@@ -131,4 +115,11 @@ class Call(Expr):
 
     def evaluate(self, frame):
         callable = self.callable.evaluate(frame)
-        return execCall(frame, callable)
+        proc = callable['name'].evaluate(frame)
+        for arg, param in zip(callable['args'], proc['params']):
+            name = param['name'].evaluate(proc['frame'])
+            proc['frame'][name]['value'] = arg.evaluate(frame)
+        for stmt in proc['stmts']:
+            returnval = execute(frame, stmt)
+            if returnval:
+                    return returnval
