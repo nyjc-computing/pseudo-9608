@@ -8,7 +8,7 @@ from builtin import LogicError
 # Helper functions
 
 def expectTypeElseError(frame, expr, expected):
-    exprtype = resolve(frame, expr)
+    exprtype = expr.resolve(frame)
     if expected != exprtype:
         if 'line' in expr:
             token = expr
@@ -23,7 +23,7 @@ def expectTypeElseError(frame, expr, expected):
 
 def resolveExprs(frame, exprs):
     for expr in exprs:
-        resolve(frame, expr)
+        expr.resolve(frame)
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
