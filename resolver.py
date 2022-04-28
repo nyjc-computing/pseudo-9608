@@ -173,9 +173,9 @@ def verifyFunction(frame, stmt):
     for var in stmt['params']:
         # Declare vars in local
         verifyDeclare(local, var)
-    # Resolve procedure statements using local
     name = stmt['name'].resolve(frame)
     returns = stmt['returns'].resolve(frame)
+    # Resolve procedure statements using local
     for procstmt in stmt['stmts']:
         returntype = verify(local, procstmt)
         if returntype and (returntype != returns):
