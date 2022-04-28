@@ -144,10 +144,7 @@ def verifyProcedure(frame, stmt):
     }
 
 def verifyCall(frame, stmt):
-    # Insert frame
-    stmt['name']['left'] = frame
-    # resolve() would return the expr type, but we need the name
-    name = resolve(frame, stmt['name']['right'])
+    name = stmt['name'].resolve(frame)
     proc = frame[name]
     expectTypeElseError(frame, proc, 'procedure')
     args, params = stmt['args'], proc['value']['params']
@@ -167,7 +164,7 @@ def verifyCall(frame, stmt):
                     'BYREF arg must be a name, not expression',
                     stmt['passby'],
                 )
-        paramtype = resolve(local, param['type'])
+        paramtype = param['type']['word']
         expectTypeElseError(frame, arg, paramtype)
 
 def verifyFunction(frame, stmt):
