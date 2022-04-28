@@ -108,10 +108,8 @@ class Call(Expr):
 
     def resolve(self, frame=None):
         self.callable.resolve(frame)
-        slot = self.callable.evaluate()
-        return slot['type']
+        return self.callable.resolve()
 
     def evaluate(self):
-        slot = self.callable.evaluate()
-        callable = slot['value']
+        callable = self.callable.evaluate()
         # execute call and return
