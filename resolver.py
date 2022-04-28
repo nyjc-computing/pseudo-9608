@@ -130,7 +130,7 @@ def verifyFunction(frame, stmt):
     name = stmt.name.resolve(frame)
     returnType = stmt.returnType
     # Resolve procedure statements using local
-    hasReturn = True
+    hasReturn = False
     for procstmt in stmt.stmts:
         stmtType = procstmt.accept(local, verify)
         if stmtType:
