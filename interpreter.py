@@ -37,45 +37,45 @@ def evaluate(frame, expr):
     return oper(left, right)
 
 def execOutput(frame, stmt):
-    for expr in stmt['exprs']:
+    for expr in stmt.exprs:
         print(str(expr.evaluate(frame)), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
-    name = stmt['name'].evaluate(frame)
+    name = stmt.name.evaluate(frame)
     frame[name]['value'] = input()
 
 def execDeclare(frame, stmt):
     pass
 
 def execAssign(frame, stmt):
-    name = stmt['name'].evaluate(frame)
-    value = stmt['expr'].evaluate(frame)
+    name = stmt.name.evaluate(frame)
+    value = stmt.expr.evaluate(frame)
     frame[name]['value'] = value
 
 def execCase(frame, stmt):
-    cond = stmt['cond'].evaluate(frame)
-    if cond in stmt['stmts']:
-        execute(frame, stmt['stmts'][cond])
-    elif stmt['fallback']:
-        execute(frame, stmt['fallback'])
+    cond = stmt.cond.evaluate(frame)
+    if cond in stmt.stmts:
+        execute(frame, stmt.stmts[cond])
+    elif stmt.fallback:
+        execute(frame, stmt.fallback)
 
 def execIf(frame, stmt):
-    if stmt['cond'].evaluate(frame):
-        executeStmts(frame, stmt['stmts'][True])
-    elif stmt['fallback']:
-        executeStmts(frame, stmt['fallback'])
+    if stmt.cond.evaluate(frame):
+        executeStmts(frame, stmt.stmts[True])
+    elif stmt.fallback:
+        executeStmts(frame, stmt.fallback)
 
 def execWhile(frame, stmt):
-    if stmt['init']:
-        execute(frame, stmt['init'])
-    while stmt['cond'].evaluate(frame) is True:
-        executeStmts(frame, stmt['stmts'])
+    if stmt.init:
+        execute(frame, stmt.init)
+    while stmt.cond.evaluate(frame) is True:
+        executeStmts(frame, stmt.stmts)
 
 def execRepeat(frame, stmt):
-    executeStmts(frame, stmt['stmts'])
-    while stmt['cond'].evaluate(frame) is False:
-        executeStmts(frame, stmt['stmts'])
+    executeStmts(frame, stmt.stmts)
+    while stmt.cond.evaluate(frame) is False:
+        executeStmts(frame, stmt.stmts)
 
 def execProcedure(frame, stmt):
     pass
@@ -84,69 +84,68 @@ def execFunction(frame, stmt):
     pass
 
 def execCall(frame, stmt):
-    proc = stmt['name'].evaluate(frame)
-    assignArgsParams(frame, stmt['args'], proc)
-    return executeStmts(frame, proc['stmts'])
+    proc = stmt.name.evaluate(frame)
+    assignArgsParams(frame, stmt.args, proc)
+    return executeStmts(frame, proc.stmts)
 
 def execReturn(local, stmt):
     # This will typically be execute()ed within
     # evaluate() in a function call, so frame is expected
     # to be local
-    return stmt['expr'].evaluate(local)
+    return stmt.expr.evaluate(local)
 
 def execFile(frame, stmt):
-    name = stmt['name'].evaluate(frame)
-    if stmt['action'] == 'open':
-        mode = stmt['mode']['word']
-        assert mode  # Internal check
+    name = stmt.name.evaluate(frame)
+    if stmt.action == 'open':
+        assert stmt.mode  # Internal check
         file = {
-            'type': mode,
+            'type': stmt.mode,
             'value': open(name, mode[0].lower()),
         }
         frame[name] = file
-    elif stmt['action'] == 'read':
+    elif stmt.action == 'read':
         file = frame[name]
-        varname = stmt['data'].evaluate(frame)
+        varname = stmt.data.evaluate(frame)
         line = file['value'].readline().rstrip()
         frame[varname]['value'] = line
-    elif stmt['action'] == 'write':
+    elif stmt.action == 'write':
         file = frame[name]
-        writedata = str(stmt['data'].evaluate(frame))
+        writedata = str(stmt.data.evaluate(frame))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
         file['value'].write(writedata)
-    elif stmt['action'] == 'close':
+    elif stmt.action == 'close':
         file = frame[name]
         file['value'].close()
         del frame[name]
 
 def execute(frame, stmt):
-    if stmt['rule'] == 'output':
+    if stmt.rule == 'output':
         stmt.accept(frame, execOutput)
-    if stmt['rule'] == 'input':
+    if stmt.rule == 'input':
         stmt.accept(frame, execInput)
-    if stmt['rule'] == 'declare':
+    if stmt.rule == 'declare':
         stmt.accept(frame, execDeclare)
-    if stmt['rule'] == 'assign':
+    if stmt.rule == 'assign':
         stmt.accept(frame, execAssign)
-    if stmt['rule'] == 'case':
+    if stmt.rule == 'case':
         stmt.accept(frame, execCase)
-    if stmt['rule'] == 'if':
+    if stmt.rule == 'if':
         stmt.accept(frame, execIf)
-    if stmt['rule'] == 'while':
+    if stmt.rule == 'while':
         stmt.accept(frame, execWhile)
-    if stmt['rule'] == 'repeat':
+    if stmt.rule == 'repeat':
         stmt.accept(frame, execRepeat)
-    if stmt['rule'] == 'procedure':
+    if stmt.rule == 'procedure':
         stmt.accept(frame, execProcedure)
-    if stmt['rule'] == 'call':
+    if stmt.rule == 'call':
         stmt.accept(frame, execCall)
-    if stmt['rule'] == 'function':
+    if stmt.rule == 'function':
         stmt.accept(frame, execFunction)
-    if stmt['rule'] == 'return':
+    if stmt.rule == 'return':
         return stmt.accept(frame, execReturn)
-    if stmt['rule'] == 'file':
+    if stmt.rule == 'file':
         stmt.accept(frame, execFile)
 
 def interpret(statements, frame=None):
