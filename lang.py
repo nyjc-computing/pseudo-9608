@@ -4,7 +4,7 @@ from builtin import add, sub, mul, div
 
 
 class Expr:
-    def resolve(self):
+    def resolve(self, frame=None):
         raise NotImplementedError
 
     def evaluate(self):
@@ -51,8 +51,8 @@ class Unary(Expr):
         self.oper = oper
         self.right = right
 
-    def resolve(self, frame=None):
-        return self.right.resolve()
+    def resolve(self, frame):
+        return self.right.resolve(frame)
 
     def evaluate(self):
         return self.oper(self.right.value)
