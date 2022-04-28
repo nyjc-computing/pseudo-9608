@@ -6,13 +6,10 @@ class Expr:
         raise NotImplementedError
 
     def __repr__(self):
-        return (
-            f'{type(self).__class__}('
-            f'{", ".join((
-                getattr(self, attr) for attr in self.__slots__
-            ))}'
-            ')'
-        )
+        attrstr = ", ".join([
+            getattr(self, attr) for attr in self.__slots__
+        ])
+        return f'{type(self).__class__}({attrstr})'
 
 
 
