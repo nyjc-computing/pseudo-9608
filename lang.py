@@ -39,7 +39,7 @@ class Name(Expr):
         self.name = name
 
     def resolve(self, frame=None):
-        return 'NAME'
+        return self.name['word']
 
     def evaluate(self):
         return self.name['word']
