@@ -115,12 +115,15 @@ def verifyCall(frame, stmt):
     local = proc['value']['frame']
     for arg, param in zip(args, params):
         if stmt.passby == 'BYREF':
+            arg.resolve(frame)
             # Only names allowed for BYREF arguments
             if not isinstance(arg, Get):
                 raise LogicError(
                     'BYREF arg must be a name, not expression',
                     None,
                 )
+        else:
+            arg.resolve(local)
         paramtype = param['type']
         expectTypeElseError(frame, arg, paramtype)
 
