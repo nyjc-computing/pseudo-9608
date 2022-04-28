@@ -62,10 +62,10 @@ class Binary(Expr):
         self.right = right
 
     def resolve(self):
-    if self.oper in (lt, lte, gt, gte, ne, eq):
-        return 'BOOLEAN'
-    elif self.oper in (add, sub, mul, div):
-        return 'INTEGER'
+        if self.oper in (lt, lte, gt, gte, ne, eq):
+            return 'BOOLEAN'
+        elif self.oper in (add, sub, mul, div):
+            return 'INTEGER'
 
     def evaluate(self):
         return self.oper(self.left.value, self.right.value)
