@@ -182,7 +182,7 @@ def declare(tokens):
         raise ParseError("Invalid type", typetoken)
     var = {
         'name': name,
-        'type': typetoken,
+        'type': typetoken['word'],
     }
     return var
     
@@ -360,7 +360,7 @@ def openfileStmt(tokens):
     expectElseError(tokens, 'FOR', "after file identifier")
     if check(tokens)['word'] not in ('READ', 'WRITE', 'APPEND'):
         raise ParseError("Invalid file mode", check(tokens))
-    mode = consume(tokens)
+    mode = consume(tokens)['word']
     expectElseError(tokens, '\n')
     return File('file', 'open', name, mode, None)
 
