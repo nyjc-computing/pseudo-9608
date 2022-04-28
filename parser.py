@@ -53,8 +53,6 @@ def match(tokens, *words):
 
 # Precedence parsers
 
-# Expr: {'left': ..., 'oper': ..., 'right': ...}
-
 def identifier(tokens):
     token = check(tokens)
     if token['type'] == 'name':
@@ -76,19 +74,16 @@ def value(tokens):
     elif token['type'] == 'name':
         frame = None
         name = identifier(tokens)
-        oper = makeToken(name['line'], name['col'], 'symbol', '', get)
         args = []
         expr = makeGetExpr(frame, name)
         # Function call
         if match(tokens, '('):
-            thisline = tokens[0]['line']
             arg = expression(tokens)
             args += [arg]
             while match(tokens, ','):
                 arg = expression(tokens)
                 args += [arg]
             expectElseError(tokens, ')', "after '('")
-            oper = makeToken(name['line'], name['col'], 'symbol', '', call)
             expr = makeCallExpr(expr, args)
         return expr
     else:
