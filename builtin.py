@@ -7,9 +7,11 @@ class PseudoError(Exception):
         self.token = token
         if line is not None:
             self.line = line
-        else:
+        elif token:
             self.line = token['line']
-        self.col = token['col']
+        else:
+            self.line = None
+        self.col = token['col'] if token else None
 
     def msg(self):
         return self.args[0]
@@ -90,6 +92,8 @@ KEYWORDS = [
 ]
 
 TYPES = ['INTEGER', 'STRING']
+
+NULL = object()
 
 OPERATORS = {
     '+': add,

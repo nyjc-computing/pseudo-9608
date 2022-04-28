@@ -1,7 +1,8 @@
-from builtin import TYPES
+from builtin import TYPES, NULL
 from builtin import ParseError
-from builtin import get, lte, add, call
+from builtin import lte, add
 from scanner import makeToken
+from lang import Literal, Name, Unary, Binary, Get, Call
 
 
 
@@ -19,12 +20,28 @@ def consume(tokens):
     token = tokens.pop(0)
     return token
 
-def makeExpr(left, oper, right):
-    return {
-        'left': left,
-        'oper': oper,
-        'right': right,
-    }
+def makeExpr(
+    *,
+    type=None, value=None,
+    frame=None, name=None,
+    left=None, oper=None, right=None,
+    callable=None, args=None,
+):
+    if name is not None:
+        if frame is not None:
+            return Get(frame, name)
+        else:
+            return Name(name)
+    if type is not None and value is not None:
+        return Literal(type, value)
+    if oper is not None and right is not None:
+        if left is not None:
+            return Binary(left, oper, right)
+        else:
+            return Unary(oper, right)
+    if callable is not None and args is not None:
+        return Call(callable, args)
+    raise ValueError("Could not find valid keyword argument combination")
 
 def expectElseError(tokens, word, addmsg=None):
     if check(tokens)['word'] == word:
@@ -41,42 +58,47 @@ def match(tokens, *words):
 
 # Precedence parsers
 
-# Expr: {'left': ..., 'oper': ..., 'right': ...}
-
 def identifier(tokens):
-    token = check(tokens)
+    token = consume(tokens)
     if token['type'] == 'name':
-        return consume(tokens)
+        return Name(token['word'])
     else:
         raise ParseError(f"Expected variable name", token)
 
 def value(tokens):
     token = check(tokens)
     # A single value
-    if token['type'] in ['integer', 'string']:
-        return consume(tokens)
+    if token['type'] in ['INTEGER', 'STRING']:
+        expr = makeExpr(
+            type=token['type'],
+            value=token['value'],
+        )
+        consume(tokens)
+        return expr
     #  A grouping
     elif match(tokens, '('):
         expr = expression(tokens)
         expectElseError(tokens, ')', "after '('")
         return expr        
     elif token['type'] == 'name':
-        frame = None
         name = identifier(tokens)
-        oper = makeToken(name['line'], name['col'], 'symbol', '', get)
-        args = []
-        expr = makeExpr(frame, oper, name)
+        expr = makeExpr(
+            frame=NULL,
+            name=name,
+        )
         # Function call
+        args = []
         if match(tokens, '('):
-            thisline = tokens[0]['line']
             arg = expression(tokens)
             args += [arg]
             while match(tokens, ','):
                 arg = expression(tokens)
                 args += [arg]
             expectElseError(tokens, ')', "after '('")
-            oper = makeToken(name['line'], name['col'], 'symbol', '', call)
-            expr = makeExpr(expr, oper, args)
+            expr = makeExpr(
+                callable=expr,
+                args=args,
+            )
         return expr
     else:
         raise ParseError("Unexpected token", token)
@@ -87,7 +109,11 @@ def muldiv(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('*', '/'):
         oper = consume(tokens)
         right = value(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeExpr(
+            left=expr,
+            oper=oper['value'],
+            right=right,
+        )
     return expr
 
 def addsub(tokens):
@@ -95,7 +121,11 @@ def addsub(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeExpr(
+            left=expr,
+            oper=oper['value'],
+            right=right,
+        )
     return expr
 
 def comparison(tokens):
@@ -104,7 +134,11 @@ def comparison(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeExpr(
+            left=expr,
+            oper=oper['value'],
+            right=right,
+        )
     return expr
 
 def equality(tokens):
@@ -113,7 +147,11 @@ def equality(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
-        expr = makeExpr(expr, oper, right)
+        expr = makeExpr(
+            left=expr,
+            oper=oper['value'],
+            right=right,
+        )
     return expr
 
 def expression(tokens):
@@ -182,7 +220,7 @@ def caseStmt(tokens):
     expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
     while not atEnd(tokens) and check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
-        val = value(tokens)['value']
+        val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
         stmt = statement(tokens)
         stmts[val] = stmt
@@ -263,7 +301,7 @@ def forStmt(tokens):
     start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = makeToken(end['line'], end['col'], 'integer', '1', 1)
+    step = makeExpr(type='INTEGER', value=1)
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n', "at end of FOR")
@@ -280,12 +318,11 @@ def forStmt(tokens):
         makeToken(end['line'], end['col'], 'keyword', '\n', None),
     ])
     # Generate loop cond
-    cond = expression([
-        name,
-        makeToken(name['line'], name['col'], 'symbol', '<=', lte),
-        end,
-        makeToken(start['line'], start['col'], 'keyword', '\n', None),
-    ])
+    cond = makeExpr(
+        left=makeExpr(frame=None, name=name),
+        oper=lte,
+        right=end,
+    )
     # Add increment statement
     incr = assignStmt([
         name,

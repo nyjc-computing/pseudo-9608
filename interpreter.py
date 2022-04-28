@@ -13,8 +13,8 @@ def executeStmts(frame, stmts):
 
 def assignArgsParams(frame, args, callable):
     for arg, param in zip(args, callable['params']):
-        name = evaluate(callable['frame'], param['name'])
-        callable['frame'][name]['value'] = evaluate(frame, arg)
+        name = param['name'].evaluate(callable['frame'])
+        callable['frame'][name]['value'] = arg.evaluate(frame)
 
 def evaluate(frame, expr):
     # Evaluating tokens
@@ -38,30 +38,30 @@ def evaluate(frame, expr):
 
 def execOutput(frame, stmt):
     for expr in stmt['exprs']:
-        print(str(evaluate(frame, expr)), end='')
+        print(str(expr.evaluate(frame)), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
-    name = evaluate(frame, stmt['name'])
+    name = stmt['name'].evaluate(frame)
     frame[name]['value'] = input()
 
 def execDeclare(frame, stmt):
     pass
 
 def execAssign(frame, stmt):
-    name = evaluate(frame, stmt['name'])
-    value = evaluate(frame, stmt['expr'])
+    name = stmt['name'].evaluate(frame)
+    value = stmt['expr'].evaluate(frame)
     frame[name]['value'] = value
 
 def execCase(frame, stmt):
-    cond = evaluate(frame, stmt['cond'])
+    cond = stmt['cond'].evaluate(frame)
     if cond in stmt['stmts']:
         execute(frame, stmt['stmts'][cond])
     elif stmt['fallback']:
         execute(frame, stmt['fallback'])
 
 def execIf(frame, stmt):
-    if evaluate(frame, stmt['cond']):
+    if stmt['cond'].evaluate(frame):
         executeStmts(frame, stmt['stmts'][True])
     elif stmt['fallback']:
         executeStmts(frame, stmt['fallback'])
@@ -69,12 +69,12 @@ def execIf(frame, stmt):
 def execWhile(frame, stmt):
     if stmt['init']:
         execute(frame, stmt['init'])
-    while evaluate(frame, stmt['cond']) is True:
+    while stmt['cond'].evaluate(frame) is True:
         executeStmts(frame, stmt['stmts'])
 
 def execRepeat(frame, stmt):
     executeStmts(frame, stmt['stmts'])
-    while evaluate(frame, stmt['cond']) is False:
+    while stmt['cond'].evaluate(frame) is False:
         executeStmts(frame, stmt['stmts'])
 
 def execProcedure(frame, stmt):
@@ -84,7 +84,7 @@ def execFunction(frame, stmt):
     pass
 
 def execCall(frame, stmt):
-    proc = evaluate(frame, stmt['name'])
+    proc = stmt['name'].evaluate(frame)
     assignArgsParams(frame, stmt['args'], proc)
     return executeStmts(frame, proc['stmts'])
 
@@ -92,10 +92,10 @@ def execReturn(local, stmt):
     # This will typically be execute()ed within
     # evaluate() in a function call, so frame is expected
     # to be local
-    return evaluate(local, stmt['expr'])
+    return stmt['expr'].evaluate(local)
 
 def execFile(frame, stmt):
-    name = evaluate(frame, stmt['name'])
+    name = stmt['name'].evaluate(frame)
     if stmt['action'] == 'open':
         mode = stmt['mode']['word']
         assert mode  # Internal check
@@ -106,12 +106,12 @@ def execFile(frame, stmt):
         frame[name] = file
     elif stmt['action'] == 'read':
         file = frame[name]
-        varname = evaluate(frame, stmt['data'])
+        varname = stmt['data'].evaluate(frame)
         line = file['value'].readline().rstrip()
         frame[varname]['value'] = line
     elif stmt['action'] == 'write':
         file = frame[name]
-        writedata = str(evaluate(frame, stmt['data']))
+        writedata = str(stmt['data'].evaluate(frame))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'

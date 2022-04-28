@@ -112,7 +112,7 @@ def scan(src):
             token = makeToken(
                 code['line'],
                 code['cursor'] - code['lineStart'] - len(text),
-                'integer',
+                'INTEGER',
                 text,
                 int(text),
             )
@@ -121,7 +121,7 @@ def scan(src):
             token = makeToken(
                 code['line'],
                 code['cursor'] - code['lineStart'] - len(text),
-                'string',
+                'STRING',
                 text,
                 text[1:-1],
             )
