@@ -1,4 +1,4 @@
-from builtin import TYPES
+from builtin import TYPES, NULL
 from builtin import ParseError
 from builtin import lte, add
 from scanner import makeToken
@@ -81,7 +81,7 @@ def value(tokens):
         expectElseError(tokens, ')', "after '('")
         return expr        
     elif token['type'] == 'name':
-        frame = None
+        frame = NULL
         name = identifier(tokens)
         args = []
         expr = makeExpr(
