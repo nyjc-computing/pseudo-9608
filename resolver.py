@@ -71,7 +71,7 @@ def verifyWhile(frame, stmt):
     verifyStmts(frame, stmt['stmts'])
 
 def verifyProcedure(frame, stmt):
-    passby = stmt['passby']['word']
+    passby = stmt['passby']
     # Set up local frame
     local = {}
     for var in stmt['params']:
@@ -114,7 +114,7 @@ def verifyCall(frame, stmt):
     # Type-check arguments
     local = proc['value']['frame']
     for arg, param in zip(args, params):
-        if stmt['passby']['word'] == 'BYREF':
+        if stmt['passby'] == 'BYREF':
             # Only names allowed for BYREF arguments
             # Check for a get expr
             if arg['oper']['value'] is not get:
@@ -122,7 +122,7 @@ def verifyCall(frame, stmt):
                     'BYREF arg must be a name, not expression',
                     stmt['passby'],
                 )
-        paramtype = param['type']['word']
+        paramtype = param['type']
         expectTypeElseError(frame, arg, paramtype)
 
 def verifyFunction(frame, stmt):

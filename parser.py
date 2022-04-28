@@ -300,7 +300,7 @@ def procedureStmt(tokens):
     if match(tokens, '('):
         passby = makeToken(name['line'], name['col'], 'keyword', 'BYVALUE', None)
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
-            passby = consume(tokens)
+            passby = consume(tokens)['word']
         var = declare(tokens)
         params += [var]
         while match(tokens, ','):
@@ -332,7 +332,7 @@ def functionStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = makeToken(name['line'], name['col'], 'keyword', 'BYVALUE', None)
+        passby = 'BYVALUE'
         var = declare(tokens)
         params += [var]
         while match(tokens, ','):
