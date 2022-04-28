@@ -68,7 +68,7 @@ def identifier(tokens):
 def value(tokens):
     token = check(tokens)
     # A single value
-    if token['type'] in ['integer', 'string']:
+    if token['type'] in ['INTEGER', 'STRING']:
         expr = makeExpr(
             type=token['type'],
             value=token['value'],
