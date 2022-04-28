@@ -136,9 +136,6 @@ class Stmt:
     def verify(self, frame=None):
         raise NotImplementedError
 
-    def execute(self, frame=None):
-        raise NotImplementedError
-
     def __repr__(self):
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -156,9 +153,6 @@ class Output(Stmt):
     def verify(self, frame):
         pass
 
-    def execute(self, frame):
-        pass
-
 
 
 class Input(Stmt):
@@ -168,9 +162,6 @@ class Input(Stmt):
         self.name = name
 
     def verify(self, frame):
-        pass
-
-    def execute(self, frame):
         pass
 
 
@@ -185,9 +176,6 @@ class Declare(Stmt):
     def verify(self, frame):
         pass
 
-    def execute(self, frame):
-        pass
-
 
 
 class Assign(Stmt):
@@ -198,9 +186,6 @@ class Assign(Stmt):
         self.expr = expr
 
     def verify(self, frame):
-        pass
-
-    def execute(self, frame):
         pass
 
 
@@ -216,9 +201,6 @@ class Conditional(Stmt):
     def verify(self, frame):
         pass
 
-    def execute(self, frame):
-        pass
-
 
 
 class Loop(Stmt):
@@ -230,9 +212,6 @@ class Loop(Stmt):
         self.stmts = stmts
 
     def verify(self, frame):
-        pass
-
-    def execute(self, frame):
         pass
 
 
@@ -250,9 +229,6 @@ class Callable(Stmt):
     def verify(self, frame):
         pass
 
-    def execute(self, frame):
-        pass
-
 
 
 class Calling(Stmt):
@@ -267,9 +243,6 @@ class Calling(Stmt):
     def verify(self, frame):
         pass
 
-    def execute(self, frame):
-        pass
-
 
 
 class Return(Stmt):
@@ -279,9 +252,6 @@ class Return(Stmt):
         self.expr = expr
 
     def verify(self, frame):
-        pass
-
-    def execute(self, frame):
         pass
 
 
@@ -296,7 +266,4 @@ class File(Stmt):
         self.data = data
 
     def verify(self, frame):
-        pass
-
-    def execute(self, frame):
         pass
