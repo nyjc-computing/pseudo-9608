@@ -39,13 +39,12 @@ def verifyInput(frame, stmt):
     if name not in frame:
         raise LogicError(
             f'Name not declared',
-            stmt['name'].name,
+            stmt['name'].resolve(frame),
         )
 
 def verifyDeclare(frame, stmt):
     name = stmt['name'].resolve(frame)
-    type_ = stmt['type']['word']
-    frame[name] = {'type': type_, 'value': None}
+    frame[name] = {'type': stmt['type'], 'value': None}
 
 def verifyAssign(frame, stmt):
     name = stmt['name'].resolve(frame)
@@ -164,7 +163,7 @@ def verifyFile(frame, stmt):
     if stmt['action'] == 'open':
         if name in frame:
             raise LogicError("File already opened", stmt['name'])
-        file = {'type': stmt['mode']['word'], 'value': None}
+        file = {'type': stmt['mode'], 'value': None}
         frame[name] = file
     elif stmt['action'] == 'read':
         if name not in frame:
