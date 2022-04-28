@@ -66,7 +66,9 @@ class Binary(Expr):
         self.oper = oper
         self.right = right
 
-    def resolve(self, frame=None):
+    def resolve(self, frame):
+        self.left.resolve(frame)
+        self.right.resolve(frame)
         if self.oper in (lt, lte, gt, gte, ne, eq):
             return 'BOOLEAN'
         elif self.oper in (add, sub, mul, div):
