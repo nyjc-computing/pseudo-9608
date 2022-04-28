@@ -43,24 +43,6 @@ def makeExpr(
         return Call(callable, args)
     raise ValueError("Could not find valid keyword argument combination")
 
-def makeLiteralExpr(type, value):
-    return Literal(type, value)
-
-def makeNameExpr(name):
-    return Name(name)
-
-def makeUnaryExpr(oper, right):
-    return Unary(oper, right)
-
-def makeBinaryExpr(left, oper, right):
-    return Binary(left, oper, right)
-
-def makeGetExpr(frame, name):
-    return Get(frame, name)
-
-def makeCallExpr(callable, args):
-    return Call(callable, args)
-
 def expectElseError(tokens, word, addmsg=None):
     if check(tokens)['word'] == word:
         consume(tokens)
@@ -87,7 +69,7 @@ def value(tokens):
     token = check(tokens)
     # A single value
     if token['type'] in ['integer', 'string']:
-        expr = makeLiteralExpr(
+        expr = makeExpr(
             type=token['type'],
             value=token['value'],
         )
@@ -101,7 +83,7 @@ def value(tokens):
         frame = None
         name = identifier(tokens)
         args = []
-        expr = makeGetExpr(
+        expr = makeExpr(
             frame=frame,
             name=name,
         )
@@ -113,7 +95,7 @@ def value(tokens):
                 arg = expression(tokens)
                 args += [arg]
             expectElseError(tokens, ')', "after '('")
-            expr = makeCallExpr(
+            expr = makeExpr(
                 callable=expr,
                 args=args,
             )
@@ -127,7 +109,7 @@ def muldiv(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('*', '/'):
         oper = consume(tokens)
         right = value(tokens)
-        expr = makeBinaryExpr(
+        expr = makeExpr(
             left=expr,
             oper=oper['value'],
             right=right,
@@ -139,7 +121,7 @@ def addsub(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
-        expr = makeBinaryExpr(
+        expr = makeExpr(
             left=expr,
             oper=oper['value'],
             right=right,
@@ -152,7 +134,7 @@ def comparison(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
-        expr = makeBinaryExpr(
+        expr = makeExpr(
             left=expr,
             oper=oper['value'],
             right=right,
@@ -165,7 +147,7 @@ def equality(tokens):
     while not atEnd(tokens) and check(tokens)['word'] in ('<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
-        expr = makeBinaryExpr(
+        expr = makeExpr(
             left=expr,
             oper=oper['value'],
             right=right,
@@ -319,7 +301,7 @@ def forStmt(tokens):
     start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = makeLiteralExpr(type='INTEGER', value=1)
+    step = makeExpr(type='INTEGER', value=1)
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n', "at end of FOR")
@@ -336,8 +318,8 @@ def forStmt(tokens):
         makeToken(end['line'], end['col'], 'keyword', '\n', None),
     ])
     # Generate loop cond
-    cond = makeBinaryExpr(
-        left=makeGetExpr(frame=None, name=name),
+    cond = makeExpr(
+        left=makeExpr(frame=None, name=name),
         oper=lte,
         right=end,
     )
