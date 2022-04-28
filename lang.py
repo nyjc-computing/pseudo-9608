@@ -139,3 +139,142 @@ class Stmt:
             repr(getattr(self, attr)) for attr in self.__slots__
         ])
         return f'{type(self).__name__}({attrstr})'
+
+
+
+class Output(Stmt):
+    __slots__ = ('rule', 'exprs')
+    def __init__(self, rule, exprs):
+        self.rule = rule
+        self.exprs = exprs
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Input(Stmt):
+    __slots__ = ('rule', 'name')
+    def __init__(self, rule, name):
+        self.rule = rule
+        self.name = name
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Declare(Stmt):
+    __slots__ = ('rule', 'name', 'type')
+    def __init__(self, rule, name, type):
+        self.rule = rule
+        self.name = name
+        self.type = type
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Assign(Stmt):
+    __slots__ = ('rule', 'name', 'expr')
+    def __init__(self, rule, name, expr):
+        self.rule = rule
+        self.name = name
+        self.expr = expr
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Conditional(Stmt):
+    __slots__ = ('rule', 'cond', 'stmtMap', 'fallback')
+    def __init__(self, rule, cond, stmtMap, fallback):
+        self.rule = rule
+        self.cond = cond
+        self.stmtMap = stmtMap
+        self.fallback = fallback
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Loop(Stmt):
+    __slots__ = ('rule', 'init', 'cond', 'stmts')
+    def __init__(self, rule, init, cond, stmts):
+        self.rule = rule
+        self.init = init
+        self.cond = cond
+        self.stmts = stmts
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Callable(Stmt):
+    __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
+    def __init__(self, rule, name, passby, params, stmts, returnType):
+        self.rule = rule
+        self.name = name
+        self.passby = passby
+        self.params = params
+        self.stmts = stmts
+        self.returnType = returnType
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class Return(Stmt):
+    __slots__ = ('rule', 'expr')
+    def __init__(self, rule, expr):
+        self.rule = rule
+        self.expr = expr
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
+
+
+
+class File(Stmt):
+    __slots__ = ('rule', 'action', 'name', 'mode', 'data')
+    def __init__(self, rule, action, name, mode, data):
+        self.rule = rule
+        self.action = action
+        self.name = name
+        self.mode = mode
+        self.data = data
+
+    def verify(self, frame):
+        pass
+
+    def execute(self, frame):
+        pass
