@@ -4,7 +4,7 @@ from builtin import lte, add
 from scanner import makeToken
 from lang import Literal, Name, Unary, Binary, Get, Call
 from lang import Output, Input, Declare, Assign, Conditional, Loop
-from lang import Callable, Return, File
+from lang import Callable, Calling, Return, File
 
 
 
@@ -167,20 +167,12 @@ def outputStmt(tokens):
     while match(tokens, ','):
         exprs += [expression(tokens)]
     expectElseError(tokens, '\n', "after statement")
-    stmt = {
-        'rule': 'output',
-        'exprs': exprs,
-    }
-    return stmt
+    return Output('output', exprs)
 
 def inputStmt(tokens):
     name = identifier(tokens)
     expectElseError(tokens, '\n', "after statement")
-    stmt = {
-        'rule': 'input',
-        'name': name,
-    }
-    return stmt
+    return Input('input', name)
 
 def declare(tokens):
     name = identifier(tokens)
@@ -197,24 +189,14 @@ def declare(tokens):
 def declareStmt(tokens):
     var = declare(tokens)
     expectElseError(tokens, '\n', "after statement")
-    stmt = {
-        'rule': 'declare',
-        'name': var['name'],
-        'type': var['type'],
-    }
-    return stmt
+    return Declare('declare', var['name'], var['type'])
 
 def assignStmt(tokens):
     name = identifier(tokens)
     expectElseError(tokens, '<-', "after name")
     expr = expression(tokens)
     expectElseError(tokens, '\n', "after statement")
-    stmt = {
-        'rule': 'assign',
-        'name': name,
-        'expr': expr,
-    }
-    return stmt
+    return Assign('assign', name, expr)
 
 def caseStmt(tokens):
     expectElseError(tokens, 'OF', "after CASE")
@@ -231,13 +213,7 @@ def caseStmt(tokens):
         fallback = statement(tokens)
     expectElseError(tokens, 'ENDCASE', "at end of CASE")
     expectElseError(tokens, '\n', "after ENDCASE")
-    stmt = {
-        'rule': 'case',
-        'cond': cond,
-        'stmts': stmts,
-        'fallback': fallback,
-    }
-    return stmt
+    return Conditional('case', cond, stmts, fallback)
 
 def ifStmt(tokens):
     cond = expression(tokens)
@@ -258,13 +234,7 @@ def ifStmt(tokens):
         fallback = false
     expectElseError(tokens, 'ENDIF', "at end of IF")
     expectElseError(tokens, '\n', "after statement")
-    stmt = {
-        'rule': 'if',
-        'cond': cond,
-        'stmts': stmts,
-        'fallback': fallback,
-    }
-    return stmt
+    return Conditional('if', cond, stmts, fallback)
 
 def whileStmt(tokens):
     cond = expression(tokens)
@@ -274,13 +244,7 @@ def whileStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDWHILE'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDWHILE")
-    stmt = {
-        'rule': 'while',
-        'init': None,
-        'cond': cond,
-        'stmts': stmts,
-    }
-    return stmt
+    return Loop('while', None, cond, stmts)
 
 def repeatStmt(tokens):
     expectElseError(tokens, '\n', "after REPEAT")
@@ -289,13 +253,7 @@ def repeatStmt(tokens):
         stmts += [statement(tokens)]
     cond = expression(tokens)
     expectElseError(tokens, '\n', "at end of UNTIL")
-    stmt = {
-        'rule': 'repeat',
-        'init': None,
-        'cond': cond,
-        'stmts': stmts
-    }
-    return stmt
+    return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
     name = identifier(tokens)
@@ -334,13 +292,7 @@ def forStmt(tokens):
         step,
         makeToken(end['line'], name['col'], 'keyword', '\n', None),
     ])
-    stmt = {
-        'rule': 'while',
-        'init': init,
-        'cond': cond,
-        'stmts': stmts + [incr],
-    }
-    return stmt
+    return Loop('while', init, cond, stmts + [incr])
 
 def procedureStmt(tokens):
     name = identifier(tokens)
@@ -361,17 +313,10 @@ def procedureStmt(tokens):
         stmts += [statement(tokens)]
     expectElseError(tokens, 'ENDPROCEDURE', "at end of PROCEDURE")
     expectElseError(tokens, '\n', "after ENDPROCEDURE")
-    stmt = {
-        'rule': 'procedure',
-        'name': name,
-        'passby': passby,
-        'params': params,
-        'stmts': stmts,
-    }
-    return stmt
+    return Callable('procedure', name, passby, params, stmts, None)
 
 def callStmt(tokens):
-    name = value(tokens)
+    callable = value(tokens)
     args = []
     if match(tokens, '('):
         arg = expression(tokens)
@@ -381,12 +326,7 @@ def callStmt(tokens):
             args += [arg]
         expectElseError(tokens, ')', "after arguments")
     expectElseError(tokens, '\n', "at end of CALL")
-    stmt = {
-        'rule': 'call',
-        'name': name,
-        'args': args,
-    }
-    return stmt
+    return Calling('call', callable, args)
 
 def functionStmt(tokens):
     name = identifier(tokens)
@@ -408,24 +348,12 @@ def functionStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFUNCTION")
-    stmt = {
-        'rule': 'function',
-        'name': name,
-        'passby': passby,
-        'params': params,
-        'stmts': stmts,
-        'returns': typetoken,
-    }
-    return stmt
+    return Callable('function', name, passby, params, stmts, typetoken['word'])
 
 def returnStmt(tokens):
     expr = expression(tokens)
     expectElseError(tokens, '\n', "at end of RETURN")
-    stmt = {
-        'rule': 'return',
-        'expr': expr,
-    }
-    return stmt
+    return Return('return', expr)
 
 def openfileStmt(tokens):
     name = value(tokens)
@@ -434,54 +362,26 @@ def openfileStmt(tokens):
         raise ParseError("Invalid file mode", check(tokens))
     mode = consume(tokens)
     expectElseError(tokens, '\n')
-    stmt = {
-        'rule': 'file',
-        'action': 'open',
-        'name': name,
-        'mode': mode,
-        'data': None,
-    }
-    return stmt
+    return File('file', 'open', name, mode, None)
 
 def readfileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, ',', "after file identifier")
     data = identifier(tokens)
     expectElseError(tokens, '\n')
-    stmt = {
-        'rule': 'file',
-        'action': 'read',
-        'name': name,
-        'mode': None,
-        'data': data,
-    }
-    return stmt
+    return File('file', 'read', name, None, data)
 
 def writefileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, ',', "after file identifier")
     data = expression(tokens)
     expectElseError(tokens, '\n')
-    stmt = {
-        'rule': 'file',
-        'action': 'write',
-        'name': name,
-        'mode': None,
-        'data': data,
-    }
-    return stmt
+    return File('file', 'write', name, None, data)
 
 def closefileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, '\n')
-    stmt = {
-        'rule': 'file',
-        'action': 'close',
-        'name': name,
-        'mode': None,
-        'data': None,
-    }
-    return stmt
+    return File('file', 'close', name, None, None)
 
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
