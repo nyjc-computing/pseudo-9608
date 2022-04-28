@@ -91,6 +91,8 @@ KEYWORDS = [
 
 TYPES = ['INTEGER', 'STRING']
 
+NULL = object()
+
 OPERATORS = {
     '+': add,
     '-': sub,
