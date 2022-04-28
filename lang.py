@@ -12,7 +12,7 @@ class Expr:
 
     def __repr__(self):
         attrstr = ", ".join([
-            getattr(self, attr) for attr in self.__slots__
+            repr(getattr(self, attr)) for attr in self.__slots__
         ])
         return f'{type(self).__class__}({attrstr})'
 
