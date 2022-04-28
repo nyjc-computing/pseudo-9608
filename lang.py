@@ -1,5 +1,6 @@
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
+from builtin import NULL
 
 
 
@@ -86,6 +87,8 @@ class Get(Expr):
         self.name = name
 
     def resolve(self, frame=None):
+        if frame and self.frame is NULL:
+            self.frame = frame
         name = self.name.evaluate()
         slot = self.frame[name]
         return slot['type']
@@ -104,6 +107,7 @@ class Call(Expr):
         self.args = args
 
     def resolve(self, frame=None):
+        self.callable.resolve(fram)
         slot = self.callable.evaluate()
         return slot['type']
 
