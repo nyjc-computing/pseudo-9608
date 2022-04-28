@@ -89,7 +89,7 @@ def verifyDeclare(frame, stmt):
     frame[name] = {'type': type_, 'value': None}
 
 def verifyAssign(frame, stmt):
-    name = resolve(frame, stmt['name'])
+    name = stmt['name'].resolve(frame)
     expectTypeElseError(frame, stmt['expr'], frame[name]['type'])
 
 def verifyCase(frame, stmt):
