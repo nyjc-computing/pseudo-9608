@@ -115,4 +115,3 @@ class Call(Expr):
 
     def evaluate(self):
         return self.callable.evaluate()
-        # execute call and return
