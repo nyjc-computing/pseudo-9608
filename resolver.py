@@ -136,16 +136,21 @@ def verifyFunction(frame, stmt):
     name = stmt.name.resolve(frame)
     returnType = stmt.returnType
     # Resolve procedure statements using local
+    hasReturn = True
     for procstmt in stmt.stmts:
         stmtType = procstmt.accept(local, verify)
-        if stmtType and (stmtType != returnType):
+        if stmtType:
+            hasReturn = True
+            if stmtType != returnType:
             raise LogicError(
                 f"Expect {returnType}, got {stmtType}",
                 stmt.name,
             )
+    if not hasReturn:
+        raise LogicError("No RETURN in function, None)
     # Declare function in frame
     frame[name] = {
-        'type': returns,
+        'type': returnType,
         'value': {
             'frame': local,
             'passby': 'BYVALUE',
