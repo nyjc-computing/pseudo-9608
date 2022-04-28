@@ -76,10 +76,9 @@ def verifyProcedure(frame, stmt):
     for var in stmt.params:
         if stmt.passby == 'BYREF':
             name = var['name'].resolve(frame)
-            globvar = frame[name]
-            expectTypeElseError(frame, var['type'], globvar['type'])
-            # Reference global vars in local
-            local[name] = globvar
+            expectTypeElseError(frame, var['type'], frame[name]['type'])
+            # Reference frame vars in local
+            local[name] = frame[name]
         else:
             verifyDeclare(local, var)
     # Resolve procedure statements using local
