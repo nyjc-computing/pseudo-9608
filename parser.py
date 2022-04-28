@@ -20,6 +20,9 @@ def consume(tokens):
     token = tokens.pop(0)
     return token
 
+def makeExpr(**kwargs):
+    pass
+
 def makeLiteralExpr(type, value):
     return Literal(type, value)
 
