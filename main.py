@@ -22,8 +22,9 @@ def main():
         statements = parser.parse(tokens)
         statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
-        lineinfo = f"[Line {err.line}]" if err.line else ""
-        print(lineinfo, lines[err.line - 1])
+        if err.line:
+            lineinfo = f"[Line {err.line}]"
+            print(lineinfo, lines[err.line - 1])
         if err.col:
             leftmargin = len(lineinfo) + 1 + err.col
             print((' ' * leftmargin) + '^')
