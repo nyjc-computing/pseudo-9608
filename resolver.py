@@ -201,8 +201,7 @@ def verifyReturn(local, stmt):
     return stmt['expr'].resolve(local)
 
 def verifyFile(frame, stmt):
-    # resolve() returns type instead of string value
-    name = stmt['name']['value']
+    name = stmt['name'].resolve(frame)
     if stmt['action'] == 'open':
         if name in frame:
             raise LogicError("File already opened", stmt['name'])
@@ -215,7 +214,7 @@ def verifyFile(frame, stmt):
         if file['type'] != 'READ':
             raise LogicError("File mode is {file['type']}", stmt['name'])
     elif stmt['action'] == 'write':
-        resolve(frame, stmt['data'])
+        stmt['data'].resolve(frame)
         if name not in frame:
             raise LogicError("File not open", stmt['name'])
         file = frame[name]
