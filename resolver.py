@@ -30,11 +30,33 @@ def verifyInput(frame, stmt):
             stmt.name,
         )
 
+def get(frame, expr):
+    """Evaluate a Get expr to retrieve value from frame"""
+    if expr.name not in frame:
+        raise LogicError("Undeclared", expr.name)
+    if frame[expr.name] is None:
+        raise LogicError("No value assigned", expr.name)
+    return frame[expr.name]
+
+def value(frame, expr):
+    """Return the value of a Literal"""
+    return expr.value
+
+def resolveLiteral(frame, literal):
+    return literal.type
+
 def resolveDeclare(frame, expr):
     if expr.name in frame:
         raise LogicError("Already declared", expr.name)
     frame[expr.name] = {'type': expr.type, 'value': None}
     return expr.type
+
+def resolveUnary(frame, expr):
+    expr.right.accept(frame, resolve)
+
+def resolveBinary(frame, expr):
+    expr.left.accept(frame, resolve)
+    expr.right.accept(frame, resolve)
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
