@@ -43,9 +43,14 @@ def verifyInput(frame, stmt):
             stmt.name,
         )
 
+def resolveDeclare(frame, expr):
+    if expr.name in frame:
+        raise LogicError("Already declared", expr.name)
+    frame[expr.name] = {'type': expr.type, 'value': None}
+    return expr.type
+
 def verifyDeclare(frame, stmt):
-    name = stmt.name.resolve(frame)
-    frame[name] = {'type': stmt.type, 'value': None}
+    stmt.expr.accept(resolveDeclare)
 
 def verifyAssign(frame, stmt):
     name = stmt.name.resolve(frame)
