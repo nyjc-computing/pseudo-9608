@@ -1,4 +1,3 @@
-from builtin import get, call
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
