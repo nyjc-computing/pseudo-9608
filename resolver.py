@@ -98,8 +98,8 @@ def verifyProcedure(frame, stmt):
 
 def verifyCall(frame, stmt):
     stmt.callable.resolve(frame)
-    name = stmt.callable.evaluate(frame)
-    proc = frame[name]
+    breakpoint()
+    proc = stmt.callable.callable.evaluate(frame)
     expectTypeElseError(frame, proc, 'procedure')
     args, params = stmt.args, proc['value']['params']
     if len(args) != len(params):
