@@ -31,3 +31,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [14d Column info](https://github.com/nyjc-computing/pseudo/pull/31)
 - [15 File IO](https://github.com/nyjc-computing/pseudo/pull/32)
 - [16a OOP: Expressions](https://github.com/nyjc-computing/pseudo/pull/34)
+- [16b OOP: Statements](https://github.com/nyjc-computing/pseudo/pull/35)
