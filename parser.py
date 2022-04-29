@@ -285,7 +285,7 @@ def procedureStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = makeToken(None, None, 'keyword', 'BYVALUE', None)
+        passby = 'BYVALUE'
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)['word']
         var = declare(tokens)
