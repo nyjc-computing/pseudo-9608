@@ -197,7 +197,7 @@ def verifyReturn(local, stmt):
     return stmt.expr.resolve(local)
 
 def verifyFile(frame, stmt):
-    name = stmt.name
+    name = stmt.name.accept(frame, value)
     if stmt.action == 'open':
         if name in frame:
             raise LogicError("File already opened", stmt.name)
