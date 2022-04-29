@@ -48,6 +48,12 @@ def resolveDeclare(frame, expr):
     frame[expr.name] = {'type': expr.type, 'value': None}
     return expr.type
 
+def resolveGet(frame, expr):
+    expr.frame = frame
+
+def get(frame, expr):
+    return frame[expr.name]
+
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
