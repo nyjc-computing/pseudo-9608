@@ -96,7 +96,7 @@ def execRepeat(frame, stmt):
         executeStmts(frame, stmt.stmts)
 
 def execFile(frame, stmt):
-    name = stmt.name
+    name = stmt.name.accept(frame, evaluate)
     if stmt.action == 'open':
         assert stmt.mode  # Internal check
         file = {
