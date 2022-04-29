@@ -73,6 +73,7 @@ def verifyWhile(frame, stmt):
 def verifyProcedure(frame, stmt):
     # Set up local frame
     local = {}
+    breakpoint()
     for var in stmt.params:
         if stmt.passby == 'BYREF':
             name = var['name'].resolve(frame)
@@ -81,7 +82,7 @@ def verifyProcedure(frame, stmt):
             local[name] = frame[name]
         else:
             name = var['name'].resolve(frame)
-            frame[name] = {'type': var['type'], 'value': None}
+            local[name] = {'type': var['type'], 'value': None}
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
