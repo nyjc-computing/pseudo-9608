@@ -145,6 +145,14 @@ class Stmt:
 
 
 
+class ExprStmt(Stmt):
+    __slots__ = ('rule', 'expr')
+    def __init__(self, rule, expr):
+        self.rule = rule
+        self.expr = expr
+
+
+
 class Output(Stmt):
     __slots__ = ('rule', 'exprs')
     def __init__(self, rule, exprs):
