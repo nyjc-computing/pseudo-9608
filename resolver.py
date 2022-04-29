@@ -125,7 +125,7 @@ def verifyIf(frame, stmt):
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
 
-def verifyWhile(frame, stmt):
+def verifyLoop(frame, stmt):
     if stmt.init:
         stmt.init.accept(frame, verify)
     stmt.cond.resolve(frame)
@@ -258,7 +258,7 @@ def verify(frame, stmt):
     elif stmt.rule == 'if':
         stmt.accept(frame, verifyIf)
     elif stmt.rule in ('while', 'repeat', 'for'):
-        stmt.accept(frame, verifyWhile)
+        stmt.accept(frame, verifyLoop)
     elif stmt.rule == 'procedure':
         stmt.accept(frame, verifyProcedure)
     elif stmt.rule == 'call':
