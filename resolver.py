@@ -46,17 +46,32 @@ def resolveLiteral(frame, literal):
     return literal.type
 
 def resolveDeclare(frame, expr):
+    """Declare variable in frame"""
     if expr.name in frame:
         raise LogicError("Already declared", expr.name)
     frame[expr.name] = {'type': expr.type, 'value': None}
     return expr.type
 
 def resolveUnary(frame, expr):
-    expr.right.accept(frame, resolve)
+    righttype = expr.right.accept(frame, resolve)
+    if expr.oper is sub:
+        expectTypeElseError(righttype, 'INTEGER')
+        return 'INTEGER'
+    else:
+        raise ValueError("Unexpected oper {expr.oper}")
 
 def resolveBinary(frame, expr):
-    expr.left.accept(frame, resolve)
-    expr.right.accept(frame, resolve)
+    lefttype = expr.left.accept(frame, resolve)
+    righttype = expr.right.accept(frame, resolve)
+    if expr.oper in (gt, gte, lt, lte, ne, eq):
+        expectTypeElseError(lefttype, 'INTEGER')
+        expectTypeElseError(righttype, 'INTEGER')
+        return 'BOOLEAN'
+    if expr.oper in (add, sub, mul, div):
+        # TODO: Handle REAL type
+        expectTypeElseError(lefttype, 'INTEGER')
+        expectTypeElseError(righttype, 'INTEGER')
+        return 'INTEGER'
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
