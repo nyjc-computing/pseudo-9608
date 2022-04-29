@@ -20,16 +20,20 @@ def evalLiteral(frame, literal):
     return literal.value
 
 def evalUnary(frame, expr):
-    pass
+    rightval = expr.right.accept(frame, evaluate)
+    return expr.oper(rightval)
 
 def evalBinary(frame, expr):
-    pass
+    leftval = expr.left.accept(frame, evaluate)
+    rightval = expr.right.accept(frame, evaluate)
+    return expr.oper(leftval, rightval)
 
 def evalGet(frame, expr):
-    pass
+    return frame[expr.name]
 
 def evalCall(frame, expr):
-    pass
+    callable = expr.callable.accept(frame, evalGet)
+    # TODO: Implement evalCall
 
 def evaluate(frame, expr):
     if isinstance(expr, Literal):
