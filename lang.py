@@ -6,6 +6,11 @@ from interpreter import execute
 
 
 class Expr:
+    def accept(self, frame, visitor):
+        # visitor must be a function that takes
+        # a frame and an Expr
+        return visitor(frame, self)
+
     def resolve(self, frame=None):
         raise NotImplementedError
 
