@@ -49,6 +49,34 @@ def resolveDeclare(frame, expr):
     frame[expr.name] = {'type': expr.type, 'value': None}
     return expr.type
 
+def resolveCall(frame, expr):
+    breakpoint()
+    expr.callable.resolve(frame)
+    proc = expr.callable.callable.evaluate(frame)
+    expectTypeElseError(frame, expr.callable, 'procedure')
+    # if len(stmt.args) != len(proc['params']):
+    #     raise LogicError(
+    #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
+    #         None,
+    #     )
+    # # Type-check arguments
+    # local = proc['frame']
+    # for arg, param in zip(stmt.args, proc['params']):
+    #     if stmt.passby == 'BYREF':
+    #         arg.resolve(frame)
+    #         # Only names allowed for BYREF arguments
+    #         if not isinstance(arg, Get):
+    #             raise LogicError(
+    #                 'BYREF arg must be a name, not expression',
+    #                 None,
+    #             )
+    #     else:
+    #         arg.resolve(local)
+    #     paramtype = param['type']
+    #     expectTypeElseError(frame, arg, paramtype)
+
+
+
 def verifyAssign(frame, stmt):
     name = stmt.name.resolve(frame)
     expectTypeElseError(frame, stmt.expr, frame[name]['type'])
@@ -76,15 +104,13 @@ def verifyWhile(frame, stmt):
 def verifyProcedure(frame, stmt):
     # Set up local frame
     local = {}
-    for var in stmt.params:
+    for expr in stmt.params:
         if stmt.passby == 'BYREF':
-            name = var['name'].resolve(frame)
-            expectTypeElseError(frame, var['type'], frame[name]['type'])
+            expectTypeElseError(frame, expr.type, frame[expr.name]['type'])
             # Reference frame vars in local
-            local[name] = frame[name]
+            local[expr.name] = frame[expr.name]
         else:
-            name = var['name'].resolve(frame)
-            local[name] = {'type': var['type'], 'value': None}
+            local[expr.name] = {'type': expr.type, 'value': None}
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
@@ -205,7 +231,7 @@ def verify(frame, stmt):
     elif stmt.rule == 'procedure':
         stmt.accept(frame, verifyProcedure)
     elif stmt.rule == 'call':
-        stmt.accept(frame, verifyCall)
+        stmt.expr.accept(frame, resolveCall)
     elif stmt.rule == 'function':
         stmt.accept(frame, verifyFunction)
     elif stmt.rule == 'file':
