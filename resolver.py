@@ -80,7 +80,8 @@ def verifyProcedure(frame, stmt):
             # Reference frame vars in local
             local[name] = frame[name]
         else:
-            verifyDeclare(local, var)
+            name = var['name'].resolve(frame)
+            frame[name] = {'type': var['type'], 'value': None}
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
