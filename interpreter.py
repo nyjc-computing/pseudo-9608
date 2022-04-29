@@ -86,18 +86,6 @@ def execRepeat(frame, stmt):
     while stmt.cond.accept(frame, evaluate) is False:
         executeStmts(frame, stmt.stmts)
 
-def execProcedure(frame, stmt):
-    pass
-
-def execFunction(frame, stmt):
-    pass
-
-def execReturn(local, stmt):
-    # This will typically be execute()ed within
-    # evaluate() in a function call, so frame is expected
-    # to be local
-    return stmt.expr.evaluate(local)
-
 def execFile(frame, stmt):
     name = stmt.name.accept(frame, evaluate)
     if stmt.action == 'open':
@@ -142,11 +130,11 @@ def execute(frame, stmt):
     if stmt.rule == 'repeat':
         stmt.accept(frame, execRepeat)
     if stmt.rule == 'procedure':
-        stmt.accept(frame, execProcedure)
+        pass
     if stmt.rule == 'call':
         stmt.expr.accept(frame, evalCall)
     if stmt.rule == 'function':
-        stmt.accept(frame, execFunction)
+        pass
     if stmt.rule == 'return':
         return stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'file':
