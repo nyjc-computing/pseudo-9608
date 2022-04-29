@@ -52,6 +52,21 @@ class Name(Expr):
 
 
 
+class Declare(Expr):
+    __slots__ = ('name', 'type')
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type
+
+    def resolve(self, frame):
+        frame[self.name] = {'type': self.type, 'value': None}
+        return self.type
+
+    def evaluate(self, frame):
+        return frame[self.name]
+
+
+
 class Unary(Expr):
     __slots__ = ('oper', 'right')
     def __init__(self, oper, right):
