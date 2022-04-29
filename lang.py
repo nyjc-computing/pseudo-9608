@@ -184,12 +184,12 @@ class Input(Stmt):
 
 
 
-class Declare(Stmt):
-    __slots__ = ('rule', 'name', 'type')
-    def __init__(self, rule, name, type):
-        self.rule = rule
-        self.name = name
-        self.type = type
+# class Declare(Stmt):
+#     __slots__ = ('rule', 'name', 'type')
+#     def __init__(self, rule, name, type):
+#         self.rule = rule
+#         self.name = name
+#         self.type = type
 
 
 
