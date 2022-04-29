@@ -50,10 +50,15 @@ def resolveDeclare(frame, expr):
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
+    assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
 
 def get(frame, expr):
     """Evaluate a Get expr to retrieve value from frame"""
+    if expr.name not in frame:
+        raise LogicError("Undeclared", expr.name)
+    if frame[expr.name] is None:
+        raise LogicError("No value assigned", expr.name)
     return frame[expr.name]
 
 def resolveCall(frame, expr):
