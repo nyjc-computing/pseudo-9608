@@ -253,7 +253,7 @@ def verify(frame, stmt):
     elif stmt.rule == 'file':
         stmt.accept(frame, verifyFile)
     elif stmt.rule == 'return':
-        return stmt.accept(frame, verifyReturn)
+        return stmt.expr.accept(frame, resolve)
 
 def inspect(statements):
     frame = {}
