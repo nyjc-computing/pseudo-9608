@@ -284,11 +284,11 @@ def procedureStmt(tokens):
         passby = 'BYVALUE'
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)['word']
-        var = declare(tokens)
-        params += [var]
+        expr = declare(tokens)
+        params += [expr]
         while match(tokens, ','):
-            var = declare(tokens)
-            params += [var]
+            expr = declare(tokens)
+            params += [expr]
         expectElseError(tokens, ')', "at end of parameters")
     expectElseError(tokens, '\n', "after parameters")
     stmts = []
