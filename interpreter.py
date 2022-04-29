@@ -57,9 +57,6 @@ def execInput(frame, stmt):
     name = stmt.name.accept(frame, evaluate)
     frame[name]['value'] = input()
 
-def execDeclare(frame, stmt):
-    pass
-
 def execAssign(frame, stmt):
     name = stmt.name.accept(frame, evaluate)
     value = stmt.expr.accept(frame, evaluate)
@@ -138,7 +135,7 @@ def execute(frame, stmt):
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
     if stmt.rule == 'declare':
-        stmt.accept(frame, execDeclare)
+        pass
     if stmt.rule == 'assign':
         stmt.accept(frame, execAssign)
     if stmt.rule == 'case':
@@ -152,11 +149,11 @@ def execute(frame, stmt):
     if stmt.rule == 'procedure':
         stmt.accept(frame, execProcedure)
     if stmt.rule == 'call':
-        stmt.accept(frame, execCall)
+        stmt.expr.accept(frame, evalCall)
     if stmt.rule == 'function':
         stmt.accept(frame, execFunction)
     if stmt.rule == 'return':
-        return stmt.accept(frame, execReturn)
+        return stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'file':
         stmt.accept(frame, execFile)
 
