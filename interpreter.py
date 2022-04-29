@@ -1,5 +1,5 @@
 from builtin import RuntimeError
-from lang import Literal, Declare, Unary, Binary, Get, Call
+from lang import Literal, Unary, Binary, Get, Call
 
 
 
@@ -10,11 +10,6 @@ def executeStmts(frame, stmts):
         returnval = stmt.accept(frame, execute)
         if returnval:
             return returnval
-
-def assignArgsParams(frame, args, callable):
-    for arg, param in zip(args, callable['params']):
-        name = param['name'].evaluate(callable['frame'])
-        callable['frame'][name]['value'] = arg.accept(frame, evaluate)
 
 def evalLiteral(frame, literal):
     return literal.value
