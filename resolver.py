@@ -50,30 +50,9 @@ def resolveDeclare(frame, expr):
     return expr.type
 
 def resolveCall(frame, expr):
-    breakpoint()
-    expr.callable.resolve(frame)
-    proc = expr.callable.callable.evaluate(frame)
-    expectTypeElseError(frame, expr.callable, 'procedure')
-    # if len(stmt.args) != len(proc['params']):
-    #     raise LogicError(
-    #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
-    #         None,
-    #     )
-    # # Type-check arguments
-    # local = proc['frame']
-    # for arg, param in zip(stmt.args, proc['params']):
-    #     if stmt.passby == 'BYREF':
-    #         arg.resolve(frame)
-    #         # Only names allowed for BYREF arguments
-    #         if not isinstance(arg, Get):
-    #             raise LogicError(
-    #                 'BYREF arg must be a name, not expression',
-    #                 None,
-    #             )
-    #     else:
-    #         arg.resolve(local)
-    #     paramtype = param['type']
-    #     expectTypeElseError(frame, arg, paramtype)
+    # Insert frame
+    calltype = expr.callable.accept(frame, resolveGet)
+    callable = expr.callable.accept(frame, get)
 
 
 
@@ -219,7 +198,7 @@ def verify(frame, stmt):
     if stmt.rule == 'input':
         stmt.accept(frame, verifyInput)
     elif stmt.rule == 'declare':
-        stmt.expr.accept(resolveDeclare)
+        stmt.expr.accept(frame, resolveDeclare)
     elif stmt.rule == 'assign':
         stmt.accept(frame, verifyAssign)
     elif stmt.rule == 'case':
