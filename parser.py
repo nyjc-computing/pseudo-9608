@@ -303,16 +303,7 @@ def procedureStmt(tokens):
 
 def callStmt(tokens):
     callable = value(tokens)
-    args = []
-    if match(tokens, '('):
-        arg = expression(tokens)
-        args += [arg]
-        while match(tokens, ','):
-            arg = expression(tokens)
-            args += [arg]
-        expectElseError(tokens, ')', "after arguments")
-    expectElseError(tokens, '\n', "at end of CALL")
-    return Calling('call', callable, args)
+    return Calling('call', callable)
 
 def functionStmt(tokens):
     name = identifier(tokens)

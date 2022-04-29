@@ -209,11 +209,10 @@ class Callable(Stmt):
 class Calling(Stmt):
     # HACK: Temporary replacement for a lack of an ExprStmt
     # Should attempt to use Call Expr
-    __slots__ = ('rule', 'callable', 'args')
-    def __init__(self, rule, callable, args):
+    __slots__ = ('rule', 'callable')
+    def __init__(self, rule, callable):
         self.rule = rule
         self.callable = callable
-        self.args = args
 
 
 
