@@ -92,11 +92,6 @@ def execProcedure(frame, stmt):
 def execFunction(frame, stmt):
     pass
 
-def execCall(frame, stmt):
-    proc = stmt.callable.accept(frame, evaluate)
-    assignArgsParams(frame, stmt.args, proc)
-    return executeStmts(frame, proc.stmts)
-
 def execReturn(local, stmt):
     # This will typically be execute()ed within
     # evaluate() in a function call, so frame is expected
