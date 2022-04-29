@@ -272,12 +272,12 @@ def forStmt(tokens):
     # Initialise name to start
     init = Assign('assign', name, start)
     # Generate loop cond
-    cond = Binary(makeExpr(frame=None, name=name), lte, end)
+    cond = Binary(makeExpr(frame=NULL, name=name), lte, end)
     # Add increment statement
     incr = Assign(
         'assign',
         name,
-        Binary(makeExpr(frame=None, name=name), add, step),
+        Binary(makeExpr(frame=NULL, name=name), add, step),
     )
     return Loop('while', init, cond, stmts + [incr])
 
