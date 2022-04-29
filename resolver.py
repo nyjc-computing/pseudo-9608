@@ -82,28 +82,19 @@ def resolveGet(frame, expr):
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
-    callable = expr.callable.accept(frame, get)
+    callable = expr.callable.accept(frame, get)['value']
     expectTypeElseError(calltype, 'procedure')
-    # if len(stmt.args) != len(proc['params']):
-    #     raise LogicError(
-    #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
-    #         None,
-    #     )
-    # # Type-check arguments
-    # local = proc['frame']
-    # for arg, param in zip(stmt.args, proc['params']):
-    #     if stmt.passby == 'BYREF':
-    #         arg.resolve(frame)
-    #         # Only names allowed for BYREF arguments
-    #         if not isinstance(arg, Get):
-    #             raise LogicError(
-    #                 'BYREF arg must be a name, not expression',
-    #                 None,
-    #             )
-    #     else:
-    #         arg.resolve(local)
-    #     paramtype = param['type']
-    #     expectTypeElseError(frame, arg, paramtype)
+    numArgs, numParams = len(expr.args), len(callable['params'])
+    if numArgs != numParams:
+        raise LogicError(
+            f"Expected {numParams} args, got {numArgs}",
+            None,
+        )
+    # Type-check arguments
+    for arg, param in zip(expr.args, callable['params']):
+        # param is a slot from either local or frame
+        argtype = arg.accept(frame, resolve)
+        expectTypeElseError(argtype, param['type'])
 
 
 
