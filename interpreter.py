@@ -29,10 +29,10 @@ def evalBinary(frame, expr):
     return expr.oper(leftval, rightval)
 
 def evalGet(frame, expr):
-    return frame[expr.name]
+    return frame[expr.name]['value']
 
 def evalCall(frame, expr):
-    callable = expr.callable.accept(frame, evalGet)['value']
+    callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
     for arg, slot in zip(expr.args, callable['params']):
         argval = arg.accept(frame, evaluate)
