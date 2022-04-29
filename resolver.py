@@ -89,7 +89,7 @@ def verifyProcedure(frame, stmt):
         'type': 'procedure',
         'value': {
             'frame': local,
-            'passby': passby,
+            'passby': stmt.passby,
             'params': stmt.params,
             'stmts': stmt.stmts,
         }
