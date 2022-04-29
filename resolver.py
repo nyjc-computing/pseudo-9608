@@ -2,6 +2,7 @@ from builtin import get, call
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
+from lang import Get
 
 
 
@@ -100,15 +101,14 @@ def verifyCall(frame, stmt):
     stmt.callable.resolve(frame)
     proc = stmt.callable.callable.evaluate(frame)
     expectTypeElseError(frame, stmt.callable, 'procedure')
-    args, params = stmt.args, proc['value']['params']
-    if len(args) != len(params):
+    if len(stmt.args) != len(proc['params']):
         raise LogicError(
-            f'Expected {len(params)} args, got {len(args)}',
+            f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
             None,
         )
     # Type-check arguments
-    local = proc['value']['frame']
-    for arg, param in zip(args, params):
+    local = proc['frame']
+    for arg, param in zip(stmt.args, proc['params']):
         if stmt.passby == 'BYREF':
             arg.resolve(frame)
             # Only names allowed for BYREF arguments
