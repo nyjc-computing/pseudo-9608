@@ -49,9 +49,11 @@ def resolveDeclare(frame, expr):
     return expr.type
 
 def resolveGet(frame, expr):
+    """Insert frame into Get expr"""
     expr.frame = frame
 
 def get(frame, expr):
+    """Evaluate a Get expr to retrieve value from frame"""
     return frame[expr.name]
 
 def resolveCall(frame, expr):
