@@ -143,8 +143,8 @@ def verifyIf(frame, stmt):
 def verifyLoop(frame, stmt):
     if stmt.init:
         stmt.init.accept(frame, verify)
-    stmt.cond.resolve(frame)
-    expectTypeElseError(frame, stmt.cond, 'BOOLEAN')
+    condtype = stmt.cond.accept(frame, resolve)
+    expectTypeElseError(condtype, 'BOOLEAN')
     verifyStmts(frame, stmt.stmts)
 
 def verifyProcedure(frame, stmt):
@@ -152,7 +152,8 @@ def verifyProcedure(frame, stmt):
     local = {}
     for expr in stmt.params:
         if stmt.passby == 'BYREF':
-            expectTypeElseError(frame, expr.type, frame[expr.name]['type'])
+            exprtype = expr.accept(local, resolveDeclare)
+            expectTypeElseError(exprtype, frame[expr.name]['type'])
             # Reference frame vars in local
             local[expr.name] = frame[expr.name]
         else:
