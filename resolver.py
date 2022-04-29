@@ -73,7 +73,6 @@ def verifyWhile(frame, stmt):
 def verifyProcedure(frame, stmt):
     # Set up local frame
     local = {}
-    breakpoint()
     for var in stmt.params:
         if stmt.passby == 'BYREF':
             name = var['name'].resolve(frame)
@@ -98,7 +97,8 @@ def verifyProcedure(frame, stmt):
     }
 
 def verifyCall(frame, stmt):
-    name = stmt.name.resolve(frame)
+    stmt.callable.resolve(frame)
+    name = stmt.callable.evaluate(frame)
     proc = frame[name]
     expectTypeElseError(frame, proc, 'procedure')
     args, params = stmt.args, proc['value']['params']
