@@ -3,8 +3,8 @@ from builtin import ParseError
 from builtin import lte, add
 from scanner import makeToken
 from lang import Literal, Name, Unary, Binary, Get, Call
-from lang import Output, Input, Declare, Assign, Conditional, Loop
-from lang import Callable, Calling, Return, File
+from lang import ExprStmt, Output, Input, Declare, Assign
+from lang import Conditional, Loop, Callable, Calling, Return, File
 
 
 
@@ -175,21 +175,17 @@ def inputStmt(tokens):
     return Input('input', name)
 
 def declare(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
     if typetoken['word'] not in TYPES:
         raise ParseError("Invalid type", typetoken)
-    var = {
-        'name': name,
-        'type': typetoken['word'],
-    }
-    return var
+    return Declare(name, typetoken['word'])
     
 def declareStmt(tokens):
-    var = declare(tokens)
+    expr = declare(tokens)
     expectElseError(tokens, '\n', "after statement")
-    return Declare('declare', var['name'], var['type'])
+    return ExprStmt('declare', expr)
 
 def assignStmt(tokens):
     name = identifier(tokens)
