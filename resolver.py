@@ -13,7 +13,7 @@ def expectTypeElseError(exprtype, expected):
 
 def resolveExprs(frame, exprs):
     for expr in exprs:
-        expr.resolve(frame)
+        expr.accept(frame, resolve)
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
@@ -117,13 +117,13 @@ def verifyAssign(frame, stmt):
     expectTypeElseError(exprtype, frame[stmt.name]['type'])
 
 def verifyCase(frame, stmt):
-    stmt.cond.resolve(frame)
+    stmt.cond.accept(frame, resolve)
     verifyStmts(frame, stmt.stmts.values())
     if stmt.fallback:
         stmt.fallback.accept(frame, verify)
 
 def verifyIf(frame, stmt):
-    stmt.cond.resolve(frame)
+    stmt.cond.accept(frame, resolve)
     expectTypeElseError(stmt.cond, 'BOOLEAN')
     verifyStmts(frame, stmt.stmts[True])
     if stmt.fallback:
@@ -212,7 +212,7 @@ def verifyFile(frame, stmt):
         if file['type'] != 'READ':
             raise LogicError("File mode is {file['type']}", stmt.name)
     elif stmt.action == 'write':
-        stmt.data.resolve(frame)
+        stmt.data.accept(frame, resolve)
         if name not in frame:
             raise LogicError("File not open", stmt.name)
         file = frame[name]
