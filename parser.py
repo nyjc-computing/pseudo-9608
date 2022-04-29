@@ -270,34 +270,22 @@ def forStmt(tokens):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFOR")
     # Initialise name to start
-    init = assignStmt([
-        name,
-        makeToken(name['line'], name['col'], 'keyword', '<-', None),
-        start,
-        makeToken(end['line'], end['col'], 'keyword', '\n', None),
-    ])
+    init = Assign('assign', name, start)
     # Generate loop cond
-    cond = makeExpr(
-        left=makeExpr(frame=None, name=name),
-        oper=lte,
-        right=end,
-    )
+    cond = Binary(makeExpr(frame=None, name=name), lte, end)
     # Add increment statement
-    incr = assignStmt([
+    incr = Assign(
+        'assign',
         name,
-        makeToken(name['line'], name['col'], 'keyword', '<-', None),
-        name,
-        makeToken(name['line'], name['col'], 'keyword', '+', add),
-        step,
-        makeToken(end['line'], name['col'], 'keyword', '\n', None),
-    ])
+        Binary(makeExpr(frame=None, name=name), add, step),
+    )
     return Loop('while', init, cond, stmts + [incr])
 
 def procedureStmt(tokens):
     name = identifier(tokens)
     params = []
     if match(tokens, '('):
-        passby = makeToken(name['line'], name['col'], 'keyword', 'BYVALUE', None)
+        passby = makeToken(None, None, 'keyword', 'BYVALUE', None)
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)['word']
         var = declare(tokens)
