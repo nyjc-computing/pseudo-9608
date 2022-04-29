@@ -115,9 +115,8 @@ class Call(Expr):
         return self.callable.resolve()
 
     def evaluate(self, frame):
-        callable = self.callable.evaluate(frame)
-        proc = callable['name'].evaluate(frame)
-        for arg, param in zip(callable['args'], proc['params']):
+        proc = self.callable.evaluate(frame)
+        for arg, param in zip(self.args, proc['params']):
             name = param['name'].evaluate(proc['frame'])
             proc['frame'][name]['value'] = arg.evaluate(frame)
         for stmt in proc['stmts']:
