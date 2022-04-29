@@ -86,7 +86,7 @@ def value(tokens):
         name = identifier(tokens)
         expr = makeExpr(
             frame=NULL,
-            name=name,
+            name=name.name,
         )
         # Function call
         args = []

@@ -35,7 +35,7 @@ def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame, stmt):
-    name = stmt.name.resolve(frame)
+    name = stmt.name
     if name not in frame:
         raise LogicError(
             f'Name not declared',
@@ -63,13 +63,36 @@ def get(frame, expr):
 
 def resolveCall(frame, expr):
     # Insert frame
+    breakpoint()
     calltype = expr.callable.accept(frame, resolveGet)
     callable = expr.callable.accept(frame, get)
+    breakpoint()
+    expectTypeElseError(frame, expr.callable, 'procedure')
+    # if len(stmt.args) != len(proc['params']):
+    #     raise LogicError(
+    #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
+    #         None,
+    #     )
+    # # Type-check arguments
+    # local = proc['frame']
+    # for arg, param in zip(stmt.args, proc['params']):
+    #     if stmt.passby == 'BYREF':
+    #         arg.resolve(frame)
+    #         # Only names allowed for BYREF arguments
+    #         if not isinstance(arg, Get):
+    #             raise LogicError(
+    #                 'BYREF arg must be a name, not expression',
+    #                 None,
+    #             )
+    #     else:
+    #         arg.resolve(local)
+    #     paramtype = param['type']
+    #     expectTypeElseError(frame, arg, paramtype)
 
 
 
 def verifyAssign(frame, stmt):
-    name = stmt.name.resolve(frame)
+    name = stmt.name
     expectTypeElseError(frame, stmt.expr, frame[name]['type'])
 
 def verifyCase(frame, stmt):
@@ -105,7 +128,7 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    name = stmt.name.resolve(frame)
+    name = stmt.name
     frame[name] = {
         'type': 'procedure',
         'value': {
@@ -147,7 +170,7 @@ def verifyFunction(frame, stmt):
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
-    name = stmt.name.resolve(frame)
+    name = stmt.name
     returnType = stmt.returnType
     # Resolve procedure statements using local
     hasReturn = False
@@ -180,7 +203,7 @@ def verifyReturn(local, stmt):
     return stmt.expr.resolve(local)
 
 def verifyFile(frame, stmt):
-    name = stmt.name.resolve(frame)
+    name = stmt.name
     if stmt.action == 'open':
         if name in frame:
             raise LogicError("File already opened", stmt.name)
