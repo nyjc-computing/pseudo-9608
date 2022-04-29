@@ -63,11 +63,11 @@ def execOutput(frame, stmt):
     print('')  # Add \n
 
 def execInput(frame, stmt):
-    name = stmt.name.accept(frame, evaluate)
+    name = stmt.name
     frame[name]['value'] = input()
 
 def execAssign(frame, stmt):
-    name = stmt.name.accept(frame, evaluate)
+    name = stmt.name
     value = stmt.expr.accept(frame, evaluate)
     frame[name]['value'] = value
 
@@ -96,7 +96,7 @@ def execRepeat(frame, stmt):
         executeStmts(frame, stmt.stmts)
 
 def execFile(frame, stmt):
-    name = stmt.name.accept(frame, evaluate)
+    name = stmt.name
     if stmt.action == 'open':
         assert stmt.mode  # Internal check
         file = {
