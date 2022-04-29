@@ -188,7 +188,7 @@ def declareStmt(tokens):
     return ExprStmt('declare', expr)
 
 def assignStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     expectElseError(tokens, '<-', "after name")
     expr = expression(tokens)
     expectElseError(tokens, '\n', "after statement")
@@ -252,7 +252,7 @@ def repeatStmt(tokens):
     return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     expectElseError(tokens, '<-', "after name")
     start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
@@ -278,7 +278,7 @@ def forStmt(tokens):
     return Loop('while', init, cond, stmts + [incr])
 
 def procedureStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params = []
     if match(tokens, '('):
         passby = 'BYVALUE'
@@ -303,7 +303,7 @@ def callStmt(tokens):
     return ExprStmt('call', callable)
 
 def functionStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params = []
     if match(tokens, '('):
         passby = 'BYVALUE'
@@ -341,7 +341,7 @@ def openfileStmt(tokens):
 def readfileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, ',', "after file identifier")
-    data = identifier(tokens)
+    data = identifier(tokens).name
     expectElseError(tokens, '\n')
     return File('file', 'read', name, None, data)
 
