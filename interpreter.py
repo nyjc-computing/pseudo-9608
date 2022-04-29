@@ -1,4 +1,5 @@
 from builtin import RuntimeError
+from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
 
@@ -15,25 +16,37 @@ def assignArgsParams(frame, args, callable):
         name = param['name'].evaluate(callable['frame'])
         callable['frame'][name]['value'] = arg.evaluate(frame)
 
+def evalLiteral(frame, literal):
+    return literal.value
+
+def evalDeclare(frame, expr):
+    pass
+
+def evalUnary(frame, expr):
+    pass
+
+def evalBinary(frame, expr):
+    pass
+
+def evalGet(frame, expr):
+    pass
+
+def evalCall(frame, expr):
+    pass
+
 def evaluate(frame, expr):
-    # Evaluating tokens
-    if 'type' in expr:
-        if expr['type'] == 'name':
-            return expr['word']
-        return expr['value']
-    # Passing frames
-    if 'oper' not in expr:
-        return expr
-    # Evaluating exprs
-    oper = expr['oper']['value']
-    if oper is call:
-        return execCall(
-            frame,
-            {'name': expr['left'], 'args': expr['right']},
-        )
-    left = evaluate(frame, expr['left'])
-    right = evaluate(frame, expr['right'])
-    return oper(left, right)
+    if isinstance(expr, Literal):
+        return expr.accept(frame, evalLiteral)
+    if isinstance(expr, Declare):
+        return expr.accept(frame, evalDeclare)
+    if isinstance(expr, Unary):
+        return expr.accept(frame, evalUnary)
+    if isinstance(expr, Binary):
+        return expr.accept(frame, evalBinary)
+    if isinstance(expr, Get):
+        return expr.accept(frame, evalGet)
+    if isinstance(expr, Call):
+        return expr.accept(frame, evalCall)
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
