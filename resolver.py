@@ -41,21 +41,13 @@ def resolveGet(frame, expr):
     assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
 
-def get(frame, expr):
-    """Evaluate a Get expr to retrieve value from frame"""
-    if expr.name not in frame:
-        raise LogicError("Undeclared", expr.name)
-    if frame[expr.name] is None:
-        raise LogicError("No value assigned", expr.name)
-    return frame[expr.name]
-
 def resolveCall(frame, expr):
     # Insert frame
     breakpoint()
     calltype = expr.callable.accept(frame, resolveGet)
     callable = expr.callable.accept(frame, get)
     breakpoint()
-    expectTypeElseError(frame, expr.callable, 'procedure')
+    expectTypeElseError(calltype, 'procedure')
     # if len(stmt.args) != len(proc['params']):
     #     raise LogicError(
     #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
@@ -79,9 +71,23 @@ def resolveCall(frame, expr):
 
 
 
+def resolve(frame, expr):
+    if isinstance(expr, Literal):
+        expr.accept(frame, resolveLiteral)
+    if isinstance(expr, Declare):
+        expr.accept(frame, resolveDeclare)
+    elif isinstance(expr, Unary):
+        expr.accept(frame, resolveUnary)
+    elif isinstance(expr, Binary):
+        expr.accept(frame, resolveBinary)
+    elif isinstance(expr, Get):
+        expr.accept(frame, resolveGet)
+    elif isinstance(expr, Call):
+        expr.accept(frame, resolveCall)
+        
 def verifyAssign(frame, stmt):
     name = stmt.name
-    expectTypeElseError(frame, stmt.expr, frame[name]['type'])
+    expectTypeElseError(stmt.expr, frame[name]['type'])
 
 def verifyCase(frame, stmt):
     stmt.cond.resolve(frame)
@@ -91,7 +97,7 @@ def verifyCase(frame, stmt):
 
 def verifyIf(frame, stmt):
     stmt.cond.resolve(frame)
-    expectTypeElseError(frame, stmt.cond, 'BOOLEAN')
+    expectTypeElseError(stmt.cond, 'BOOLEAN')
     verifyStmts(frame, stmt.stmts[True])
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
