@@ -62,6 +62,7 @@ def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
+    return frame[expr.name]['type']
 
 def resolveCall(frame, expr):
     # Insert frame
@@ -95,21 +96,21 @@ def resolveCall(frame, expr):
 
 def resolve(frame, expr):
     if isinstance(expr, Literal):
-        expr.accept(frame, resolveLiteral)
+        return expr.accept(frame, resolveLiteral)
     if isinstance(expr, Declare):
-        expr.accept(frame, resolveDeclare)
+        return expr.accept(frame, resolveDeclare)
     elif isinstance(expr, Unary):
-        expr.accept(frame, resolveUnary)
+        return expr.accept(frame, resolveUnary)
     elif isinstance(expr, Binary):
-        expr.accept(frame, resolveBinary)
+        return expr.accept(frame, resolveBinary)
     elif isinstance(expr, Get):
-        expr.accept(frame, resolveGet)
+        return expr.accept(frame, resolveGet)
     elif isinstance(expr, Call):
-        expr.accept(frame, resolveCall)
+        return expr.accept(frame, resolveCall)
         
 def verifyAssign(frame, stmt):
-    name = stmt.name
-    expectTypeElseError(stmt.expr, frame[name]['type'])
+    exprtype = stmt.expr.accept(frame, resolve)
+    expectTypeElseError(exprtype, frame[stmt.name]['type'])
 
 def verifyCase(frame, stmt):
     stmt.cond.resolve(frame)
