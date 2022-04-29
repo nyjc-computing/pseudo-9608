@@ -268,7 +268,6 @@ def forStmt(tokens):
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDFOR'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDFOR', "at end of FOR")
     expectElseError(tokens, '\n', "after ENDFOR")
     # Initialise name to start
     init = assignStmt([
@@ -311,7 +310,6 @@ def procedureStmt(tokens):
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDPROCEDURE'):
         stmts += [statement(tokens)]
-    expectElseError(tokens, 'ENDPROCEDURE', "at end of PROCEDURE")
     expectElseError(tokens, '\n', "after ENDPROCEDURE")
     return Callable('procedure', name, passby, params, stmts, None)
 
