@@ -1,27 +1,15 @@
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
-from lang import Get
+from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
 
 # Helper functions
 
-def expectTypeElseError(frame, expr, expected):
-    exprtype = expr.resolve(frame)
-    if expected != exprtype:
-        token = None
-        # if type(expr) is dict:
-        #     if 'line' in expr:
-        #         token = expr
-        #     elif 'line' in expr['left']:
-        #         token = expr['left']
-        #     elif 'line' in expr['right']:
-        #         token = expr['right']
-        raise LogicError(
-            f"Expected {repr(expected)}, got {repr(exprtype)}",
-            token,
-        )
+def expectTypeElseError(exprtype, expected):
+    if exprtype != expected:
+        raise LogicError(f"Expected {expected}", exprtype)
 
 def resolveExprs(frame, exprs):
     for expr in exprs:
