@@ -2,6 +2,7 @@ from builtin import get, call
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
+from lang import Get
 
 
 
@@ -11,13 +12,13 @@ def expectTypeElseError(frame, expr, expected):
     exprtype = expr.resolve(frame)
     if expected != exprtype:
         token = None
-        if type(expr) is dict:
-            if 'line' in expr:
-                token = expr
-            elif 'line' in expr['left']:
-                token = expr['left']
-            elif 'line' in expr['right']:
-                token = expr['right']
+        # if type(expr) is dict:
+        #     if 'line' in expr:
+        #         token = expr
+        #     elif 'line' in expr['left']:
+        #         token = expr['left']
+        #     elif 'line' in expr['right']:
+        #         token = expr['right']
         raise LogicError(
             f"Expected {repr(expected)}, got {repr(exprtype)}",
             token,
@@ -29,170 +30,127 @@ def resolveExprs(frame, exprs):
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
-        verify(frame, stmt)
-
-def resolve(frame, expr):
-    # Resolving tokens
-    if 'type' in expr:
-        if expr['type'] == 'name':
-            return expr['word']
-        elif expr['type'] in ('integer', 'string'):
-            return expr['type'].upper()
-        else:
-            # internal error
-            raise TypeError(f'Cannot resolve type for {expr}')
-    # Resolving get expressions
-    oper = expr['oper']['value']
-    if oper is get:
-        expr['left'] = frame
-        name = resolve(frame, expr['right'])
-        if name not in frame:
-            raise LogicError(
-                f'Name not declared',
-                expr['right'],
-            )
-        return frame[name]['type']
-    # Resolving function calls
-    if oper is call:
-        # Insert frame into get expr
-        resolve(frame, expr['left'])
-        # Insert frame into args
-        args = expr['right']
-        resolveExprs(frame, args)
-        # Return function type
-        functype = resolve(frame, expr['left'])
-        return functype
-    # Resolving other exprs
-    if oper in (lt, lte, gt, gte, ne, eq):
-        resolve(frame, expr['left'])
-        resolve(frame, expr['right'])
-        return 'BOOLEAN'
-    elif oper in (add, sub, mul, div):
-        resolve(frame, expr['left'])
-        resolve(frame, expr['right'])
-        expectTypeElseError(frame, expr['left'], 'INTEGER')
-        expectTypeElseError(frame, expr['right'], 'INTEGER')
-        return 'INTEGER'
+        stmt.accept(frame, verify)
 
 def verifyOutput(frame, stmt):
-    resolveExprs(frame, stmt['exprs'])
+    resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame, stmt):
-    name = stmt['name'].resolve(frame)
+    name = stmt.name.resolve(frame)
     if name not in frame:
         raise LogicError(
             f'Name not declared',
-            stmt['name'].name,
+            stmt.name,
         )
 
 def verifyDeclare(frame, stmt):
-    name = stmt['name'].resolve(frame)
-    type_ = stmt['type']['word']
-    frame[name] = {'type': type_, 'value': None}
+    name = stmt.name.resolve(frame)
+    frame[name] = {'type': stmt.type, 'value': None}
 
 def verifyAssign(frame, stmt):
-    name = stmt['name'].resolve(frame)
-    expectTypeElseError(frame, stmt['expr'], frame[name]['type'])
+    name = stmt.name.resolve(frame)
+    expectTypeElseError(frame, stmt.expr, frame[name]['type'])
 
 def verifyCase(frame, stmt):
-    stmt['cond'].resolve(frame)
-    verifyStmts(frame, stmt['stmts'].values())
-    if stmt['fallback']:
-        verify(frame, stmt['fallback'])
+    stmt.cond.resolve(frame)
+    verifyStmts(frame, stmt.stmts.values())
+    if stmt.fallback:
+        stmt.fallback.accept(frame, verify)
 
 def verifyIf(frame, stmt):
-    stmt['cond'].resolve(frame)
-    expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
-    verifyStmts(frame, stmt['stmts'][True])
-    if stmt['fallback']:
-        verifyStmts(frame, stmt['fallback'])
+    stmt.cond.resolve(frame)
+    expectTypeElseError(frame, stmt.cond, 'BOOLEAN')
+    verifyStmts(frame, stmt.stmts[True])
+    if stmt.fallback:
+        verifyStmts(frame, stmt.fallback)
 
 def verifyWhile(frame, stmt):
-    if stmt['init']:
-        verify(frame, stmt['init'])
-    stmt['cond'].resolve(frame)
-    expectTypeElseError(frame, stmt['cond'], 'BOOLEAN')
-    verifyStmts(frame, stmt['stmts'])
+    if stmt.init:
+        stmt.init.accept(frame, verify)
+    stmt.cond.resolve(frame)
+    expectTypeElseError(frame, stmt.cond, 'BOOLEAN')
+    verifyStmts(frame, stmt.stmts)
 
 def verifyProcedure(frame, stmt):
-    passby = stmt['passby']['word']
     # Set up local frame
     local = {}
-    for var in stmt['params']:
-        # Declare vars in local
-        if passby == 'BYVALUE':
-            verifyDeclare(local, var)
-        elif passby == 'BYREF':
+    for var in stmt.params:
+        if stmt.passby == 'BYREF':
             name = var['name'].resolve(frame)
-            globvar = frame[name]
-            expectTypeElseError(frame, var['type'], globvar['type'])
-            # Reference global vars in local
-            local[name] = globvar
+            expectTypeElseError(frame, var['type'], frame[name]['type'])
+            # Reference frame vars in local
+            local[name] = frame[name]
         else:
-            # Internal error
-            raise TypeError(stmt['passby'], f"str expected for passby, got {passby}")
+            name = var['name'].resolve(frame)
+            local[name] = {'type': var['type'], 'value': None}
     # Resolve procedure statements using local
-    verifyStmts(local, stmt['stmts'])
+    verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    name = stmt['name'].resolve(frame)
+    name = stmt.name.resolve(frame)
     frame[name] = {
         'type': 'procedure',
         'value': {
             'frame': local,
-            'passby': passby,
-            'params': stmt['params'],
-            'stmts': stmt['stmts'],
+            'passby': stmt.passby,
+            'params': stmt.params,
+            'stmts': stmt.stmts,
         }
     }
 
 def verifyCall(frame, stmt):
-    name = stmt['name'].resolve(frame)
-    proc = frame[name]
-    expectTypeElseError(frame, proc, 'procedure')
-    args, params = stmt['args'], proc['value']['params']
-    if len(args) != len(params):
-        raise LogicError(
-            f'Expected {len(params)} args, got {len(args)}',
-            stmt['name']['right'],
-        )
-    # Type-check arguments
-    local = proc['value']['frame']
-    for arg, param in zip(args, params):
-        if stmt['passby']['word'] == 'BYREF':
-            # Only names allowed for BYREF arguments
-            # Check for a get expr
-            if arg['oper']['value'] is not get:
-                raise LogicError(
-                    'BYREF arg must be a name, not expression',
-                    stmt['passby'],
-                )
-        paramtype = param['type']['word']
-        expectTypeElseError(frame, arg, paramtype)
+    stmt.callable.resolve(frame)
+    proc = stmt.callable.callable.evaluate(frame)
+    expectTypeElseError(frame, stmt.callable, 'procedure')
+    # if len(stmt.args) != len(proc['params']):
+    #     raise LogicError(
+    #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
+    #         None,
+    #     )
+    # # Type-check arguments
+    # local = proc['frame']
+    # for arg, param in zip(stmt.args, proc['params']):
+    #     if stmt.passby == 'BYREF':
+    #         arg.resolve(frame)
+    #         # Only names allowed for BYREF arguments
+    #         if not isinstance(arg, Get):
+    #             raise LogicError(
+    #                 'BYREF arg must be a name, not expression',
+    #                 None,
+    #             )
+    #     else:
+    #         arg.resolve(local)
+    #     paramtype = param['type']
+    #     expectTypeElseError(frame, arg, paramtype)
 
 def verifyFunction(frame, stmt):
     # Set up local frame
     local = {}
-    for var in stmt['params']:
+    for var in stmt.params:
         # Declare vars in local
         verifyDeclare(local, var)
-    name = stmt['name'].resolve(frame)
-    returns = stmt['returns'].resolve(frame)
+    name = stmt.name.resolve(frame)
+    returnType = stmt.returnType
     # Resolve procedure statements using local
-    for procstmt in stmt['stmts']:
-        returntype = verify(local, procstmt)
-        if returntype and (returntype != returns):
-            raise LogicError(
-                f"Expect {returns}, got {returntype}",
-                stmt['name'],
-            )
-    # Declare function in frame
+    hasReturn = False
+    for procstmt in stmt.stmts:
+        stmtType = procstmt.accept(local, verify)
+        if stmtType:
+            hasReturn = True
+            if stmtType != returnType:
+                raise LogicError(
+                    f"Expect {returnType}, got {stmtType}",
+                    stmt.name,
+                )
+    if not hasReturn:
+        raise LogicError("No RETURN in function", None)
+     # Declare function in frame
     frame[name] = {
-        'type': returns,
+        'type': returnType,
         'value': {
             'frame': local,
             'passby': 'BYVALUE',
-            'params': stmt['params'],
-            'stmts': stmt['stmts'],
+            'params': stmt.params,
+            'stmts': stmt.stmts,
         }
     }
 
@@ -200,59 +158,58 @@ def verifyReturn(local, stmt):
     # This will typically be verify()ed within
     # verifyFunction(), so frame is expected to
     # be local
-    return stmt['expr'].resolve(local)
+    return stmt.expr.resolve(local)
 
 def verifyFile(frame, stmt):
-    name = stmt['name'].resolve(frame)
-    if stmt['action'] == 'open':
+    name = stmt.name.resolve(frame)
+    if stmt.action == 'open':
         if name in frame:
-            raise LogicError("File already opened", stmt['name'])
-        file = {'type': stmt['mode']['word'], 'value': None}
+            raise LogicError("File already opened", stmt.name)
+        file = {'type': stmt.mode, 'value': None}
         frame[name] = file
-    elif stmt['action'] == 'read':
+    elif stmt.action == 'read':
         if name not in frame:
-            raise LogicError("File not open", stmt['name'])
+            raise LogicError("File not open", stmt.name)
         file = frame[name]
         if file['type'] != 'READ':
-            raise LogicError("File mode is {file['type']}", stmt['name'])
-    elif stmt['action'] == 'write':
-        stmt['data'].resolve(frame)
+            raise LogicError("File mode is {file['type']}", stmt.name)
+    elif stmt.action == 'write':
+        stmt.data.resolve(frame)
         if name not in frame:
-            raise LogicError("File not open", stmt['name'])
+            raise LogicError("File not open", stmt.name)
         file = frame[name]
         if file['type'] not in ('WRITE', 'APPEND'):
-            raise LogicError("File mode is {file['type']}", stmt['name'])
-    elif stmt['action'] == 'close':
+            raise LogicError("File mode is {file['type']}", stmt.name)
+    elif stmt.action == 'close':
         if name not in frame:
-            raise LogicError("File not open", stmt['name'])
+            raise LogicError("File not open", stmt.name)
         del frame[name]
 
 def verify(frame, stmt):
-    if 'rule' not in stmt: breakpoint()
-    if stmt['rule'] == 'output':
-        verifyOutput(frame, stmt)
-    if stmt['rule'] == 'input':
-        verifyInput(frame, stmt)
-    elif stmt['rule'] == 'declare':
-        verifyDeclare(frame, stmt)
-    elif stmt['rule'] == 'assign':
-        verifyAssign(frame, stmt)
-    elif stmt['rule'] == 'case':
-        verifyCase(frame, stmt)
-    elif stmt['rule'] == 'if':
-        verifyIf(frame, stmt)
-    elif stmt['rule'] in ('while', 'repeat'):
-        verifyWhile(frame, stmt)
-    elif stmt['rule'] == 'procedure':
-        verifyProcedure(frame, stmt)
-    elif stmt['rule'] == 'call':
-        verifyCall(frame, stmt)
-    elif stmt['rule'] == 'function':
-        verifyFunction(frame, stmt)
-    elif stmt['rule'] == 'file':
-        verifyFile(frame, stmt)
-    elif stmt['rule'] == 'return':
-        return verifyReturn(frame, stmt)
+    if stmt.rule == 'output':
+        stmt.accept(frame, verifyOutput)
+    if stmt.rule == 'input':
+        stmt.accept(frame, verifyInput)
+    elif stmt.rule == 'declare':
+        stmt.accept(frame, verifyDeclare)
+    elif stmt.rule == 'assign':
+        stmt.accept(frame, verifyAssign)
+    elif stmt.rule == 'case':
+        stmt.accept(frame, verifyCase)
+    elif stmt.rule == 'if':
+        stmt.accept(frame, verifyIf)
+    elif stmt.rule in ('while', 'repeat', 'for'):
+        stmt.accept(frame, verifyWhile)
+    elif stmt.rule == 'procedure':
+        stmt.accept(frame, verifyProcedure)
+    elif stmt.rule == 'call':
+        stmt.accept(frame, verifyCall)
+    elif stmt.rule == 'function':
+        stmt.accept(frame, verifyFunction)
+    elif stmt.rule == 'file':
+        stmt.accept(frame, verifyFile)
+    elif stmt.rule == 'return':
+        return stmt.accept(frame, verifyReturn)
 
 def inspect(statements):
     frame = {}

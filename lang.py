@@ -115,12 +115,120 @@ class Call(Expr):
         return self.callable.resolve()
 
     def evaluate(self, frame):
-        callable = self.callable.evaluate(frame)
-        proc = callable['name'].evaluate(frame)
-        for arg, param in zip(callable['args'], proc['params']):
+        proc = self.callable.evaluate(frame)
+        for arg, param in zip(self.args, proc['params']):
             name = param['name'].evaluate(proc['frame'])
             proc['frame'][name]['value'] = arg.evaluate(frame)
         for stmt in proc['stmts']:
             returnval = execute(frame, stmt)
             if returnval:
-                    return returnval
+                return returnval
+
+
+
+class Stmt:
+    def accept(self, frame, visitor):
+        # visitor must be a function that takes
+        # a frame and a Stmt
+        return visitor(frame, self)
+
+    def __repr__(self):
+        attrstr = ", ".join([
+            repr(getattr(self, attr)) for attr in self.__slots__
+        ])
+        return f'{type(self).__name__}({attrstr})'
+
+
+
+class Output(Stmt):
+    __slots__ = ('rule', 'exprs')
+    def __init__(self, rule, exprs):
+        self.rule = rule
+        self.exprs = exprs
+
+
+
+class Input(Stmt):
+    __slots__ = ('rule', 'name')
+    def __init__(self, rule, name):
+        self.rule = rule
+        self.name = name
+
+
+
+class Declare(Stmt):
+    __slots__ = ('rule', 'name', 'type')
+    def __init__(self, rule, name, type):
+        self.rule = rule
+        self.name = name
+        self.type = type
+
+
+
+class Assign(Stmt):
+    __slots__ = ('rule', 'name', 'expr')
+    def __init__(self, rule, name, expr):
+        self.rule = rule
+        self.name = name
+        self.expr = expr
+
+
+
+class Conditional(Stmt):
+    __slots__ = ('rule', 'cond', 'stmtMap', 'fallback')
+    def __init__(self, rule, cond, stmtMap, fallback):
+        self.rule = rule
+        self.cond = cond
+        self.stmtMap = stmtMap
+        self.fallback = fallback
+
+
+
+class Loop(Stmt):
+    __slots__ = ('rule', 'init', 'cond', 'stmts')
+    def __init__(self, rule, init, cond, stmts):
+        self.rule = rule
+        self.init = init
+        self.cond = cond
+        self.stmts = stmts
+
+
+
+class Callable(Stmt):
+    __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
+    def __init__(self, rule, name, passby, params, stmts, returnType):
+        self.rule = rule
+        self.name = name
+        self.passby = passby
+        self.params = params
+        self.stmts = stmts
+        self.returnType = returnType
+
+
+
+class Calling(Stmt):
+    # HACK: Temporary replacement for a lack of an ExprStmt
+    # Should attempt to use Call Expr
+    __slots__ = ('rule', 'callable')
+    def __init__(self, rule, callable):
+        self.rule = rule
+        self.callable = callable
+
+
+
+class Return(Stmt):
+    __slots__ = ('rule', 'expr')
+    def __init__(self, rule, expr):
+        self.rule = rule
+        self.expr = expr
+
+
+
+class File(Stmt):
+    __slots__ = ('rule', 'action', 'name', 'mode', 'data')
+    def __init__(self, rule, action, name, mode, data):
+        self.rule = rule
+        self.action = action
+        self.name = name
+        self.mode = mode
+        self.data = data

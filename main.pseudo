@@ -1,10 +1,10 @@
-DECLARE Number : INTEGER
-DECLARE Max : INTEGER
-Number <- 0
-Max <- 10
-OPENFILE "data.txt" FOR WRITE
-WHILE Number <= Max DO
-    WRITEFILE "data.txt", Number
-    Number <- Number + 1
-ENDWHILE
-CLOSEFILE "data.txt"
+PROCEDURE WriteNumber(Start : INTEGER, End : INTEGER)
+    DECLARE Number : INTEGER
+    OPENFILE "data.txt" FOR WRITE
+    FOR Number <- Start TO End
+        WRITEFILE "data.txt", Number
+    ENDFOR
+    CLOSEFILE "data.txt"
+ENDPROCEDURE
+
+CALL WriteNumber(1, 10)
