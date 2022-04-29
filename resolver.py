@@ -81,10 +81,8 @@ def resolveGet(frame, expr):
 
 def resolveCall(frame, expr):
     # Insert frame
-    breakpoint()
     calltype = expr.callable.accept(frame, resolveGet)
     callable = expr.callable.accept(frame, get)
-    breakpoint()
     expectTypeElseError(calltype, 'procedure')
     # if len(stmt.args) != len(proc['params']):
     #     raise LogicError(
