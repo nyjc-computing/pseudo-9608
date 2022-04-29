@@ -65,7 +65,7 @@ def verifyIf(frame, stmt):
 
 def verifyWhile(frame, stmt):
     if stmt.init:
-        stmt.init.verify(frame)
+        stmt.init.accept(frame, verify)
     stmt.cond.resolve(frame)
     expectTypeElseError(frame, stmt.cond, 'BOOLEAN')
     verifyStmts(frame, stmt.stmts)
