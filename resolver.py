@@ -49,9 +49,6 @@ def resolveDeclare(frame, expr):
     frame[expr.name] = {'type': expr.type, 'value': None}
     return expr.type
 
-def verifyDeclare(frame, stmt):
-    stmt.expr.accept(resolveDeclare)
-
 def verifyAssign(frame, stmt):
     name = stmt.name.resolve(frame)
     expectTypeElseError(frame, stmt.expr, frame[name]['type'])
@@ -130,9 +127,9 @@ def verifyCall(frame, stmt):
 def verifyFunction(frame, stmt):
     # Set up local frame
     local = {}
-    for var in stmt.params:
+    for expr in stmt.params:
         # Declare vars in local
-        verifyDeclare(local, var)
+        expr.accept(local, resolveDeclare)
     name = stmt.name.resolve(frame)
     returnType = stmt.returnType
     # Resolve procedure statements using local
@@ -196,7 +193,7 @@ def verify(frame, stmt):
     if stmt.rule == 'input':
         stmt.accept(frame, verifyInput)
     elif stmt.rule == 'declare':
-        stmt.accept(frame, verifyDeclare)
+        stmt.expr.accept(resolveDeclare)
     elif stmt.rule == 'assign':
         stmt.accept(frame, verifyAssign)
     elif stmt.rule == 'case':
