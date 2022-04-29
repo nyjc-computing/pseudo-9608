@@ -122,7 +122,7 @@ class Call(Expr):
         for stmt in proc['stmts']:
             returnval = execute(frame, stmt)
             if returnval:
-                    return returnval
+                return returnval
 
 
 
