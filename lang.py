@@ -113,13 +113,11 @@ class Get(Expr):
     def resolve(self, frame=None):
         if frame and self.frame is NULL:
             self.frame = frame
-        name = self.name.evaluate()
-        slot = self.frame[name]
+        slot = self.frame[self.name]
         return slot['type']
 
     def evaluate(self, frame):
-        name = self.name.evaluate(frame)
-        slot = self.frame[name]
+        slot = self.frame[self.name]
         return slot['value']
 
 
