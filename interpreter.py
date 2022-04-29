@@ -32,8 +32,16 @@ def evalGet(frame, expr):
     return frame[expr.name]
 
 def evalCall(frame, expr):
-    callable = expr.callable.accept(frame, evalGet)
-    # TODO: Implement evalCall
+    callable = expr.callable.accept(frame, evalGet)['value']
+    # Assign args to param slots
+    for arg, slot in zip(expr.args, callable['params']):
+        argval = arg.accept(frame, evaluate)
+        slot['value'] = argval
+    local = callable['frame']
+    for stmt in callable['stmts']:
+        returnval = stmt.accept(local, execute)
+        if returnval:
+            return returnval
 
 def evaluate(frame, expr):
     if isinstance(expr, Literal):
