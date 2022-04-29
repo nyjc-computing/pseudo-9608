@@ -198,12 +198,6 @@ def verifyFunction(frame, stmt):
         }
     }
 
-def verifyReturn(local, stmt):
-    # This will typically be verify()ed within
-    # verifyFunction(), so frame is expected to
-    # be local
-    return stmt.expr.resolve(local)
-
 def verifyFile(frame, stmt):
     name = stmt.name.accept(frame, value)
     if stmt.action == 'open':
