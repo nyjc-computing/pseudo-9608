@@ -299,7 +299,8 @@ def procedureStmt(tokens):
 
 def callStmt(tokens):
     callable = value(tokens)
-    return Calling('call', callable)
+    expectElseError(tokens, '\n', "at end of CALL")
+    return ExprStmt('call', callable)
 
 def functionStmt(tokens):
     name = identifier(tokens)
@@ -326,7 +327,7 @@ def functionStmt(tokens):
 def returnStmt(tokens):
     expr = expression(tokens)
     expectElseError(tokens, '\n', "at end of RETURN")
-    return Return('return', expr)
+    return ExprStmt('return', expr)
 
 def openfileStmt(tokens):
     name = value(tokens)
