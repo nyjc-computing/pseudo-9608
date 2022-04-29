@@ -19,9 +19,6 @@ def assignArgsParams(frame, args, callable):
 def evalLiteral(frame, literal):
     return literal.value
 
-def evalDeclare(frame, expr):
-    pass
-
 def evalUnary(frame, expr):
     pass
 
@@ -37,8 +34,6 @@ def evalCall(frame, expr):
 def evaluate(frame, expr):
     if isinstance(expr, Literal):
         return expr.accept(frame, evalLiteral)
-    if isinstance(expr, Declare):
-        return expr.accept(frame, evalDeclare)
     if isinstance(expr, Unary):
         return expr.accept(frame, evalUnary)
     if isinstance(expr, Binary):
@@ -47,6 +42,8 @@ def evaluate(frame, expr):
         return expr.accept(frame, evalGet)
     if isinstance(expr, Call):
         return expr.accept(frame, evalCall)
+    else:
+        raise TypeError(f"Unexpected expr {expr}")
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
