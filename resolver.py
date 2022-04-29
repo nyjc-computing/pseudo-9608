@@ -148,14 +148,19 @@ def verifyLoop(frame, stmt):
 def verifyProcedure(frame, stmt):
     # Set up local frame
     local = {}
-    for expr in stmt.params:
+    for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
             expectTypeElseError(exprtype, frame[expr.name]['type'])
             # Reference frame vars in local
             local[expr.name] = frame[expr.name]
         else:
-            local[expr.name] = {'type': expr.type, 'value': None}
+            local[expr.name] = {
+                'type': expr.type,
+                'value': None,
+            }
+        # params: replace Declare Expr with slot
+        stmt.params[i] = local[expr.name]
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
