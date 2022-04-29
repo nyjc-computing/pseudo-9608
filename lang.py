@@ -182,15 +182,6 @@ class Input(Stmt):
 
 
 
-# class Declare(Stmt):
-#     __slots__ = ('rule', 'name', 'type')
-#     def __init__(self, rule, name, type):
-#         self.rule = rule
-#         self.name = name
-#         self.type = type
-
-
-
 class Assign(Stmt):
     __slots__ = ('rule', 'name', 'expr')
     def __init__(self, rule, name, expr):
@@ -229,16 +220,6 @@ class Callable(Stmt):
         self.params = params
         self.stmts = stmts
         self.returnType = returnType
-
-
-
-class Calling(Stmt):
-    # HACK: Temporary replacement for a lack of an ExprStmt
-    # Should attempt to use Call Expr
-    __slots__ = ('rule', 'callable')
-    def __init__(self, rule, callable):
-        self.rule = rule
-        self.callable = callable
 
 
 

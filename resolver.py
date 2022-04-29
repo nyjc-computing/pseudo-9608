@@ -166,31 +166,6 @@ def verifyProcedure(frame, stmt):
         }
     }
 
-def verifyCall(frame, stmt):
-    stmt.callable.resolve(frame)
-    proc = stmt.callable.callable.evaluate(frame)
-    expectTypeElseError(frame, stmt.callable, 'procedure')
-    # if len(stmt.args) != len(proc['params']):
-    #     raise LogicError(
-    #         f"Expected {len(proc['params'])} args, got {len(stmt.args)}",
-    #         None,
-    #     )
-    # # Type-check arguments
-    # local = proc['frame']
-    # for arg, param in zip(stmt.args, proc['params']):
-    #     if stmt.passby == 'BYREF':
-    #         arg.resolve(frame)
-    #         # Only names allowed for BYREF arguments
-    #         if not isinstance(arg, Get):
-    #             raise LogicError(
-    #                 'BYREF arg must be a name, not expression',
-    #                 None,
-    #             )
-    #     else:
-    #         arg.resolve(local)
-    #     paramtype = param['type']
-    #     expectTypeElseError(frame, arg, paramtype)
-
 def verifyFunction(frame, stmt):
     # Set up local frame
     local = {}
