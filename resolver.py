@@ -219,7 +219,6 @@ def verifyFile(frame, stmt):
     elif stmt.action == 'close':
         if name not in frame:
             raise LogicError("File not open", stmt.name)
-        frame[name].value.close()
         del frame[name]
 
 def verify(frame, stmt):
