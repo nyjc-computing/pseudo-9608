@@ -34,9 +34,9 @@ def get(frame, expr):
     """Evaluate a Get expr to retrieve value from frame"""
     if expr.name not in frame:
         raise LogicError("Undeclared", expr.name)
-    if frame[expr.name] is None:
+    if frame[expr.name]['value'] is None:
         raise LogicError("No value assigned", expr.name)
-    return frame[expr.name]
+    return frame[expr.name]['value']
 
 def value(frame, expr):
     """Return the value of a Literal"""
