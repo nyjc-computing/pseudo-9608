@@ -1,3 +1,15 @@
+class TypedValue:
+    """
+    Represents a value in 9608 pseudocode.
+    Each TypedValue has a type and a value.
+    """
+    __slots__ = ('type', 'value')
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
+
+
+
 class Expr:
     """
     Represents an expression in 9608 pseudocode.
