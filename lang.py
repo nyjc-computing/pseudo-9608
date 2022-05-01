@@ -1,4 +1,19 @@
 class Expr:
+    """
+    Represents an expression in 9608 pseudocode.
+    An expression resolves to a type, and evaluates
+    to a value.
+    An Expr object has an accept() method which implements
+    the Visitor pattern.
+
+    Methods
+    -------
+    - accept(frame, visitor) -> Any
+        Enables a visitor to carry out operations on the
+        Expr (with a provided frame).
+        The visitor should take in two arguments: a frame,
+        and an Expr.
+    """
     def accept(self, frame, visitor):
         # visitor must be a function that takes
         # a frame and an Expr
@@ -13,6 +28,10 @@ class Expr:
 
 
 class Literal(Expr):
+    """
+    A Literal represents any value coming directly from
+    the source code.
+    """
     __slots__ = ('type', 'value')
     def __init__(self, type, value):
         self.type = type
