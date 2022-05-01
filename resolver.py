@@ -83,7 +83,7 @@ def resolveGet(frame, expr):
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
-    callable = expr.callable.accept(frame, get).value
+    callable = expr.callable.accept(frame, get)
     expectTypeElseError(calltype, 'procedure')
     numArgs, numParams = len(expr.args), len(callable['params'])
     if numArgs != numParams:
