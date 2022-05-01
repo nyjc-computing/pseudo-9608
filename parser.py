@@ -3,8 +3,8 @@ from builtin import ParseError
 from builtin import lte, add
 from scanner import makeToken
 from lang import Literal, Name, Unary, Binary, Get, Call
-from lang import Output, Input, Declare, Assign, Conditional, Loop
-from lang import Callable, Calling, Return, File
+from lang import ExprStmt, Output, Input, Declare, Assign
+from lang import Conditional, Loop, Callable, Return, File
 
 
 
@@ -86,7 +86,7 @@ def value(tokens):
         name = identifier(tokens)
         expr = makeExpr(
             frame=NULL,
-            name=name,
+            name=name.name,
         )
         # Function call
         args = []
@@ -175,24 +175,20 @@ def inputStmt(tokens):
     return Input('input', name)
 
 def declare(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
     if typetoken['word'] not in TYPES:
         raise ParseError("Invalid type", typetoken)
-    var = {
-        'name': name,
-        'type': typetoken['word'],
-    }
-    return var
+    return Declare(name, typetoken['word'])
     
 def declareStmt(tokens):
-    var = declare(tokens)
+    expr = declare(tokens)
     expectElseError(tokens, '\n', "after statement")
-    return Declare('declare', var['name'], var['type'])
+    return ExprStmt('declare', expr)
 
 def assignStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     expectElseError(tokens, '<-', "after name")
     expr = expression(tokens)
     expectElseError(tokens, '\n', "after statement")
@@ -256,7 +252,7 @@ def repeatStmt(tokens):
     return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     expectElseError(tokens, '<-', "after name")
     start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
@@ -282,17 +278,17 @@ def forStmt(tokens):
     return Loop('while', init, cond, stmts + [incr])
 
 def procedureStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params = []
     if match(tokens, '('):
         passby = 'BYVALUE'
         if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
             passby = consume(tokens)['word']
-        var = declare(tokens)
-        params += [var]
+        expr = declare(tokens)
+        params += [expr]
         while match(tokens, ','):
-            var = declare(tokens)
-            params += [var]
+            expr = declare(tokens)
+            params += [expr]
         expectElseError(tokens, ')', "at end of parameters")
     expectElseError(tokens, '\n', "after parameters")
     stmts = []
@@ -303,10 +299,11 @@ def procedureStmt(tokens):
 
 def callStmt(tokens):
     callable = value(tokens)
-    return Calling('call', callable)
+    expectElseError(tokens, '\n', "at end of CALL")
+    return ExprStmt('call', callable)
 
 def functionStmt(tokens):
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params = []
     if match(tokens, '('):
         passby = 'BYVALUE'
@@ -330,7 +327,7 @@ def functionStmt(tokens):
 def returnStmt(tokens):
     expr = expression(tokens)
     expectElseError(tokens, '\n', "at end of RETURN")
-    return Return('return', expr)
+    return ExprStmt('return', expr)
 
 def openfileStmt(tokens):
     name = value(tokens)
@@ -344,7 +341,7 @@ def openfileStmt(tokens):
 def readfileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, ',', "after file identifier")
-    data = identifier(tokens)
+    data = identifier(tokens).name
     expectElseError(tokens, '\n')
     return File('file', 'read', name, None, data)
 

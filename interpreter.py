@@ -1,5 +1,5 @@
-from builtin import call
 from builtin import RuntimeError
+from lang import Literal, Unary, Binary, Get, Call
 
 
 
@@ -11,57 +11,70 @@ def executeStmts(frame, stmts):
         if returnval:
             return returnval
 
-def assignArgsParams(frame, args, callable):
-    for arg, param in zip(args, callable['params']):
-        name = param['name'].evaluate(callable['frame'])
-        callable['frame'][name]['value'] = arg.evaluate(frame)
+def evalLiteral(frame, literal):
+    return literal.value
+
+def evalUnary(frame, expr):
+    rightval = expr.right.accept(frame, evaluate)
+    return expr.oper(rightval)
+
+def evalBinary(frame, expr):
+    leftval = expr.left.accept(frame, evaluate)
+    rightval = expr.right.accept(frame, evaluate)
+    return expr.oper(leftval, rightval)
+
+def evalGet(frame, expr):
+    return frame[expr.name]['value']
+
+def evalCall(frame, expr):
+    callable = expr.callable.accept(frame, evalGet)
+    # Assign args to param slots
+    for arg, slot in zip(expr.args, callable['params']):
+        argval = arg.accept(frame, evaluate)
+        slot['value'] = argval
+    local = callable['frame']
+    for stmt in callable['stmts']:
+        returnval = stmt.accept(local, execute)
+        if returnval:
+            return returnval
 
 def evaluate(frame, expr):
-    # Evaluating tokens
-    if 'type' in expr:
-        if expr['type'] == 'name':
-            return expr['word']
-        return expr['value']
-    # Passing frames
-    if 'oper' not in expr:
-        return expr
-    # Evaluating exprs
-    oper = expr['oper']['value']
-    if oper is call:
-        return execCall(
-            frame,
-            {'name': expr['left'], 'args': expr['right']},
-        )
-    left = evaluate(frame, expr['left'])
-    right = evaluate(frame, expr['right'])
-    return oper(left, right)
+    if isinstance(expr, Literal):
+        return expr.accept(frame, evalLiteral)
+    if isinstance(expr, Unary):
+        return expr.accept(frame, evalUnary)
+    if isinstance(expr, Binary):
+        return expr.accept(frame, evalBinary)
+    if isinstance(expr, Get):
+        return expr.accept(frame, evalGet)
+    if isinstance(expr, Call):
+        return expr.accept(frame, evalCall)
+    else:
+        raise TypeError(f"Unexpected expr {expr}")
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
-        print(str(expr.evaluate(frame)), end='')
+        print(str(expr.accept(frame, evaluate)), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
-    name = stmt.name.evaluate(frame)
+    name = stmt.name
     frame[name]['value'] = input()
 
-def execDeclare(frame, stmt):
-    pass
-
 def execAssign(frame, stmt):
-    name = stmt.name.evaluate(frame)
-    value = stmt.expr.evaluate(frame)
+    name = stmt.name
+    value = stmt.expr.accept(frame, evaluate)
     frame[name]['value'] = value
 
 def execCase(frame, stmt):
-    cond = stmt.cond.evaluate(frame)
+    cond = stmt.cond.accept(frame, evaluate)
     if cond in stmt.stmtMap:
         execute(frame, stmt.stmtMap[cond])
     elif stmt.fallback:
         execute(frame, stmt.fallback)
 
 def execIf(frame, stmt):
-    if stmt.cond.evaluate(frame):
+    if stmt.cond.accept(frame, evaluate):
         executeStmts(frame, stmt.stmtMap[True])
     elif stmt.fallback:
         executeStmts(frame, stmt.fallback)
@@ -69,33 +82,16 @@ def execIf(frame, stmt):
 def execWhile(frame, stmt):
     if stmt.init:
         execute(frame, stmt.init)
-    while stmt.cond.evaluate(frame) is True:
+    while stmt.cond.accept(frame, evaluate) is True:
         executeStmts(frame, stmt.stmts)
 
 def execRepeat(frame, stmt):
     executeStmts(frame, stmt.stmts)
-    while stmt.cond.evaluate(frame) is False:
+    while stmt.cond.accept(frame, evaluate) is False:
         executeStmts(frame, stmt.stmts)
 
-def execProcedure(frame, stmt):
-    pass
-
-def execFunction(frame, stmt):
-    pass
-
-def execCall(frame, stmt):
-    proc = stmt.callable.evaluate(frame)
-    assignArgsParams(frame, stmt.args, proc)
-    return executeStmts(frame, proc.stmts)
-
-def execReturn(local, stmt):
-    # This will typically be execute()ed within
-    # evaluate() in a function call, so frame is expected
-    # to be local
-    return stmt.expr.evaluate(local)
-
 def execFile(frame, stmt):
-    name = stmt.name.evaluate(frame)
+    name = stmt.name.accept(frame, evaluate)
     if stmt.action == 'open':
         assert stmt.mode  # Internal check
         file = {
@@ -105,12 +101,12 @@ def execFile(frame, stmt):
         frame[name] = file
     elif stmt.action == 'read':
         file = frame[name]
-        varname = stmt.data.evaluate(frame)
+        varname = stmt.data.accept(frame, evaluate)
         line = file['value'].readline().rstrip()
         frame[varname]['value'] = line
     elif stmt.action == 'write':
         file = frame[name]
-        writedata = str(stmt.data.evaluate(frame))
+        writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
@@ -126,7 +122,7 @@ def execute(frame, stmt):
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
     if stmt.rule == 'declare':
-        stmt.accept(frame, execDeclare)
+        pass
     if stmt.rule == 'assign':
         stmt.accept(frame, execAssign)
     if stmt.rule == 'case':
@@ -138,13 +134,13 @@ def execute(frame, stmt):
     if stmt.rule == 'repeat':
         stmt.accept(frame, execRepeat)
     if stmt.rule == 'procedure':
-        stmt.accept(frame, execProcedure)
+        pass
     if stmt.rule == 'call':
-        stmt.accept(frame, execCall)
+        stmt.expr.accept(frame, evalCall)
     if stmt.rule == 'function':
-        stmt.accept(frame, execFunction)
+        pass
     if stmt.rule == 'return':
-        return stmt.accept(frame, execReturn)
+        return stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'file':
         stmt.accept(frame, execFile)
 

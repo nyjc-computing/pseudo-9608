@@ -5,13 +5,15 @@ class PseudoError(Exception):
     def __init__(self, msg, token, line=None):
         super().__init__(msg)
         self.token = token
+        self.line = None
+        self.col = None
         if line is not None:
             self.line = line
-        elif token:
+        elif type(token) is dict:
             self.line = token['line']
+            self.col = token['col']
         else:
             self.line = None
-        self.col = token['col'] if token else None
 
     def msg(self):
         return self.args[0]
@@ -65,12 +67,6 @@ def ne(x, y):
 
 def eq(x, y):
     return x == y
-
-def get(frame, name):
-    return frame[name]['value']
-
-def call(func, args):
-    return func, args
 
 
 
