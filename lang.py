@@ -39,15 +39,11 @@ class Expr:
 
 
 
-class Literal(Expr):
+class Literal(TypedValue, Expr):
     """
     A Literal represents any value coming directly from
     the source code.
     """
-    __slots__ = ('type', 'value')
-    def __init__(self, type, value):
-        self.type = type
-        self.value = value
 
 
 
