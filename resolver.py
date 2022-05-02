@@ -214,7 +214,7 @@ def verifyFile(frame, stmt):
         stmt.data.accept(frame, resolve)
         if name not in frame:
             raise LogicError("File not open", stmt.name)
-        file = frame[name]
+        file = get(frame, name)
         if file.type not in ('WRITE', 'APPEND'):
             raise LogicError("File mode is {file.type}", stmt.name)
     elif stmt.action == 'close':
