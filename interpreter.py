@@ -158,8 +158,6 @@ def execute(frame, stmt):
         stmt.accept(frame, execOutput)
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
-    if stmt.rule == 'declare':
-        pass
     if stmt.rule == 'assign':
         stmt.accept(frame, execAssign)
     if stmt.rule == 'case':
@@ -170,16 +168,14 @@ def execute(frame, stmt):
         stmt.accept(frame, execWhile)
     if stmt.rule == 'repeat':
         stmt.accept(frame, execRepeat)
-    if stmt.rule == 'procedure':
-        pass
     if stmt.rule == 'call':
         stmt.expr.accept(frame, evalCall)
-    if stmt.rule == 'function':
-        pass
     if stmt.rule == 'return':
         return stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'file':
         stmt.accept(frame, execFile)
+    if stmt.rule in ('declare', 'procedure', 'function'):
+        pass
 
 def interpret(statements, frame=None):
     if frame is None:
