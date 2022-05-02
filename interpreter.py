@@ -12,19 +12,29 @@ def executeStmts(frame, stmts):
         if returnval:
             return returnval
 
-def getValue(frame, expr):
-    """Evaluate a Get expr to retrieve value from frame"""
-    if expr.name not in frame:
-        raise RuntimeError("Undeclared", expr.name)
-    if frame[expr.name].value is None:
-        raise RuntimeError("No value assigned", expr.name)
-    return frame[expr.name].value
+def getValue(frame, name, errmsg="Undeclared"):
+    """Retrieve value from frame using a name"""
+    if name not in frame:
+        raise RuntimeError(errmsg, name)
+    if frame[name].value is None:
+        raise RuntimeError("No value assigned", name)
+    return frame[name].value
 
 def setValue(frame, name, value):
-    """Set a new value in the frame slot"""
+    """
+    Set a new typed value in the frame slot if one exists,
+    otherwise add a new typed value to the frame.
+    """
+    frame[name].value = value
+
+def setValueIfExist(frame, name, value, errmsg="Undeclared"):
+    """
+    Set a new value in the frame slot if one exists,
+    otherwise raise an Error
+    """
     if name not in frame:
         raise RuntimeError("Undeclared", name)
-    frame[name].value = value
+    setValue(frame, name, value):
 
 # Evaluators
 
@@ -41,7 +51,11 @@ def evalBinary(frame, expr):
     return expr.oper(leftval, rightval)
 
 def evalGet(frame, expr):
-    return expr.accept(frame, getValue)
+    # Frame should have been inserted in resolver
+    # So ignore the frame that is passed here
+    if expr.frame[expr.name].value is None:
+        raise RuntimeError("No value assigned", expr.name)
+    return expr.frame[expr.name].value
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
@@ -125,6 +139,7 @@ def execFile(frame, stmt):
         if file.type != 'READ':
             raise RuntimeError("File opened for {file.type}", name)
         varname = stmt.data.accept(frame, evaluate)
+        # TODO: Catch and handle Python file io errors
         line = file.readline().rstrip()
         # TODO: Type conversion
         setValue(frame, varname, line)
@@ -138,6 +153,7 @@ def execFile(frame, stmt):
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
+        # TODO: Catch and handle Python file io errors
         file.write(writedata)
     elif stmt.action == 'close':
         if name not in frame:
