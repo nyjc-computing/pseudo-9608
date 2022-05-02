@@ -41,7 +41,7 @@ def evalBinary(frame, expr):
     return expr.oper(leftval, rightval)
 
 def evalGet(frame, expr):
-    return frame[expr.name].value
+    return expr.accept(frame, getValue)
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
@@ -78,12 +78,11 @@ def execOutput(frame, stmt):
 
 def execInput(frame, stmt):
     name = stmt.name
-    frame[name].value = input()
+    setValue(frame, name, input())
 
 def execAssign(frame, stmt):
-    name = stmt.name
     value = stmt.expr.accept(frame, evaluate)
-    frame[name].value = value
+    setValue(frame, stmt.name, value)
 
 def execCase(frame, stmt):
     cond = stmt.cond.accept(frame, evaluate)
@@ -118,20 +117,20 @@ def execFile(frame, stmt):
             value=open(name, stmt.mode[0].lower()),
         )
     elif stmt.action == 'read':
-        file = frame[name].value
+        file = getValue(frame, name)
         varname = stmt.data.accept(frame, evaluate)
         line = file.readline().rstrip()
         # TODO: Type conversion
-        frame[varname].value = line
+        setValue(frame, varname, line)
     elif stmt.action == 'write':
-        file = frame[name].value
+        file = getValue(frame, name)
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
         file.write(writedata)
     elif stmt.action == 'close':
-        file = frame[name].value
+        file = getValue(frame, name)
         file.close()
         del frame[name]
 
