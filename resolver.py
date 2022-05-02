@@ -197,30 +197,15 @@ def verifyFunction(frame, stmt):
     )
 
 def verifyFile(frame, stmt):
-    name = stmt.name.accept(frame, value)
+    stmt.name.accept(frame, value)
     if stmt.action == 'open':
-        if name in frame:
-            raise LogicError("File already opened", stmt.name)
-        file = TypedValue(stmt.mode, None)
-        frame[name] = file
+        pass
     elif stmt.action == 'read':
         stmt.data.accept(frame, resolve)
-        if name not in frame:
-            raise LogicError("File not open", stmt.name)
-        file = frame[name]
-        if file.type != 'READ':
-            raise LogicError("File mode is {file.type}", stmt.name)
     elif stmt.action == 'write':
         stmt.data.accept(frame, resolve)
-        if name not in frame:
-            raise LogicError("File not open", stmt.name)
-        file = get(frame, name)
-        if file.type not in ('WRITE', 'APPEND'):
-            raise LogicError("File mode is {file.type}", stmt.name)
     elif stmt.action == 'close':
-        if name not in frame:
-            raise LogicError("File not open", stmt.name)
-        del frame[name]
+        pass
 
 def verify(frame, stmt):
     if stmt.rule == 'output':
