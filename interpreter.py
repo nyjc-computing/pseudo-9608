@@ -7,7 +7,7 @@ from lang import Literal, Unary, Binary, Get, Call
 # Helper functions
 
 def expectModeElseError(exprmode, expected, errmsg="Expected", name=None):
-    if not type(expected) is str:
+    if type(expected) is str:
         expected = (expected,)
     if not exprmode in expected:
         if not name: name = exprmode
