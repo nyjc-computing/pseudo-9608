@@ -1,4 +1,5 @@
 from builtin import RuntimeError
+from lang import TypedValue
 from lang import Literal, Unary, Binary, Get, Call
 
 
@@ -24,14 +25,14 @@ def evalBinary(frame, expr):
     return expr.oper(leftval, rightval)
 
 def evalGet(frame, expr):
-    return frame[expr.name]['value']
+    return frame[expr.name].value
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
     for arg, slot in zip(expr.args, callable['params']):
         argval = arg.accept(frame, evaluate)
-        slot['value'] = argval
+        slot.value = argval
     local = callable['frame']
     for stmt in callable['stmts']:
         returnval = stmt.accept(local, execute)
@@ -59,12 +60,12 @@ def execOutput(frame, stmt):
 
 def execInput(frame, stmt):
     name = stmt.name
-    frame[name]['value'] = input()
+    frame[name].value = input()
 
 def execAssign(frame, stmt):
     name = stmt.name
     value = stmt.expr.accept(frame, evaluate)
-    frame[name]['value'] = value
+    frame[name].value = value
 
 def execCase(frame, stmt):
     cond = stmt.cond.accept(frame, evaluate)
@@ -94,26 +95,26 @@ def execFile(frame, stmt):
     name = stmt.name.accept(frame, evaluate)
     if stmt.action == 'open':
         assert stmt.mode  # Internal check
-        file = {
-            'type': stmt.mode,
-            'value': open(name, stmt.mode[0].lower()),
-        }
-        frame[name] = file
+        frame[name] = TypedValue(
+            type=stmt.mode,
+            value=open(name, stmt.mode[0].lower()),
+        )
     elif stmt.action == 'read':
-        file = frame[name]
+        file = frame[name].value
         varname = stmt.data.accept(frame, evaluate)
-        line = file['value'].readline().rstrip()
-        frame[varname]['value'] = line
+        line = file.readline().rstrip()
+        # TODO: Type conversion
+        frame[varname].value = line
     elif stmt.action == 'write':
-        file = frame[name]
+        file = frame[name].value
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
-        file['value'].write(writedata)
+        file.write(writedata)
     elif stmt.action == 'close':
-        file = frame[name]
-        file['value'].close()
+        file = frame[name].value
+        file.close()
         del frame[name]
 
 def execute(frame, stmt):
