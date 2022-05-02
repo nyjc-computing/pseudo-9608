@@ -12,6 +12,20 @@ def executeStmts(frame, stmts):
         if returnval:
             return returnval
 
+def getValue(frame, expr):
+    """Evaluate a Get expr to retrieve value from frame"""
+    if expr.name not in frame:
+        raise RuntimeError("Undeclared", expr.name)
+    if frame[expr.name].value is None:
+        raise RuntimeError("No value assigned", expr.name)
+    return frame[expr.name].value
+
+def setValue(frame, name, value):
+    """Set a new value in the frame slot"""
+    if name not in frame:
+        raise RuntimeError("Undeclared", name)
+    frame[name].value = value
+
 # Evaluators
 
 def evalLiteral(frame, literal):
