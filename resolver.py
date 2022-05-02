@@ -20,8 +20,13 @@ def resolveExprs(frame, exprs):
     for expr in exprs:
         expr.accept(frame, resolve)
 
+def getType(frame, name):
+    declaredElseError(frame, name)
+    return frame[name].type
+
 def getValue(frame, name):
     """Retrieve value from a frame using a name"""
+    declaredElseError(frame, name)
     if frame[name].value is None:
         raise LogicError("No value assigned", name)
     return frame[name].value
@@ -76,7 +81,7 @@ def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
-    return frame[expr.name].type
+    return getType(frame, name)
 
 def resolveCall(frame, expr):
     # Insert frame
@@ -127,7 +132,7 @@ def verifyInput(frame, stmt):
 
 def verifyAssign(frame, stmt):
     exprtype = stmt.expr.accept(frame, resolve)
-    expectTypeElseError(exprtype, frame[stmt.name].type)
+    expectTypeElseError(exprtype, getType(frame, stmt.name))
 
 def verifyCase(frame, stmt):
     stmt.cond.accept(frame, resolve)
@@ -155,7 +160,7 @@ def verifyProcedure(frame, stmt):
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(exprtype, frame[expr.name].type)
+            expectTypeElseError(exprtype, getType(frame, expr.name))
             # Reference frame vars in local
             local[expr.name] = getValue(frame, expr.name)
         else:
