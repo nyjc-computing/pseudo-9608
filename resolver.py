@@ -186,18 +186,19 @@ def verifyFunction(frame, stmt):
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
      # Declare function in frame
-    frame[name] = {
-        'type': returnType,
-        'value': {
+    frame[name] = TypedValue(
+        type=returnType,
+        value={
             'frame': local,
             'passby': 'BYVALUE',
             'params': stmt.params,
             'stmts': stmt.stmts,
         }
-    }
+    )
 
 def verifyFile(frame, stmt):
     name = stmt.name.accept(frame, value)
+    dataType = stmt.data.accept(frame, resolve)
     if stmt.action == 'open':
         if name in frame:
             raise LogicError("File already opened", stmt.name)
