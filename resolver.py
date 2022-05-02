@@ -19,9 +19,11 @@ def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
     if declaredType:
         expectTypeElseError(frame[name], declaredType)
 
-def resolveExprs(frame, exprs):
-    for expr in exprs:
-        expr.accept(frame, resolve)
+def declareVar(frame, name, type):
+    """Declare a name in a frame"""
+    if name in frame:
+        raise LogicError("Already declared", name)
+    frame[name] = TypedValue(type, None)
 
 def getType(frame, name):
     declaredElseError(frame, name)
@@ -39,17 +41,15 @@ def setValue(frame, name, value):
     declaredElseError(frame, name)
     frame[name].value = value
 
-def declareVar(frame, name, type):
-    """Declare a name in a frame"""
-    if name in frame:
-        raise LogicError("Already declared", name)
-    frame[name] = TypedValue(type, None)
-
 def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
 
 # Resolvers
+
+def resolveExprs(frame, exprs):
+    for expr in exprs:
+        expr.accept(frame, resolve)
 
 def resolveLiteral(frame, literal):
     return literal.type
