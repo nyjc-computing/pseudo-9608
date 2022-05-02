@@ -33,8 +33,7 @@ def getType(frame, name):
 
 def getValue(frame, name, errmsg="Undeclared"):
     """Retrieve value from frame using a name"""
-    if name not in frame:
-        raise RuntimeError(errmsg, name)
+    declaredElseError(frame, name)
     if frame[name].value is None:
         raise RuntimeError("No value assigned", name)
     return frame[name].value
@@ -51,8 +50,7 @@ def setValueIfExist(frame, name, value, errmsg="Undeclared"):
     Set a new value in the frame slot if one exists,
     otherwise raise an Error
     """
-    if name not in frame:
-        raise RuntimeError(errmsg, name)
+    declaredElseError(frame, name)
     setValue(frame, name, value)
 
 # Evaluators
@@ -148,16 +146,13 @@ def execRepeat(frame, stmt):
 def execFile(frame, stmt):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
-        if name in frame:
-            raise RuntimeError("File already opened", name)
-        frame[name] = TypedValue(
-            type=stmt.mode,
-            value=open(name, stmt.mode[0].lower()),
-        )
+        undeclaredElseError(frame, name, "File already opened")
+        declareVar(frame, name, stmt.mode)
+        setValue(frame, name, open(name, stmt.mode[0].lower()))
     elif stmt.action == 'read':
         file = getValue(frame, name, "File not open")
-        if file.mode != 'r':
-            raise RuntimeError("File opened for {file.type}", name)
+        mode = getType(frame, name)
+        expectModeElseError(mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
         line = file.readline().rstrip()
@@ -165,8 +160,8 @@ def execFile(frame, stmt):
         setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
         file = getValue(frame, name, "File not open")
-        if file.mode not in ('w', 'a'):
-            raise RuntimeError("File opened for {file.type}", name)
+        mode = getType(frame, name)
+        expectModeElseError(mode, ('WRITE', 'APPEND'))
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
