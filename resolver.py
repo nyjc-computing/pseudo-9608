@@ -13,9 +13,11 @@ def expectTypeElseError(exprtype, expected, name=None):
         if not name: name = exprtype
         raise LogicError(f"{exprtype} <> {expected}", name)
 
-def declaredElseError(frame, name):
+def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
     if name not in frame:
-        raise LogicError("Undeclared", name)
+        raise LogicError(errmsg, name)
+    if declaredType:
+        expectTypeElseError(frame[name], declaredType)
 
 def resolveExprs(frame, exprs):
     for expr in exprs:
@@ -82,7 +84,7 @@ def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
-    return getType(frame, name)
+    return getType(frame, expr.name)
 
 def resolveCall(frame, expr):
     # Insert frame
@@ -132,6 +134,7 @@ def verifyInput(frame, stmt):
     declaredElseError(frame, stmt.name)
 
 def verifyAssign(frame, stmt):
+    declaredElseError(frame, stmt.name)
     exprtype = stmt.expr.accept(frame, resolve)
     expectTypeElseError(exprtype, getType(frame, stmt.name))
 
