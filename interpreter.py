@@ -112,24 +112,36 @@ def execFile(frame, stmt):
     name = stmt.name.accept(frame, evaluate)
     if stmt.action == 'open':
         assert stmt.mode  # Internal check
+        if name in frame:
+            raise RuntimeError("File already opened", name)
         frame[name] = TypedValue(
             type=stmt.mode,
             value=open(name, stmt.mode[0].lower()),
         )
     elif stmt.action == 'read':
+        if name not in frame:
+            raise RuntimeError("File not open", name)
         file = getValue(frame, name)
+        if file.type != 'READ':
+            raise RuntimeError("File opened for {file.type}", name)
         varname = stmt.data.accept(frame, evaluate)
         line = file.readline().rstrip()
         # TODO: Type conversion
         setValue(frame, varname, line)
     elif stmt.action == 'write':
+        if name not in frame:
+            raise RuntimeError("File not open", name)
         file = getValue(frame, name)
+        if file.type != 'WRITE':
+            raise RuntimeError("File opened for {file.type}", name)
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
         file.write(writedata)
     elif stmt.action == 'close':
+        if name not in frame:
+            raise RuntimeError("File not open", name)
         file = getValue(frame, name)
         file.close()
         del frame[name]
