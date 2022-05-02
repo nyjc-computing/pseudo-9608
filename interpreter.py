@@ -53,7 +53,7 @@ def evalBinary(frame, expr):
 def evalGet(frame, expr):
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
-    return getValue(expr.frame, expr.name).value
+    return getValue(expr.frame, expr.name)
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
