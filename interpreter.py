@@ -53,9 +53,7 @@ def evalBinary(frame, expr):
 def evalGet(frame, expr):
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
-    if expr.frame[expr.name].value is None:
-        raise RuntimeError("No value assigned", expr.name)
-    return expr.frame[expr.name].value
+    return getValue(expr.frame, expr.name).value
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
