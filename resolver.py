@@ -16,18 +16,6 @@ def resolveExprs(frame, exprs):
     for expr in exprs:
         expr.accept(frame, resolve)
 
-def verifyStmts(frame, stmts):
-    for stmt in stmts:
-        stmt.accept(frame, verify)
-
-def verifyOutput(frame, stmt):
-    resolveExprs(frame, stmt.exprs)
-
-def verifyInput(frame, stmt):
-    name = stmt.name
-    if name not in frame:
-        raise LogicError('Undeclared', stmt.name)
-
 def get(frame, expr):
     """Evaluate a Get expr to retrieve value from frame"""
     if expr.name not in frame:
@@ -39,6 +27,8 @@ def get(frame, expr):
 def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
+
+# Resolvers
 
 def resolveLiteral(frame, literal):
     return literal.type
@@ -94,8 +84,6 @@ def resolveCall(frame, expr):
         argtype = arg.accept(frame, resolve)
         expectTypeElseError(argtype, param.type)
 
-
-
 def resolve(frame, expr):
     if isinstance(expr, Literal):
         return expr.accept(frame, resolveLiteral)
@@ -109,7 +97,23 @@ def resolve(frame, expr):
         return expr.accept(frame, resolveGet)
     elif isinstance(expr, Call):
         return expr.accept(frame, resolveCall)
+
+
         
+# Verifiers
+
+def verifyStmts(frame, stmts):
+    for stmt in stmts:
+        stmt.accept(frame, verify)
+
+def verifyOutput(frame, stmt):
+    resolveExprs(frame, stmt.exprs)
+
+def verifyInput(frame, stmt):
+    name = stmt.name
+    if name not in frame:
+        raise LogicError('Undeclared', stmt.name)
+
 def verifyAssign(frame, stmt):
     exprtype = stmt.expr.accept(frame, resolve)
     expectTypeElseError(exprtype, frame[stmt.name].type)
@@ -229,6 +233,8 @@ def verify(frame, stmt):
         stmt.accept(frame, verifyFile)
     elif stmt.rule == 'return':
         return stmt.expr.accept(frame, resolve)
+
+
 
 def inspect(statements):
     frame = {}
