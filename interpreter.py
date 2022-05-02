@@ -132,7 +132,7 @@ def execFile(frame, stmt):
         if name not in frame:
             raise RuntimeError("File not open", name)
         file = getValue(frame, name)
-        if file.type != 'WRITE':
+        if file.type not in ('WRITE', 'APPEND'):
             raise RuntimeError("File opened for {file.type}", name)
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
