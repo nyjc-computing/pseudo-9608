@@ -191,12 +191,7 @@ def verifyFunction(frame, stmt):
         stmtType = procstmt.accept(local, verify)
         if stmtType:
             hasReturn = True
-            expectTypeElseError(stmtType, stmt.returnType)
-            if stmtType != stmt.returnType:
-                raise LogicError(
-                    f"Expect {stmt.returnType}, got {stmtType}",
-                    stmt.name,
-                )
+            expectTypeElseError(stmtType, stmt.returnType, stmt.name)
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
      # Declare function in frame
