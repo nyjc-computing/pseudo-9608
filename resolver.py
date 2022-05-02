@@ -12,14 +12,17 @@ def expectTypeElseError(exprtype, expected):
     if exprtype != expected:
         raise LogicError(f"Expected {expected}", exprtype)
 
+def declaredElseError(frame, name):
+    if name not in frame:
+        raise LogicError("Undeclared", name)
+
 def resolveExprs(frame, exprs):
     for expr in exprs:
         expr.accept(frame, resolve)
 
 def get(frame, expr):
     """Evaluate a Get expr to retrieve value from frame"""
-    if expr.name not in frame:
-        raise LogicError("Undeclared", expr.name)
+    declaredElseError(frame, expr.name)
     if frame[expr.name].value is None:
         raise LogicError("No value assigned", expr.name)
     return frame[expr.name].value
@@ -110,9 +113,7 @@ def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame, stmt):
-    name = stmt.name
-    if name not in frame:
-        raise LogicError('Undeclared', stmt.name)
+    declaredElseError(frame, stmt.name)
 
 def verifyAssign(frame, stmt):
     exprtype = stmt.expr.accept(frame, resolve)
