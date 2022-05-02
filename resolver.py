@@ -26,6 +26,11 @@ def getValue(frame, name):
         raise LogicError("No value assigned", name)
     return frame[name].value
 
+def setValue(frame, name, value):
+    """Set a value for a declared variable in a frame"""
+    declaredElseError(frame, name)
+    frame[name].value = value
+
 def declareVar(frame, name, type):
     """Declare a name in a frame"""
     if name in frame:
@@ -160,16 +165,13 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    name = stmt.name
-    frame[name] = TypedValue(
-        type='procedure',
-        value={
-            'frame': local,
-            'passby': stmt.passby,
-            'params': stmt.params,
-            'stmts': stmt.stmts,
-        },
-    )
+    declareVar(frame, stmt.name, 'procedure')
+    setValue(frame, stmt.name, {
+        'frame': local,
+        'passby': stmt.passby,
+        'params': stmt.params,
+        'stmts': stmt.stmts,
+    })
 
 def verifyFunction(frame, stmt):
     # Set up local frame
@@ -177,31 +179,27 @@ def verifyFunction(frame, stmt):
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
-    name = stmt.name
-    returnType = stmt.returnType
     # Resolve procedure statements using local
     hasReturn = False
     for procstmt in stmt.stmts:
         stmtType = procstmt.accept(local, verify)
         if stmtType:
             hasReturn = True
-            if stmtType != returnType:
+            if stmtType != stmt.returnType:
                 raise LogicError(
-                    f"Expect {returnType}, got {stmtType}",
+                    f"Expect {stmt.returnType}, got {stmtType}",
                     stmt.name,
                 )
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
      # Declare function in frame
-    frame[name] = TypedValue(
-        type=returnType,
-        value={
-            'frame': local,
-            'passby': 'BYVALUE',
-            'params': stmt.params,
-            'stmts': stmt.stmts,
-        }
-    )
+    declareVar(frame, stmt.name, stmt.returnType)
+    setValue(frame, stmt.name, {
+        'frame': local,
+        'passby': 'BYVALUE',
+        'params': stmt.params,
+        'stmts': stmt.stmts,
+    })
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)
