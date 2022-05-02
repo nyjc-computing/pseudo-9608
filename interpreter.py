@@ -125,6 +125,7 @@ def execFile(frame, stmt):
         if file.type != 'READ':
             raise RuntimeError("File opened for {file.type}", name)
         varname = stmt.data.accept(frame, evaluate)
+        # TODO: Catch and handle Python file io errors
         line = file.readline().rstrip()
         # TODO: Type conversion
         setValue(frame, varname, line)
@@ -138,6 +139,7 @@ def execFile(frame, stmt):
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
+        # TODO: Catch and handle Python file io errors
         file.write(writedata)
     elif stmt.action == 'close':
         if name not in frame:
