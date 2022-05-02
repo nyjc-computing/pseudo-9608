@@ -29,7 +29,7 @@ def getValue(frame, name):
 def declareVar(frame, name, type):
     """Declare a name in a frame"""
     if name in frame:
-        raise LogicError("Already ddeclared", name)
+        raise LogicError("Already declared", name)
     frame[name] = TypedValue(type, None)
 
 def value(frame, expr):
@@ -43,8 +43,6 @@ def resolveLiteral(frame, literal):
 
 def resolveDeclare(frame, expr):
     """Declare variable in frame"""
-    if expr.name in frame:
-        raise LogicError("Already declared", expr.name)
     declareVar(frame, expr.name, expr.type)
     return expr.type
 
