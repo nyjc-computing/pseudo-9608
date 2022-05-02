@@ -33,3 +33,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [16a OOP: Expressions](https://github.com/nyjc-computing/pseudo/pull/34)
 - [16b OOP: Statements](https://github.com/nyjc-computing/pseudo/pull/35)
 - [16c OOP: Expression Statements](https://github.com/nyjc-computing/pseudo/pull/36)
+- [16d OOP: Variables](https://github.com/nyjc-computing/pseudo/pull/37)
