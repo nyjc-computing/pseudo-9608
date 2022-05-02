@@ -198,13 +198,13 @@ def verifyFunction(frame, stmt):
 
 def verifyFile(frame, stmt):
     name = stmt.name.accept(frame, value)
-    dataType = stmt.data.accept(frame, resolve)
     if stmt.action == 'open':
         if name in frame:
             raise LogicError("File already opened", stmt.name)
         file = TypedValue(stmt.mode, None)
         frame[name] = file
     elif stmt.action == 'read':
+        stmt.data.accept(frame, resolve)
         if name not in frame:
             raise LogicError("File not open", stmt.name)
         file = frame[name]
