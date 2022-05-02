@@ -26,10 +26,7 @@ def verifyOutput(frame, stmt):
 def verifyInput(frame, stmt):
     name = stmt.name
     if name not in frame:
-        raise LogicError(
-            f'Undeclared',
-            stmt.name,
-        )
+        raise LogicError('Undeclared', stmt.name)
 
 def get(frame, expr):
     """Evaluate a Get expr to retrieve value from frame"""
