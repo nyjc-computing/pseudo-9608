@@ -125,10 +125,9 @@ def execFile(frame, stmt):
         name = stmt.name.accept(frame, evalLiteral)
         if name in frame:
             raise RuntimeError("File already opened", name)
-        setValue(frame, name, TypedValue(
-                type=stmt.mode,
-                value=open(name, stmt.mode[0].lower()),
-            )
+        frame[name] = TypedValue(
+            type=stmt.mode,
+            value=open(name, stmt.mode[0].lower()),
         )
     elif stmt.action == 'read':
         file = getValue(frame, stmt.name, "File not open")
