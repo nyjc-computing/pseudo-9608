@@ -39,6 +39,10 @@ def get(frame, expr):
         raise LogicError("No value assigned", expr.name)
     return frame[expr.name].value
 
+def value(frame, expr):
+    """Return the value of a Literal"""
+    return expr.value
+
 def resolveLiteral(frame, literal):
     return literal.type
 
