@@ -22,7 +22,6 @@ def resolveExprs(frame, exprs):
 
 def get(frame, expr):
     """Evaluate a Get expr to retrieve value from frame"""
-    declaredElseError(frame, expr.name)
     if frame[expr.name].value is None:
         raise LogicError("No value assigned", expr.name)
     return frame[expr.name].value
@@ -73,6 +72,7 @@ def resolveGet(frame, expr):
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
+    declaredElseError(frame, expr.name)
     callable = expr.callable.accept(frame, get)
     expectTypeElseError(calltype, 'procedure')
     numArgs, numParams = len(expr.args), len(callable['params'])
