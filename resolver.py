@@ -8,9 +8,10 @@ from lang import Literal, Declare, Unary, Binary, Get, Call
 
 # Helper functions
 
-def expectTypeElseError(exprtype, expected):
+def expectTypeElseError(exprtype, expected, name=None):
     if exprtype != expected:
-        raise LogicError(f"Expected {expected}", exprtype)
+        if not name: name = exprtype
+        raise LogicError(f"{exprtype} <> {expected}", name)
 
 def declaredElseError(frame, name):
     if name not in frame:
@@ -190,6 +191,7 @@ def verifyFunction(frame, stmt):
         stmtType = procstmt.accept(local, verify)
         if stmtType:
             hasReturn = True
+            expectTypeElseError(stmtType, stmt.returnType)
             if stmtType != stmt.returnType:
                 raise LogicError(
                     f"Expect {stmt.returnType}, got {stmtType}",
