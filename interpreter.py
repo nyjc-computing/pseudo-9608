@@ -131,7 +131,7 @@ def execFile(frame, stmt):
         )
     elif stmt.action == 'read':
         file = getValue(frame, name, "File not open")
-        if file.type != 'READ':
+        if file.mode != 'r':
             raise RuntimeError("File opened for {file.type}", name)
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
@@ -140,7 +140,7 @@ def execFile(frame, stmt):
         setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
         file = getValue(frame, name, "File not open")
-        if file.type not in ('WRITE', 'APPEND'):
+        if file.mode not in ('w', 'a'):
             raise RuntimeError("File opened for {file.type}", name)
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
