@@ -121,8 +121,8 @@ def execRepeat(frame, stmt):
         executeStmts(frame, stmt.stmts)
 
 def execFile(frame, stmt):
+    name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
-        name = stmt.name.accept(frame, evalLiteral)
         if name in frame:
             raise RuntimeError("File already opened", name)
         frame[name] = TypedValue(
@@ -130,16 +130,16 @@ def execFile(frame, stmt):
             value=open(name, stmt.mode[0].lower()),
         )
     elif stmt.action == 'read':
-        file = getValue(frame, stmt.name, "File not open")
+        file = getValue(frame, name, "File not open")
         if file.type != 'READ':
-            raise RuntimeError("File opened for {file.type}", stmt.name)
+            raise RuntimeError("File opened for {file.type}", name)
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
         line = file.readline().rstrip()
         # TODO: Type conversion
         setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
-        file = getValue(frame, stmt.name, "File not open")
+        file = getValue(frame, name, "File not open")
         if file.type not in ('WRITE', 'APPEND'):
             raise RuntimeError("File opened for {file.type}", name)
         writedata = str(stmt.data.accept(frame, evaluate))
@@ -149,9 +149,9 @@ def execFile(frame, stmt):
         # TODO: Catch and handle Python file io errors
         file.write(writedata)
     elif stmt.action == 'close':
-        file = getValue(frame, stmt.name, "File not open")
+        file = getValue(frame, name, "File not open")
         file.close()
-        del frame[stmt.name]
+        del frame[name]
 
 def execute(frame, stmt):
     if stmt.rule == 'output':
