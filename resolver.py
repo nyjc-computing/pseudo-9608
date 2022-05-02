@@ -26,6 +26,12 @@ def getValue(frame, name):
         raise LogicError("No value assigned", name)
     return frame[name].value
 
+def declareVar(frame, name, type):
+    """Declare a name in a frame"""
+    if name in frame:
+        raise LogicError("Already ddeclared", name)
+    frame[name] = TypedValue(type, None)
+
 def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
@@ -39,7 +45,7 @@ def resolveDeclare(frame, expr):
     """Declare variable in frame"""
     if expr.name in frame:
         raise LogicError("Already declared", expr.name)
-    frame[expr.name] = TypedValue(expr.type, None)
+    declareVar(frame, expr.name, expr.type)
     return expr.type
 
 def resolveUnary(frame, expr):
@@ -148,9 +154,9 @@ def verifyProcedure(frame, stmt):
             exprtype = expr.accept(local, resolveDeclare)
             expectTypeElseError(exprtype, frame[expr.name].type)
             # Reference frame vars in local
-            local[expr.name] = frame[expr.name]
+            local[expr.name] = getValue(frame, expr.name)
         else:
-            local[expr.name] = TypedValue(expr.type, None)
+            declareVar(local, expr.name, expr.type)
         # params: replace Declare Expr with slot
         stmt.params[i] = local[expr.name]
     # Resolve procedure statements using local
