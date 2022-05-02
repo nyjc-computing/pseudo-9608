@@ -6,11 +6,30 @@ from lang import Literal, Unary, Binary, Get, Call
 
 # Helper functions
 
-def executeStmts(frame, stmts):
-    for stmt in stmts:
-        returnval = stmt.accept(frame, execute)
-        if returnval:
-            return returnval
+def expectModeElseError(exprmode, expected, errmsg="Expected", name=None):
+    if not type(expected) is str:
+        expected = (expected,)
+    if not exprmode in expected:
+        if not name: name = exprmode
+        raise RuntimeError(f"{errmsg} {expected}", name)
+
+def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
+    if name not in frame:
+        raise RuntimeError(errmsg, name)
+
+def undeclaredElseError(frame, name, errmsg="Already declared", declaredType=None):
+    if name in frame:
+        raise RuntimeError(errmsg, name)
+
+def declareVar(frame, name, type, errmsg="Already declared"):
+    """Declare a name in a frame"""
+    if name in frame:
+        raise RuntimeError(errmsg, name)
+    frame[name] = TypedValue(type, None)
+
+def getType(frame, name):
+    declaredElseError(frame, name)
+    return frame[name].type
 
 def getValue(frame, name, errmsg="Undeclared"):
     """Retrieve value from frame using a name"""
@@ -82,6 +101,12 @@ def evaluate(frame, expr):
         raise TypeError(f"Unexpected expr {expr}")
 
 # Executors
+
+def executeStmts(frame, stmts):
+    for stmt in stmts:
+        returnval = stmt.accept(frame, execute)
+        if returnval:
+            return returnval
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
