@@ -34,7 +34,7 @@ def setValueIfExist(frame, name, value, errmsg="Undeclared"):
     """
     if name not in frame:
         raise RuntimeError("Undeclared", name)
-    setValue(frame, name, value):
+    setValue(frame, name, value)
 
 # Evaluators
 
