@@ -72,8 +72,11 @@ def resolveGet(frame, expr):
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
-    declaredElseError(frame, expr.name)
-    callable = expr.callable.accept(frame, get)
+    name = expr.callable.name
+    declaredElseError(frame, name)
+    if frame[name].value is None:
+        raise LogicError("No value assigned", name)
+    callable = frame[name].value
     expectTypeElseError(calltype, 'procedure')
     numArgs, numParams = len(expr.args), len(callable['params'])
     if numArgs != numParams:
