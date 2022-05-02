@@ -1,15 +1,59 @@
 from builtin import RuntimeError
+from lang import TypedValue
 from lang import Literal, Unary, Binary, Get, Call
 
 
 
 # Helper functions
 
-def executeStmts(frame, stmts):
-    for stmt in stmts:
-        returnval = stmt.accept(frame, execute)
-        if returnval:
-            return returnval
+def expectModeElseError(exprmode, expected, errmsg="Expected", name=None):
+    if not type(expected) is str:
+        expected = (expected,)
+    if not exprmode in expected:
+        if not name: name = exprmode
+        raise RuntimeError(f"{errmsg} {expected}", name)
+
+def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
+    if name not in frame:
+        raise RuntimeError(errmsg, name)
+
+def undeclaredElseError(frame, name, errmsg="Already declared", declaredType=None):
+    if name in frame:
+        raise RuntimeError(errmsg, name)
+
+def declareVar(frame, name, type, errmsg="Already declared"):
+    """Declare a name in a frame"""
+    if name in frame:
+        raise RuntimeError(errmsg, name)
+    frame[name] = TypedValue(type, None)
+
+def getType(frame, name):
+    declaredElseError(frame, name)
+    return frame[name].type
+
+def getValue(frame, name, errmsg="Undeclared"):
+    """Retrieve value from frame using a name"""
+    declaredElseError(frame, name)
+    if frame[name].value is None:
+        raise RuntimeError("No value assigned", name)
+    return frame[name].value
+
+def setValue(frame, name, value):
+    """
+    Set a new typed value in the frame slot if one exists,
+    otherwise add a new typed value to the frame.
+    """
+    frame[name].value = value
+
+def setValueIfExist(frame, name, value, errmsg="Undeclared"):
+    """
+    Set a new value in the frame slot if one exists,
+    otherwise raise an Error
+    """
+    declaredElseError(frame, name)
+    setValue(frame, name, value)
+
+# Evaluators
 
 def evalLiteral(frame, literal):
     return literal.value
@@ -24,14 +68,16 @@ def evalBinary(frame, expr):
     return expr.oper(leftval, rightval)
 
 def evalGet(frame, expr):
-    return frame[expr.name]['value']
+    # Frame should have been inserted in resolver
+    # So ignore the frame that is passed here
+    return getValue(expr.frame, expr.name)
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
     for arg, slot in zip(expr.args, callable['params']):
         argval = arg.accept(frame, evaluate)
-        slot['value'] = argval
+        slot.value = argval
     local = callable['frame']
     for stmt in callable['stmts']:
         returnval = stmt.accept(local, execute)
@@ -52,6 +98,14 @@ def evaluate(frame, expr):
     else:
         raise TypeError(f"Unexpected expr {expr}")
 
+# Executors
+
+def executeStmts(frame, stmts):
+    for stmt in stmts:
+        returnval = stmt.accept(frame, execute)
+        if returnval:
+            return returnval
+
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
         print(str(expr.accept(frame, evaluate)), end='')
@@ -59,12 +113,11 @@ def execOutput(frame, stmt):
 
 def execInput(frame, stmt):
     name = stmt.name
-    frame[name]['value'] = input()
+    setValue(frame, name, input())
 
 def execAssign(frame, stmt):
-    name = stmt.name
     value = stmt.expr.accept(frame, evaluate)
-    frame[name]['value'] = value
+    setValue(frame, stmt.name, value)
 
 def execCase(frame, stmt):
     cond = stmt.cond.accept(frame, evaluate)
@@ -91,29 +144,33 @@ def execRepeat(frame, stmt):
         executeStmts(frame, stmt.stmts)
 
 def execFile(frame, stmt):
-    name = stmt.name.accept(frame, evaluate)
+    name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
-        assert stmt.mode  # Internal check
-        file = {
-            'type': stmt.mode,
-            'value': open(name, stmt.mode[0].lower()),
-        }
-        frame[name] = file
+        undeclaredElseError(frame, name, "File already opened")
+        declareVar(frame, name, stmt.mode)
+        setValue(frame, name, open(name, stmt.mode[0].lower()))
     elif stmt.action == 'read':
-        file = frame[name]
+        file = getValue(frame, name, "File not open")
+        mode = getType(frame, name)
+        expectModeElseError(mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
-        line = file['value'].readline().rstrip()
-        frame[varname]['value'] = line
+        # TODO: Catch and handle Python file io errors
+        line = file.readline().rstrip()
+        # TODO: Type conversion
+        setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
-        file = frame[name]
+        file = getValue(frame, name, "File not open")
+        mode = getType(frame, name)
+        expectModeElseError(mode, ('WRITE', 'APPEND'))
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
-        file['value'].write(writedata)
+        # TODO: Catch and handle Python file io errors
+        file.write(writedata)
     elif stmt.action == 'close':
-        file = frame[name]
-        file['value'].close()
+        file = getValue(frame, name, "File not open")
+        file.close()
         del frame[name]
 
 def execute(frame, stmt):
@@ -121,8 +178,6 @@ def execute(frame, stmt):
         stmt.accept(frame, execOutput)
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
-    if stmt.rule == 'declare':
-        pass
     if stmt.rule == 'assign':
         stmt.accept(frame, execAssign)
     if stmt.rule == 'case':
@@ -133,16 +188,14 @@ def execute(frame, stmt):
         stmt.accept(frame, execWhile)
     if stmt.rule == 'repeat':
         stmt.accept(frame, execRepeat)
-    if stmt.rule == 'procedure':
-        pass
     if stmt.rule == 'call':
         stmt.expr.accept(frame, evalCall)
-    if stmt.rule == 'function':
-        pass
     if stmt.rule == 'return':
         return stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'file':
         stmt.accept(frame, execFile)
+    if stmt.rule in ('declare', 'procedure', 'function'):
+        pass
 
 def interpret(statements, frame=None):
     if frame is None:

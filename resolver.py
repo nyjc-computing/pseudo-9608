@@ -1,55 +1,62 @@
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
+from lang import TypedValue
 from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
 
 # Helper functions
 
-def expectTypeElseError(exprtype, expected):
+def expectTypeElseError(exprtype, expected, name=None):
     if exprtype != expected:
-        raise LogicError(f"Expected {expected}", exprtype)
+        if not name: name = exprtype
+        raise LogicError(f"{exprtype} <> {expected}", name)
 
-def resolveExprs(frame, exprs):
-    for expr in exprs:
-        expr.accept(frame, resolve)
-
-def verifyStmts(frame, stmts):
-    for stmt in stmts:
-        stmt.accept(frame, verify)
-
-def verifyOutput(frame, stmt):
-    resolveExprs(frame, stmt.exprs)
-
-def verifyInput(frame, stmt):
-    name = stmt.name
+def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
     if name not in frame:
-        raise LogicError(
-            f'Name not declared',
-            stmt.name,
-        )
+        raise LogicError(errmsg, name)
+    if declaredType:
+        expectTypeElseError(frame[name], declaredType)
 
-def get(frame, expr):
-    """Evaluate a Get expr to retrieve value from frame"""
-    if expr.name not in frame:
-        raise LogicError("Undeclared", expr.name)
-    if frame[expr.name] is None:
-        raise LogicError("No value assigned", expr.name)
-    return frame[expr.name]
+def declareVar(frame, name, type):
+    """Declare a name in a frame"""
+    if name in frame:
+        raise LogicError("Already declared", name)
+    frame[name] = TypedValue(type, None)
+
+def getType(frame, name):
+    declaredElseError(frame, name)
+    return frame[name].type
+
+def getValue(frame, name):
+    """Retrieve value from a frame using a name"""
+    declaredElseError(frame, name)
+    if frame[name].value is None:
+        raise LogicError("No value assigned", name)
+    return frame[name].value
+
+def setValue(frame, name, value):
+    """Set a value for a declared variable in a frame"""
+    declaredElseError(frame, name)
+    frame[name].value = value
 
 def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
+
+# Resolvers
+
+def resolveExprs(frame, exprs):
+    for expr in exprs:
+        expr.accept(frame, resolve)
 
 def resolveLiteral(frame, literal):
     return literal.type
 
 def resolveDeclare(frame, expr):
     """Declare variable in frame"""
-    if expr.name in frame:
-        raise LogicError("Already declared", expr.name)
-    frame[expr.name] = {'type': expr.type, 'value': None}
+    declareVar(frame, expr.name, expr.type)
     return expr.type
 
 def resolveUnary(frame, expr):
@@ -77,12 +84,14 @@ def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
-    return frame[expr.name]['type']
+    return getType(frame, expr.name)
 
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
-    callable = expr.callable.accept(frame, get)['value']
+    name = expr.callable.name
+    declaredElseError(frame, name)
+    callable = getValue(frame, name)
     expectTypeElseError(calltype, 'procedure')
     numArgs, numParams = len(expr.args), len(callable['params'])
     if numArgs != numParams:
@@ -94,9 +103,7 @@ def resolveCall(frame, expr):
     for arg, param in zip(expr.args, callable['params']):
         # param is a slot from either local or frame
         argtype = arg.accept(frame, resolve)
-        expectTypeElseError(argtype, param['type'])
-
-
+        expectTypeElseError(argtype, param.type)
 
 def resolve(frame, expr):
     if isinstance(expr, Literal):
@@ -111,10 +118,25 @@ def resolve(frame, expr):
         return expr.accept(frame, resolveGet)
     elif isinstance(expr, Call):
         return expr.accept(frame, resolveCall)
+
+
         
+# Verifiers
+
+def verifyStmts(frame, stmts):
+    for stmt in stmts:
+        stmt.accept(frame, verify)
+
+def verifyOutput(frame, stmt):
+    resolveExprs(frame, stmt.exprs)
+
+def verifyInput(frame, stmt):
+    declaredElseError(frame, stmt.name)
+
 def verifyAssign(frame, stmt):
+    declaredElseError(frame, stmt.name)
     exprtype = stmt.expr.accept(frame, resolve)
-    expectTypeElseError(exprtype, frame[stmt.name]['type'])
+    expectTypeElseError(exprtype, getType(frame, stmt.name))
 
 def verifyCase(frame, stmt):
     stmt.cond.accept(frame, resolve)
@@ -142,29 +164,23 @@ def verifyProcedure(frame, stmt):
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(exprtype, frame[expr.name]['type'])
+            expectTypeElseError(exprtype, getType(frame, expr.name))
             # Reference frame vars in local
-            local[expr.name] = frame[expr.name]
+            local[expr.name] = getValue(frame, expr.name)
         else:
-            local[expr.name] = {
-                'type': expr.type,
-                'value': None,
-            }
+            declareVar(local, expr.name, expr.type)
         # params: replace Declare Expr with slot
         stmt.params[i] = local[expr.name]
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    name = stmt.name
-    frame[name] = {
-        'type': 'procedure',
-        'value': {
-            'frame': local,
-            'passby': stmt.passby,
-            'params': stmt.params,
-            'stmts': stmt.stmts,
-        }
-    }
+    declareVar(frame, stmt.name, 'procedure')
+    setValue(frame, stmt.name, {
+        'frame': local,
+        'passby': stmt.passby,
+        'params': stmt.params,
+        'stmts': stmt.stmts,
+    })
 
 def verifyFunction(frame, stmt):
     # Set up local frame
@@ -172,56 +188,34 @@ def verifyFunction(frame, stmt):
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
-    name = stmt.name
-    returnType = stmt.returnType
     # Resolve procedure statements using local
     hasReturn = False
     for procstmt in stmt.stmts:
         stmtType = procstmt.accept(local, verify)
         if stmtType:
             hasReturn = True
-            if stmtType != returnType:
-                raise LogicError(
-                    f"Expect {returnType}, got {stmtType}",
-                    stmt.name,
-                )
+            expectTypeElseError(stmtType, stmt.returnType, stmt.name)
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
      # Declare function in frame
-    frame[name] = {
-        'type': returnType,
-        'value': {
-            'frame': local,
-            'passby': 'BYVALUE',
-            'params': stmt.params,
-            'stmts': stmt.stmts,
-        }
-    }
+    declareVar(frame, stmt.name, stmt.returnType)
+    setValue(frame, stmt.name, {
+        'frame': local,
+        'passby': 'BYVALUE',
+        'params': stmt.params,
+        'stmts': stmt.stmts,
+    })
 
 def verifyFile(frame, stmt):
-    name = stmt.name.accept(frame, value)
+    stmt.name.accept(frame, value)
     if stmt.action == 'open':
-        if name in frame:
-            raise LogicError("File already opened", stmt.name)
-        file = {'type': stmt.mode, 'value': None}
-        frame[name] = file
+        pass
     elif stmt.action == 'read':
-        if name not in frame:
-            raise LogicError("File not open", stmt.name)
-        file = frame[name]
-        if file['type'] != 'READ':
-            raise LogicError("File mode is {file['type']}", stmt.name)
+        stmt.data.accept(frame, resolve)
     elif stmt.action == 'write':
         stmt.data.accept(frame, resolve)
-        if name not in frame:
-            raise LogicError("File not open", stmt.name)
-        file = frame[name]
-        if file['type'] not in ('WRITE', 'APPEND'):
-            raise LogicError("File mode is {file['type']}", stmt.name)
     elif stmt.action == 'close':
-        if name not in frame:
-            raise LogicError("File not open", stmt.name)
-        del frame[name]
+        pass
 
 def verify(frame, stmt):
     if stmt.rule == 'output':
@@ -248,6 +242,8 @@ def verify(frame, stmt):
         stmt.accept(frame, verifyFile)
     elif stmt.rule == 'return':
         return stmt.expr.accept(frame, resolve)
+
+
 
 def inspect(statements):
     frame = {}

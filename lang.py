@@ -1,3 +1,18 @@
+class TypedValue:
+    """
+    Represents a value in 9608 pseudocode.
+    Each TypedValue has a type and a value.
+    """
+    __slots__ = ('type', 'value')
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
+
+    def __repr__(self):
+        return f"<{self.type}: {repr(self.value)}>"
+
+
+
 class Expr:
     """
     Represents an expression in 9608 pseudocode.
@@ -27,15 +42,11 @@ class Expr:
 
 
 
-class Literal(Expr):
+class Literal(TypedValue, Expr):
     """
     A Literal represents any value coming directly from
     the source code.
     """
-    __slots__ = ('type', 'value')
-    def __init__(self, type, value):
-        self.type = type
-        self.value = value
 
 
 
