@@ -12,6 +12,8 @@ def executeStmts(frame, stmts):
         if returnval:
             return returnval
 
+# Evaluators
+
 def evalLiteral(frame, literal):
     return literal.value
 
@@ -52,6 +54,8 @@ def evaluate(frame, expr):
         return expr.accept(frame, evalCall)
     else:
         raise TypeError(f"Unexpected expr {expr}")
+
+# Executors
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
