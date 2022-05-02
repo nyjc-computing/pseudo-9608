@@ -33,7 +33,7 @@ def setValueIfExist(frame, name, value, errmsg="Undeclared"):
     otherwise raise an Error
     """
     if name not in frame:
-        raise RuntimeError("Undeclared", name)
+        raise RuntimeError(errmsg, name)
     setValue(frame, name, value)
 
 # Evaluators
