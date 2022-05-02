@@ -8,7 +8,7 @@ class TypedValue:
         self.type = type
         self.value = value
 
-    def repr(self):
+    def __repr__(self):
         return f"<{self.type}: {repr(self.value)}>"
 
 
