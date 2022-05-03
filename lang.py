@@ -83,6 +83,44 @@ class TypedValue:
 
 
 
+class Frame:
+    """
+    Represents a space for storing of TypedValues
+    in 9608 pseudocode.
+    Provides methods for managing TypedValues.
+
+    Methods
+    -------
+    has(name)
+        returns True if the var exists in frame,
+        otherwise returns False
+    declare(name, type)
+        initialises a named TypedValue in the frame
+    getType(name)
+        retrieves the type information associated
+        the name
+    getValue(name)
+        retrieves the value associated with the name
+    setValue(name, value)
+        updates the value associated with the name
+    """
+    def has(self, name):
+        pass
+
+    def declare(self, name, type):
+        pass
+
+    def getType(self, name):
+        pass
+
+    def getValue(self, name):
+        pass
+
+    def setValue(self, name, value):
+        pass
+
+
+
 class Expr:
     """
     Represents an expression in 9608 pseudocode.
