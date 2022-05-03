@@ -1,5 +1,5 @@
 from builtin import RuntimeError
-from lang import TypedValue, Frame, File
+from lang import Frame, File
 from lang import Literal, Unary, Binary, Get, Call
 
 
