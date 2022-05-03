@@ -146,8 +146,9 @@ def execFile(frame, stmt):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
         undeclaredElseError(frame, name, "File already opened")
-        declareVar(frame, name, stmt.mode)
-        setValue(frame, name, open(name, stmt.mode[0].lower()))
+        declareVar(frame, name, 'FILE')
+        file = File(name, stmt.mode, open(name, stmt.mode[0].lower()))
+        setValue(frame, name, file)
     elif stmt.action == 'read':
         file = getValue(frame, name, "File not open")
         mode = getType(frame, name)
