@@ -51,7 +51,7 @@ def setValueIfExist(frame, name, value, errmsg="Undeclared"):
     otherwise raise an Error
     """
     declaredElseError(frame, name)
-    setValue(frame, name, value)
+    frame.setValue(name, value)
 
 # Evaluators
 
@@ -70,7 +70,7 @@ def evalBinary(frame, expr):
 def evalGet(frame, expr):
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
-    return getValue(expr.frame, expr.name)
+    return expr.frame.getValue(expr.name)
 
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
@@ -112,11 +112,11 @@ def execOutput(frame, stmt):
 
 def execInput(frame, stmt):
     name = stmt.name
-    setValue(frame, name, input())
+    frame.setValue(name, input())
 
 def execAssign(frame, stmt):
     value = stmt.expr.accept(frame, evaluate)
-    setValue(frame, stmt.name, value)
+    frame.setValue(stmt.name, value)
 
 def execCase(frame, stmt):
     cond = stmt.cond.accept(frame, evaluate)
@@ -146,21 +146,24 @@ def execFile(frame, stmt):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
         undeclaredElseError(frame, name, "File already opened")
-        declareVar(frame, name, 'FILE')
+        frame.declare(name, 'FILE')
         file = File(name, stmt.mode, open(name, stmt.mode[0].lower()))
-        setValue(frame, name, file)
+        frame.setValue(name, file)
     elif stmt.action == 'read':
-        file = getValue(frame, name, "File not open")
-        expectTypeElseError(getType(frame, name), 'FILE')
+        declaredElseError(frame, name, "File not open")
+        file = frame.getValue(name)
+        expectTypeElseError(frame.getType(name), 'FILE')
         expectTypeElseError(file.mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
+        declaredElseError(frame, name)
         # TODO: Catch and handle Python file io errors
         line = file.iohandler.readline().rstrip()
         # TODO: Type conversion
-        setValueIfExist(frame, varname, line)
+        frame.setValue(varname, line)
     elif stmt.action == 'write':
-        file = getValue(frame, name, "File not open")
-        expectTypeElseError(getType(frame, name), 'FILE')
+        declaredElseError(frame, name, "File not open")
+        file = frame.getValue(name)
+        expectTypeElseError(frame.getType(name), 'FILE')
         expectTypeElseError(file.mode, ('WRITE', 'APPEND'))
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
@@ -169,8 +172,9 @@ def execFile(frame, stmt):
         # TODO: Catch and handle Python file io errors
         file.iohandler.write(writedata)
     elif stmt.action == 'close':
-        file = getValue(frame, name, "File not open")
-        expectTypeElseError(getType(frame, name), 'FILE')
+        declaredElseError(frame, name, "File not open")
+        file = frame.getValue(name)
+        expectTypeElseError(frame.getType(name), 'FILE')
         file.iohandler.close()
         del frame[name]
 
@@ -200,6 +204,6 @@ def execute(frame, stmt):
 
 def interpret(statements, frame=None):
     if frame is None:
-        frame = {}
+        frame = Frame()
     executeStmts(frame, statements)
     return frame
