@@ -1,12 +1,19 @@
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
-from lang import TypedValue
+from builtin import NULL
+from lang import TypedValue, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
 
 # Helper functions
+
+def isProcedure(callable):
+    return isinstance(callable, Procedure)
+
+def isFunction(callable):
+    return isinstance(callable, Function)
 
 def expectTypeElseError(exprtype, expected, name=None):
     if exprtype != expected:
@@ -86,21 +93,35 @@ def resolveGet(frame, expr):
     expr.frame = frame
     return getType(frame, expr.name)
 
+def resolveProcCall(frame, expr):
+    expr.callable.accept(frame, resolveGet)
+    callable = getValue(frame, expr.callable.name)
+    if not isProcedure(callable):
+        raise LogicError("Not PROCEDURE", expr.callable.name)
+    resolveCall(frame, expr)
+
+def resolveFuncCall(frame, expr):
+    expr.callable.accept(frame, resolveGet)
+    callable = getValue(frame, expr.callable.name)
+    if not isFunction(callable):
+        raise LogicError("Not FUNCTION", expr.callable.name)
+    resolveCall(frame, expr)
+    
 def resolveCall(frame, expr):
-    # Insert frame
-    calltype = expr.callable.accept(frame, resolveGet)
-    name = expr.callable.name
-    declaredElseError(frame, name)
-    callable = getValue(frame, name)
-    expectTypeElseError(calltype, 'procedure')
-    numArgs, numParams = len(expr.args), len(callable['params'])
+    """
+    resolveCall() does not carry out any frame insertion or
+    type-checking. These should be carried out first (e.g. in a wrapper
+    function) before resolveCall() is invoked.
+    """
+    callable = getValue(frame, expr.callable.name)
+    numArgs, numParams = len(expr.args), len(callable.params)
     if numArgs != numParams:
         raise LogicError(
             f"Expected {numParams} args, got {numArgs}",
             None,
         )
     # Type-check arguments
-    for arg, param in zip(expr.args, callable['params']):
+    for arg, param in zip(expr.args, callable.params):
         # param is a slot from either local or frame
         argtype = arg.accept(frame, resolve)
         expectTypeElseError(argtype, param.type)
@@ -117,7 +138,7 @@ def resolve(frame, expr):
     elif isinstance(expr, Get):
         return expr.accept(frame, resolveGet)
     elif isinstance(expr, Call):
-        return expr.accept(frame, resolveCall)
+        return expr.accept(frame, resolveFuncCall)
 
 
         
@@ -174,13 +195,10 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    declareVar(frame, stmt.name, 'procedure')
-    setValue(frame, stmt.name, {
-        'frame': local,
-        'passby': stmt.passby,
-        'params': stmt.params,
-        'stmts': stmt.stmts,
-    })
+    declareVar(frame, stmt.name, NULL)
+    setValue(frame, stmt.name, Procedure(
+        local, stmt.params, stmt.stmts
+    ))
 
 def verifyFunction(frame, stmt):
     # Set up local frame
@@ -197,14 +215,11 @@ def verifyFunction(frame, stmt):
             expectTypeElseError(stmtType, stmt.returnType, stmt.name)
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
-     # Declare function in frame
+    # Declare function in frame
     declareVar(frame, stmt.name, stmt.returnType)
-    setValue(frame, stmt.name, {
-        'frame': local,
-        'passby': 'BYVALUE',
-        'params': stmt.params,
-        'stmts': stmt.stmts,
-    })
+    setValue(frame, stmt.name, Function(
+        local, stmt.params, stmt.stmts
+    ))
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)
@@ -235,7 +250,7 @@ def verify(frame, stmt):
     elif stmt.rule == 'procedure':
         stmt.accept(frame, verifyProcedure)
     elif stmt.rule == 'call':
-        stmt.expr.accept(frame, resolveCall)
+        stmt.expr.accept(frame, resolveProcCall)
     elif stmt.rule == 'function':
         stmt.accept(frame, verifyFunction)
     elif stmt.rule == 'file':
