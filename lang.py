@@ -74,7 +74,8 @@ class TypedValue:
     Each TypedValue has a type and a value.
     """
     __slots__ = ('type', 'value')
-    def __init__(self, type, value):
+    def __init__(self, type, value, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.type = type
         self.value = value
 
