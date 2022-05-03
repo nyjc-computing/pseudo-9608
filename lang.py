@@ -20,6 +20,7 @@ class Callable(Value):
     - stmts
         A list of statements the callable executes when called
     """
+    __slots__ = ('frame', 'params', 'stmts')
     def __init__(self, frame, params, stmts):
         self.frame = frame
         self.params = params
