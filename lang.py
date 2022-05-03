@@ -151,12 +151,21 @@ class Expr:
 
     Methods
     -------
+    - token() -> dict
+        Returns the token asociated with the expr, for error
+        reporting purposes.
     - accept(frame, visitor) -> Any
         Enables a visitor to carry out operations on the
         Expr (with a provided frame).
         The visitor should take in two arguments: a frame,
         and an Expr.
     """
+    def __init__(self, token=None):
+        self.token = token
+
+    def token(self):
+        return self.token
+
     def accept(self, frame, visitor):
         # visitor must be a function that takes
         # a frame and an Expr
