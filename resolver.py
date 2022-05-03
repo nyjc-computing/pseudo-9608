@@ -194,7 +194,7 @@ def verifyFunction(frame, stmt):
             expectTypeElseError(stmtType, stmt.returnType, stmt.name)
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
-     # Declare function in frame
+    # Declare function in frame
     declareVar(frame, stmt.name, stmt.returnType)
     setValue(frame, stmt.name, Function(
         local, stmt.params, stmt.stmts
