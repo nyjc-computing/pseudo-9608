@@ -114,8 +114,6 @@ def resolveCall(frame, expr):
     function) before resolveCall() is invoked.
     """
     callable = getValue(frame, expr.callable.name)
-    if not (isProcedure(callable) or isFunction(callable)):
-        raise LogicError("Not callable", expr.callable.name)
     numArgs, numParams = len(expr.args), len(callable['params'])
     if numArgs != numParams:
         raise LogicError(
