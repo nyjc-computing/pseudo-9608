@@ -190,14 +190,16 @@ class Literal(TypedValue, Expr):
 
 class Name(Expr):
     __slots__ = ('name',)
-    def __init__(self, name):
+    def __init__(self, name, token=None):
+        super().__init__(token=token)
         self.name = name
 
 
 
 class Declare(Expr):
     __slots__ = ('name', 'type')
-    def __init__(self, name, type):
+    def __init__(self, name, type, token=None):
+        super().__init__(token=token)
         self.name = name
         self.type = type
 
@@ -205,7 +207,8 @@ class Declare(Expr):
 
 class Unary(Expr):
     __slots__ = ('oper', 'right')
-    def __init__(self, oper, right):
+    def __init__(self, oper, right, token=None):
+        super().__init__(token=token)
         self.oper = oper
         self.right = right
 
@@ -213,7 +216,8 @@ class Unary(Expr):
 
 class Binary(Expr):
     __slots__ = ('left', 'oper', 'right')
-    def __init__(self, left, oper, right):
+    def __init__(self, left, oper, right, token=None):
+        super().__init__(token=token)
         self.left = left
         self.oper = oper
         self.right = right
@@ -222,7 +226,8 @@ class Binary(Expr):
 
 class Get(Expr):
     __slots__ = ('frame', 'name')
-    def __init__(self, frame, name):
+    def __init__(self, frame, name, token=None):
+        super().__init__(token=token)
         self.frame = frame
         self.name = name
 
@@ -230,7 +235,8 @@ class Get(Expr):
 
 class Call(Expr):
     __slots__ = ('callable', 'args')
-    def __init__(self, callable, args):
+    def __init__(self, callable, args, token=None):
+        super().__init__(token=token)
         self.callable = callable
         self.args = args
 
