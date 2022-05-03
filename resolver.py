@@ -2,7 +2,7 @@ from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
 from builtin import NULL
-from lang import TypedValue, Function, Procedure
+from lang import TypedValue, Frame, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
@@ -21,32 +21,33 @@ def expectTypeElseError(exprtype, expected, name=None):
         raise LogicError(f"{exprtype} <> {expected}", name)
 
 def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
-    if name not in frame:
+    if not frame.has(name):
         raise LogicError(errmsg, name)
     if declaredType:
-        expectTypeElseError(frame[name], declaredType)
+        expectTypeElseError(frame.getType(name), declaredType)
 
 def declareVar(frame, name, type):
     """Declare a name in a frame"""
-    if name in frame:
+    if not frame.has(name):
         raise LogicError("Already declared", name)
-    frame[name] = TypedValue(type, None)
+    frame.declare(name, type)
 
 def getType(frame, name):
     declaredElseError(frame, name)
-    return frame[name].type
+    return frame.getType(name)
 
 def getValue(frame, name):
     """Retrieve value from a frame using a name"""
     declaredElseError(frame, name)
-    if frame[name].value is None:
+    value = frame.getValue(name)
+    if value is None:
         raise LogicError("No value assigned", name)
-    return frame[name].value
+    return value
 
 def setValue(frame, name, value):
     """Set a value for a declared variable in a frame"""
     declaredElseError(frame, name)
-    frame[name].value = value
+    frame. setValue(name, value)
 
 def value(frame, expr):
     """Return the value of a Literal"""
@@ -261,6 +262,6 @@ def verify(frame, stmt):
 
 
 def inspect(statements):
-    frame = {}
+    frame = Frame()
     verifyStmts(frame, statements)
     return statements, frame
