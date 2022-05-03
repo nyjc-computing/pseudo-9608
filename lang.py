@@ -25,6 +25,12 @@ class Callable(Value):
         self.params = params
         self.stmts = stmts
 
+    def __repr__(self):
+        attrstr = ", ".join([
+            repr(getattr(self, attr)) for attr in self.__slots__
+        ])
+        return f'{type(self).__name__}({attrstr})'
+
 
 
 class Function(Callable):
