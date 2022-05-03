@@ -155,7 +155,7 @@ def execFile(frame, stmt):
         expectTypeElseError(file.mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
-        line = file.readline().rstrip()
+        line = file.iohandler.readline().rstrip()
         # TODO: Type conversion
         setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
@@ -167,11 +167,11 @@ def execFile(frame, stmt):
         if not writedata.endswith('\n'):
             writedata += '\n'
         # TODO: Catch and handle Python file io errors
-        file.write(writedata)
+        file.iohandler.write(writedata)
     elif stmt.action == 'close':
         file = getValue(frame, name, "File not open")
         expectTypeElseError(getType(frame, name), 'FILE')
-        file.close()
+        file.iohandler.close()
         del frame[name]
 
 def execute(frame, stmt):
