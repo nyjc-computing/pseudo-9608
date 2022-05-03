@@ -35,3 +35,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [16c OOP: Expression Statements](https://github.com/nyjc-computing/pseudo/pull/36)
 - [16d OOP: Variables](https://github.com/nyjc-computing/pseudo/pull/37)
 - [16e OOP: Values](https://github.com/nyjc-computing/pseudo/pull/38)
+- [16f OOP: Frames](https://github.com/nyjc-computing/pseudo/pull/40)
