@@ -2,7 +2,7 @@ from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
 from builtin import NULL
-from lang import TypedValue, Function, Procedure
+from lang import TypedValue, Frame, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
@@ -21,32 +21,10 @@ def expectTypeElseError(exprtype, expected, name=None):
         raise LogicError(f"{exprtype} <> {expected}", name)
 
 def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
-    if name not in frame:
+    if not frame.has(name):
         raise LogicError(errmsg, name)
     if declaredType:
-        expectTypeElseError(frame[name], declaredType)
-
-def declareVar(frame, name, type):
-    """Declare a name in a frame"""
-    if name in frame:
-        raise LogicError("Already declared", name)
-    frame[name] = TypedValue(type, None)
-
-def getType(frame, name):
-    declaredElseError(frame, name)
-    return frame[name].type
-
-def getValue(frame, name):
-    """Retrieve value from a frame using a name"""
-    declaredElseError(frame, name)
-    if frame[name].value is None:
-        raise LogicError("No value assigned", name)
-    return frame[name].value
-
-def setValue(frame, name, value):
-    """Set a value for a declared variable in a frame"""
-    declaredElseError(frame, name)
-    frame[name].value = value
+        expectTypeElseError(frame.getType(name), declaredType)
 
 def value(frame, expr):
     """Return the value of a Literal"""
@@ -63,7 +41,7 @@ def resolveLiteral(frame, literal):
 
 def resolveDeclare(frame, expr):
     """Declare variable in frame"""
-    declareVar(frame, expr.name, expr.type)
+    frame.declare(expr.name, expr.type)
     return expr.type
 
 def resolveUnary(frame, expr):
@@ -91,18 +69,18 @@ def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
     expr.frame = frame
-    return getType(frame, expr.name)
+    return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
-    callable = getValue(frame, expr.callable.name)
+    callable = frame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise LogicError("Not PROCEDURE", expr.callable.name)
     resolveCall(frame, expr)
 
 def resolveFuncCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
-    callable = getValue(frame, expr.callable.name)
+    callable = frame.getValue(expr.callable.name)
     if not isFunction(callable):
         raise LogicError("Not FUNCTION", expr.callable.name)
     resolveCall(frame, expr)
@@ -113,7 +91,7 @@ def resolveCall(frame, expr):
     type-checking. These should be carried out first (e.g. in a wrapper
     function) before resolveCall() is invoked.
     """
-    callable = getValue(frame, expr.callable.name)
+    callable = frame.getValue(expr.callable.name)
     numArgs, numParams = len(expr.args), len(callable.params)
     if numArgs != numParams:
         raise LogicError(
@@ -157,7 +135,7 @@ def verifyInput(frame, stmt):
 def verifyAssign(frame, stmt):
     declaredElseError(frame, stmt.name)
     exprtype = stmt.expr.accept(frame, resolve)
-    expectTypeElseError(exprtype, getType(frame, stmt.name))
+    expectTypeElseError(exprtype, frame.getType(stmt.name))
 
 def verifyCase(frame, stmt):
     stmt.cond.accept(frame, resolve)
@@ -181,28 +159,28 @@ def verifyLoop(frame, stmt):
 
 def verifyProcedure(frame, stmt):
     # Set up local frame
-    local = {}
+    local = Frame()
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(exprtype, getType(frame, expr.name))
+            expectTypeElseError(exprtype, frame.getType(expr.name))
             # Reference frame vars in local
-            local[expr.name] = getValue(frame, expr.name)
+            local.setValue(expr.name, frame.getValue(expr.name))
         else:
-            declareVar(local, expr.name, expr.type)
+            local.declare(expr.name, expr.type)
         # params: replace Declare Expr with slot
-        stmt.params[i] = local[expr.name]
+        stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    declareVar(frame, stmt.name, NULL)
-    setValue(frame, stmt.name, Procedure(
+    frame.declare(stmt.name, NULL)
+    frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
 
 def verifyFunction(frame, stmt):
     # Set up local frame
-    local = {}
+    local = Frame()
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
@@ -216,8 +194,8 @@ def verifyFunction(frame, stmt):
     if not hasReturn:
         raise LogicError("No RETURN in function", None)
     # Declare function in frame
-    declareVar(frame, stmt.name, stmt.returnType)
-    setValue(frame, stmt.name, Function(
+    frame.declare(stmt.name, stmt.returnType)
+    frame.setValue(stmt.name, Function(
         local, stmt.params, stmt.stmts
     ))
 
@@ -261,6 +239,6 @@ def verify(frame, stmt):
 
 
 def inspect(statements):
-    frame = {}
+    frame = Frame()
     verifyStmts(frame, statements)
     return statements, frame
