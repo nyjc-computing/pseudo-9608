@@ -75,12 +75,11 @@ def evalGet(frame, expr):
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
-    for arg, slot in zip(expr.args, callable['params']):
+    for arg, slot in zip(expr.args, callable.params):
         argval = arg.accept(frame, evaluate)
         slot.value = argval
-    local = callable['frame']
-    for stmt in callable['stmts']:
-        returnval = stmt.accept(local, execute)
+    for stmt in callable.stmts:
+        returnval = stmt.accept(callable.frame, execute)
         if returnval:
             return returnval
 
