@@ -114,14 +114,14 @@ def resolveCall(frame, expr):
     function) before resolveCall() is invoked.
     """
     callable = getValue(frame, expr.callable.name)
-    numArgs, numParams = len(expr.args), len(callable['params'])
+    numArgs, numParams = len(expr.args), len(callable.params)
     if numArgs != numParams:
         raise LogicError(
             f"Expected {numParams} args, got {numArgs}",
             None,
         )
     # Type-check arguments
-    for arg, param in zip(expr.args, callable['params']):
+    for arg, param in zip(expr.args, callable.params):
         # param is a slot from either local or frame
         argtype = arg.accept(frame, resolve)
         expectTypeElseError(argtype, param.type)
