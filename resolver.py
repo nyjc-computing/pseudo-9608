@@ -1,12 +1,19 @@
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
-from lang import TypedValue, Function, Procedure
+from builtin import NULL
+from lang import TypedValue, Callable, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
 
 # Helper functions
+
+def isProcedure(callable):
+    return isinstance(callable, Procedure)
+
+def isFunction(callable):
+    return isinstance(callable, Function)
 
 def expectTypeElseError(exprtype, expected, name=None):
     if exprtype != expected:
