@@ -108,12 +108,14 @@ def resolveFuncCall(frame, expr):
     resolveCall(frame, expr)
     
 def resolveCall(frame, expr):
-    # Insert frame
-    calltype = expr.callable.accept(frame, resolveGet)
-    name = expr.callable.name
-    declaredElseError(frame, name)
-    callable = getValue(frame, name)
-    expectTypeElseError(calltype, 'procedure')
+    """
+    resolveCall() does not carry out any frame insertion or
+    type-checking. These should be carried out first (e.g. in a wrapper
+    function) before resolveCall() is invoked.
+    """
+    callable = getValue(frame, expr.callable.name)
+    if not (isProcedure(callable) or isFunction(callable)):
+        raise LogicError("Not callable", expr.callable.name)
     numArgs, numParams = len(expr.args), len(callable['params'])
     if numArgs != numParams:
         raise LogicError(
@@ -138,7 +140,7 @@ def resolve(frame, expr):
     elif isinstance(expr, Get):
         return expr.accept(frame, resolveGet)
     elif isinstance(expr, Call):
-        return expr.accept(frame, resolveCall)
+        return expr.accept(frame, resolveFuncCall)
 
 
         
@@ -250,7 +252,7 @@ def verify(frame, stmt):
     elif stmt.rule == 'procedure':
         stmt.accept(frame, verifyProcedure)
     elif stmt.rule == 'call':
-        stmt.expr.accept(frame, resolveCall)
+        stmt.expr.accept(frame, resolveProcCall)
     elif stmt.rule == 'function':
         stmt.accept(frame, verifyFunction)
     elif stmt.rule == 'file':
