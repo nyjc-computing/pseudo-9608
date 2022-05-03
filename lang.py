@@ -44,6 +44,30 @@ class Procedure(Callable):
 
 
 
+class File(Value):
+    """
+    Represents a file object in a frame.
+
+    Attributes
+    ----------
+    - name
+        Name of the file that is open
+    - mode
+        The mode that the file was opened in
+    - iohandler
+        An object for accessing the file
+    """
+    __slots__ = ('name', 'mode', 'iohandler')
+    def __init__(self, name, mode, iohandler):
+        self.name = name
+        self.mode = mode
+        self.iohandler = iohandler
+
+    def __repr__(self):
+        return f"<{self.mode}: {self.name}>"
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
