@@ -1,3 +1,11 @@
+class Value:
+    """
+    Base class for pseudo values.
+    Represents a value stored in the frame.
+    """
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
