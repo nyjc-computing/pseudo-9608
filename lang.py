@@ -204,7 +204,7 @@ class Loop(Stmt):
 
 
 
-class Callable(Stmt):
+class ProcFunc(Stmt):
     __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(self, rule, name, passby, params, stmts, returnType):
         self.rule = rule

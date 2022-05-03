@@ -4,7 +4,7 @@ from builtin import lte, add
 from scanner import makeToken
 from lang import Literal, Name, Unary, Binary, Get, Call
 from lang import ExprStmt, Output, Input, Declare, Assign
-from lang import Conditional, Loop, Callable, Return, File
+from lang import Conditional, Loop, ProcFunc, Return, File
 
 
 
@@ -295,7 +295,7 @@ def procedureStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDPROCEDURE'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDPROCEDURE")
-    return Callable('procedure', name, passby, params, stmts, None)
+    return ProcFunc('procedure', name, passby, params, stmts, None)
 
 def callStmt(tokens):
     callable = value(tokens)
@@ -322,7 +322,7 @@ def functionStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFUNCTION")
-    return Callable('function', name, passby, params, stmts, typetoken['word'])
+    return ProcFunc('function', name, passby, params, stmts, typetoken['word'])
 
 def returnStmt(tokens):
     expr = expression(tokens)
