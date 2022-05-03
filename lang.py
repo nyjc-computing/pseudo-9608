@@ -104,20 +104,23 @@ class Frame:
     setValue(name, value)
         updates the value associated with the name
     """
+    def __init__(self):
+        self.data = {}
+
     def has(self, name):
-        pass
+        return name in self.data
 
     def declare(self, name, type):
-        pass
+        self.data[name] = TypedValue(type=type, value=None)
 
     def getType(self, name):
-        pass
+        return self.data[name].type
 
     def getValue(self, name):
-        pass
+        return self.data[name].value
 
     def setValue(self, name, value):
-        pass
+        self.data[name].value = value
 
 
 
