@@ -96,6 +96,8 @@ class Frame:
         otherwise returns False
     declare(name, type)
         initialises a named TypedValue in the frame
+    get(name)
+        retrieves the slot associated with the name
     getType(name)
         retrieves the type information associated
         the name
@@ -103,6 +105,8 @@ class Frame:
         retrieves the value associated with the name
     setValue(name, value)
         updates the value associated with the name
+    delete(name)
+        deletes the slot associated with the name
     """
     def __init__(self):
         self.data = {}
@@ -124,6 +128,9 @@ class Frame:
 
     def setValue(self, name, value):
         self.data[name].value = value
+
+    def delete(self, name):
+        del self.data[name]
 
 
 

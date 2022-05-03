@@ -176,7 +176,7 @@ def execFile(frame, stmt):
         file = frame.getValue(name)
         expectTypeElseError(frame.getType(name), 'FILE')
         file.iohandler.close()
-        del frame[name]
+        frame.delete(name)
 
 def execute(frame, stmt):
     if stmt.rule == 'output':
