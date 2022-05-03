@@ -151,8 +151,8 @@ def execFile(frame, stmt):
         setValue(frame, name, file)
     elif stmt.action == 'read':
         file = getValue(frame, name, "File not open")
-        mode = getType(frame, name)
-        expectTypeElseError(mode, 'READ')
+        expectTypeElseError(getType(frame, name), 'FILE')
+        expectTypeElseError(file.mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
         line = file.readline().rstrip()
@@ -160,8 +160,8 @@ def execFile(frame, stmt):
         setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
         file = getValue(frame, name, "File not open")
-        mode = getType(frame, name)
-        expectTypeElseError(mode, ('WRITE', 'APPEND'))
+        expectTypeElseError(getType(frame, name), 'FILE')
+        expectTypeElseError(file.mode, ('WRITE', 'APPEND'))
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
@@ -170,6 +170,7 @@ def execFile(frame, stmt):
         file.write(writedata)
     elif stmt.action == 'close':
         file = getValue(frame, name, "File not open")
+        expectTypeElseError(getType(frame, name), 'FILE')
         file.close()
         del frame[name]
 
