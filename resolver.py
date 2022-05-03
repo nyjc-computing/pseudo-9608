@@ -15,16 +15,16 @@ def isProcedure(callable):
 def isFunction(callable):
     return isinstance(callable, Function)
 
-def expectTypeElseError(exprtype, expected, name=None):
+def expectTypeElseError(exprtype, expected, *, token=None):
     if exprtype != expected:
         if not name: name = exprtype
-        raise LogicError(f"{exprtype} <> {expected}", name)
+        raise LogicError(f"{exprtype} <> {expected}", token)
 
-def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
+def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None, *, token=None):
     if not frame.has(name):
-        raise LogicError(errmsg, name)
+        raise LogicError(errmsg, name, token)
     if declaredType:
-        expectTypeElseError(frame.getType(name), declaredType)
+        expectTypeElseError(frame.getType(name), declaredType, token=token)
 
 def value(frame, expr):
     """Return the value of a Literal"""
@@ -47,7 +47,7 @@ def resolveDeclare(frame, expr):
 def resolveUnary(frame, expr):
     righttype = expr.right.accept(frame, resolve)
     if expr.oper is sub:
-        expectTypeElseError(righttype, 'INTEGER')
+        expectTypeElseError(righttype, 'INTEGER', token=expr.right,token())
         return 'INTEGER'
     else:
         raise ValueError("Unexpected oper {expr.oper}")
@@ -56,13 +56,13 @@ def resolveBinary(frame, expr):
     lefttype = expr.left.accept(frame, resolve)
     righttype = expr.right.accept(frame, resolve)
     if expr.oper in (gt, gte, lt, lte, ne, eq):
-        expectTypeElseError(lefttype, 'INTEGER')
-        expectTypeElseError(righttype, 'INTEGER')
+        expectTypeElseError(lefttype, 'INTEGER', token=expr.left.token())
+        expectTypeElseError(righttype, 'INTEGER', token=expr.right.token())
         return 'BOOLEAN'
     if expr.oper in (add, sub, mul, div):
         # TODO: Handle REAL type
-        expectTypeElseError(lefttype, 'INTEGER')
-        expectTypeElseError(righttype, 'INTEGER')
+        expectTypeElseError(lefttype, 'INTEGER', token=expr.left.token())
+        expectTypeElseError(righttype, 'INTEGER', token=expr.right.token())
         return 'INTEGER'
 
 def resolveGet(frame, expr):
@@ -75,14 +75,14 @@ def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
     callable = frame.getValue(expr.callable.name)
     if not isProcedure(callable):
-        raise LogicError("Not PROCEDURE", expr.callable.name)
+        raise LogicError("Not PROCEDURE", token=expr.callable.token())
     resolveCall(frame, expr)
 
 def resolveFuncCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
     callable = frame.getValue(expr.callable.name)
     if not isFunction(callable):
-        raise LogicError("Not FUNCTION", expr.callable.name)
+        raise LogicError("Not FUNCTION", token=expr.callable.token())
     resolveCall(frame, expr)
     
 def resolveCall(frame, expr):
@@ -96,13 +96,13 @@ def resolveCall(frame, expr):
     if numArgs != numParams:
         raise LogicError(
             f"Expected {numParams} args, got {numArgs}",
-            None,
+            token=expr.callable.token(),
         )
     # Type-check arguments
     for arg, param in zip(expr.args, callable.params):
         # param is a slot from either local or frame
         argtype = arg.accept(frame, resolve)
-        expectTypeElseError(argtype, param.type)
+        expectTypeElseError(argtype, param.type, token=arg.token())
 
 def resolve(frame, expr):
     if isinstance(expr, Literal):
@@ -135,7 +135,7 @@ def verifyInput(frame, stmt):
 def verifyAssign(frame, stmt):
     declaredElseError(frame, stmt.name)
     exprtype = stmt.expr.accept(frame, resolve)
-    expectTypeElseError(exprtype, frame.getType(stmt.name))
+    expectTypeElseError(exprtype, frame.getType(stmt.name), token=stmt.expr.token())
 
 def verifyCase(frame, stmt):
     stmt.cond.accept(frame, resolve)
@@ -144,8 +144,8 @@ def verifyCase(frame, stmt):
         stmt.fallback.accept(frame, verify)
 
 def verifyIf(frame, stmt):
-    stmt.cond.accept(frame, resolve)
-    expectTypeElseError(stmt.cond, 'BOOLEAN')
+    condType = stmt.cond.accept(frame, resolve)
+    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts[True])
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
@@ -154,7 +154,7 @@ def verifyLoop(frame, stmt):
     if stmt.init:
         stmt.init.accept(frame, verify)
     condtype = stmt.cond.accept(frame, resolve)
-    expectTypeElseError(condtype, 'BOOLEAN')
+    expectTypeElseError(condtype, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
 def verifyProcedure(frame, stmt):
@@ -163,7 +163,7 @@ def verifyProcedure(frame, stmt):
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(exprtype, frame.getType(expr.name))
+            expectTypeElseError(exprtype, frame.getType(expr.name), token=expr.token())
             # Reference frame vars in local
             local.setValue(expr.name, frame.getValue(expr.name))
         else:
@@ -190,9 +190,9 @@ def verifyFunction(frame, stmt):
         stmtType = procstmt.accept(local, verify)
         if stmtType:
             hasReturn = True
-            expectTypeElseError(stmtType, stmt.returnType, stmt.name)
+            expectTypeElseError(stmtType, stmt.returnType, token=stmt.name)
     if not hasReturn:
-        raise LogicError("No RETURN in function", None)
+        raise LogicError("No RETURN in function", stmt.name)
     # Declare function in frame
     frame.declare(stmt.name, stmt.returnType)
     frame.setValue(stmt.name, Function(
