@@ -6,7 +6,7 @@ from lang import Literal, Unary, Binary, Get, Call
 
 # Helper functions
 
-def expectModeElseError(exprmode, expected, errmsg="Expected", name=None):
+def expectTypeElseError(exprmode, expected, errmsg="Expected", name=None):
     if type(expected) is str:
         expected = (expected,)
     if not exprmode in expected:
@@ -151,7 +151,7 @@ def execFile(frame, stmt):
     elif stmt.action == 'read':
         file = getValue(frame, name, "File not open")
         mode = getType(frame, name)
-        expectModeElseError(mode, 'READ')
+        expectTypeElseError(mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
         line = file.readline().rstrip()
@@ -160,7 +160,7 @@ def execFile(frame, stmt):
     elif stmt.action == 'write':
         file = getValue(frame, name, "File not open")
         mode = getType(frame, name)
-        expectModeElseError(mode, ('WRITE', 'APPEND'))
+        expectTypeElseError(mode, ('WRITE', 'APPEND'))
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
