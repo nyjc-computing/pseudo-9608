@@ -255,7 +255,7 @@ class Return(Stmt):
 
 
 
-class File(Stmt):
+class FileAction(Stmt):
     __slots__ = ('rule', 'action', 'name', 'mode', 'data')
     def __init__(self, rule, action, name, mode, data):
         self.rule = rule
