@@ -197,7 +197,7 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    declareVar(frame, stmt.name, 'procedure')
+    declareVar(frame, stmt.name, NULL)
     setValue(frame, stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
