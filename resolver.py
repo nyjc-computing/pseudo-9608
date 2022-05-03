@@ -135,7 +135,7 @@ def verifyInput(frame, stmt):
 def verifyAssign(frame, stmt):
     declaredElseError(frame, stmt.name)
     exprtype = stmt.expr.accept(frame, resolve)
-    expectTypeElseError(exprtype, getType(frame, stmt.name))
+    expectTypeElseError(exprtype, frame.getType(stmt.name))
 
 def verifyCase(frame, stmt):
     stmt.cond.accept(frame, resolve)
@@ -163,11 +163,11 @@ def verifyProcedure(frame, stmt):
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(exprtype, getType(frame, expr.name))
+            expectTypeElseError(exprtype, frame.getType(expr.name))
             # Reference frame vars in local
             local.setValue(expr.name, frame.getValue(expr.name))
         else:
-            declareVar(local, expr.name, expr.type)
+            local.declare(expr.name, expr.type)
         # params: replace Declare Expr with slot
         stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
