@@ -1,5 +1,5 @@
 from builtin import RuntimeError
-from lang import TypedValue, File
+from lang import TypedValue, Frame, File
 from lang import Literal, Unary, Binary, Get, Call
 
 
@@ -14,36 +14,36 @@ def expectTypeElseError(exprmode, expected, errmsg="Expected", name=None):
         raise RuntimeError(f"{errmsg} {expected}", name)
 
 def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
-    if name not in frame:
+    if not frame.has(name):
         raise RuntimeError(errmsg, name)
 
 def undeclaredElseError(frame, name, errmsg="Already declared", declaredType=None):
-    if name in frame:
+    if frame.has(name):
         raise RuntimeError(errmsg, name)
 
 def declareVar(frame, name, type, errmsg="Already declared"):
     """Declare a name in a frame"""
-    if name in frame:
-        raise RuntimeError(errmsg, name)
-    frame[name] = TypedValue(type, None)
+    undeclaredElseError(frame, name, errmsg)
+    frame.declare(name, type)
 
 def getType(frame, name):
     declaredElseError(frame, name)
-    return frame[name].type
+    return frame.getType(name)
 
 def getValue(frame, name, errmsg="Undeclared"):
     """Retrieve value from frame using a name"""
     declaredElseError(frame, name)
-    if frame[name].value is None:
+    value = frame.getValue(name)
+    if value is None:
         raise RuntimeError("No value assigned", name)
-    return frame[name].value
+    return value
 
 def setValue(frame, name, value):
     """
     Set a new typed value in the frame slot if one exists,
     otherwise add a new typed value to the frame.
     """
-    frame[name].value = value
+    frame.setValue(name, value)
 
 def setValueIfExist(frame, name, value, errmsg="Undeclared"):
     """
