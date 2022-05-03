@@ -1,7 +1,7 @@
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
-from lang import TypedValue
+from lang import TypedValue, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call
 
 
@@ -175,12 +175,9 @@ def verifyProcedure(frame, stmt):
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
     declareVar(frame, stmt.name, 'procedure')
-    setValue(frame, stmt.name, {
-        'frame': local,
-        'passby': stmt.passby,
-        'params': stmt.params,
-        'stmts': stmt.stmts,
-    })
+    setValue(frame, stmt.name, Procedure(
+        local, stmt.params, stmt.stmts
+    ))
 
 def verifyFunction(frame, stmt):
     # Set up local frame
@@ -199,12 +196,9 @@ def verifyFunction(frame, stmt):
         raise LogicError("No RETURN in function", None)
      # Declare function in frame
     declareVar(frame, stmt.name, stmt.returnType)
-    setValue(frame, stmt.name, {
-        'frame': local,
-        'passby': 'BYVALUE',
-        'params': stmt.params,
-        'stmts': stmt.stmts,
-    })
+    setValue(frame, stmt.name, Function(
+        local, stmt.params, stmt.stmts
+    ))
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)
