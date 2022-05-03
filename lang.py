@@ -111,6 +111,13 @@ class Frame:
     def __init__(self):
         self.data = {}
 
+    def __repr__(self):
+        nameTypePairs = [
+            f"{name}: {self.getType(name)}"
+            for name in self.data
+        ]
+        return f"\{{', '.join(nameTypePairs)}}\"
+
     def has(self, name):
         return name in self.data
 
