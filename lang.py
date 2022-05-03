@@ -116,7 +116,7 @@ class Frame:
             f"{name}: {self.getType(name)}"
             for name in self.data
         ]
-        return f"\{{', '.join(nameTypePairs)}\}"
+        return f"{{{', '.join(nameTypePairs)}}}"
 
     def has(self, name):
         return name in self.data
