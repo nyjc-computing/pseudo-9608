@@ -93,6 +93,20 @@ def resolveGet(frame, expr):
     expr.frame = frame
     return getType(frame, expr.name)
 
+def resolveProcCall(frame, expr):
+    expr.callable.accept(frame, resolveGet)
+    callable = getValue(frame, expr.callable.name)
+    if not isProcedure(callable):
+        raise LogicError("Not PROCEDURE", expr.callable.name)
+    resolveCall(frame, expr)
+
+def resolveFuncCall(frame, expr):
+    expr.callable.accept(frame, resolveGet)
+    callable = getValue(frame, expr.callable.name)
+    if not isFunction(callable):
+        raise LogicError("Not FUNCTION", expr.callable.name)
+    resolveCall(frame, expr)
+    
 def resolveCall(frame, expr):
     # Insert frame
     calltype = expr.callable.accept(frame, resolveGet)
