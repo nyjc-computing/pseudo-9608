@@ -6,6 +6,27 @@ class Value:
 
 
 
+class Callable(Value):
+    """
+    Base class for Function and Procedure.
+    Represents a Callable in pseudo.
+
+    Attributes
+    ----------
+    - frame
+        The frame used by the callable
+    - params
+        A list of parameters used by the callable
+    - stmts
+        A list of statements the callable executes when called
+    """
+    def __init__(self, frame, params, stmts):
+        self.frame = frame
+        self.params = params
+        self.stmts = stmts
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
