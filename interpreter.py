@@ -1,13 +1,13 @@
 from builtin import RuntimeError
-from lang import TypedValue
+from lang import TypedValue, File
 from lang import Literal, Unary, Binary, Get, Call
 
 
 
 # Helper functions
 
-def expectModeElseError(exprmode, expected, errmsg="Expected", name=None):
-    if not type(expected) is str:
+def expectTypeElseError(exprmode, expected, errmsg="Expected", name=None):
+    if type(expected) is str:
         expected = (expected,)
     if not exprmode in expected:
         if not name: name = exprmode
@@ -75,12 +75,11 @@ def evalGet(frame, expr):
 def evalCall(frame, expr):
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
-    for arg, slot in zip(expr.args, callable['params']):
+    for arg, slot in zip(expr.args, callable.params):
         argval = arg.accept(frame, evaluate)
         slot.value = argval
-    local = callable['frame']
-    for stmt in callable['stmts']:
-        returnval = stmt.accept(local, execute)
+    for stmt in callable.stmts:
+        returnval = stmt.accept(callable.frame, execute)
         if returnval:
             return returnval
 
@@ -147,30 +146,32 @@ def execFile(frame, stmt):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
         undeclaredElseError(frame, name, "File already opened")
-        declareVar(frame, name, stmt.mode)
-        setValue(frame, name, open(name, stmt.mode[0].lower()))
+        declareVar(frame, name, 'FILE')
+        file = File(name, stmt.mode, open(name, stmt.mode[0].lower()))
+        setValue(frame, name, file)
     elif stmt.action == 'read':
         file = getValue(frame, name, "File not open")
-        mode = getType(frame, name)
-        expectModeElseError(mode, 'READ')
+        expectTypeElseError(getType(frame, name), 'FILE')
+        expectTypeElseError(file.mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
         # TODO: Catch and handle Python file io errors
-        line = file.readline().rstrip()
+        line = file.iohandler.readline().rstrip()
         # TODO: Type conversion
         setValueIfExist(frame, varname, line)
     elif stmt.action == 'write':
         file = getValue(frame, name, "File not open")
-        mode = getType(frame, name)
-        expectModeElseError(mode, ('WRITE', 'APPEND'))
+        expectTypeElseError(getType(frame, name), 'FILE')
+        expectTypeElseError(file.mode, ('WRITE', 'APPEND'))
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'
         # TODO: Catch and handle Python file io errors
-        file.write(writedata)
+        file.iohandler.write(writedata)
     elif stmt.action == 'close':
         file = getValue(frame, name, "File not open")
-        file.close()
+        expectTypeElseError(getType(frame, name), 'FILE')
+        file.iohandler.close()
         del frame[name]
 
 def execute(frame, stmt):

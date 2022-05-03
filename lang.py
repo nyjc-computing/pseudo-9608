@@ -1,3 +1,73 @@
+class Value:
+    """
+    Base class for pseudo values.
+    Represents a value stored in the frame.
+    """
+
+
+
+class Callable(Value):
+    """
+    Base class for Function and Procedure.
+    Represents a Callable in pseudo.
+
+    Attributes
+    ----------
+    - frame
+        The frame used by the callable
+    - params
+        A list of parameters used by the callable
+    - stmts
+        A list of statements the callable executes when called
+    """
+    __slots__ = ('frame', 'params', 'stmts')
+    def __init__(self, frame, params, stmts):
+        self.frame = frame
+        self.params = params
+        self.stmts = stmts
+
+    def __repr__(self):
+        attrstr = ", ".join([
+            repr(getattr(self, attr)) for attr in self.__slots__
+        ])
+        return f'{type(self).__name__}({attrstr})'
+
+
+
+class Function(Callable):
+    """Functions are evaluated to return a value."""
+
+
+
+class Procedure(Callable):
+    """Procedures are called to execute its statements."""
+
+
+
+class File(Value):
+    """
+    Represents a file object in a frame.
+
+    Attributes
+    ----------
+    - name
+        Name of the file that is open
+    - mode
+        The mode that the file was opened in
+    - iohandler
+        An object for accessing the file
+    """
+    __slots__ = ('name', 'mode', 'iohandler')
+    def __init__(self, name, mode, iohandler):
+        self.name = name
+        self.mode = mode
+        self.iohandler = iohandler
+
+    def __repr__(self):
+        return f"<{self.mode}: {self.name}>"
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
@@ -165,7 +235,7 @@ class Loop(Stmt):
 
 
 
-class Callable(Stmt):
+class ProcFunc(Stmt):
     __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(self, rule, name, passby, params, stmts, returnType):
         self.rule = rule
@@ -185,7 +255,7 @@ class Return(Stmt):
 
 
 
-class File(Stmt):
+class FileAction(Stmt):
     __slots__ = ('rule', 'action', 'name', 'mode', 'data')
     def __init__(self, rule, action, name, mode, data):
         self.rule = rule

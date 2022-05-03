@@ -87,7 +87,7 @@ KEYWORDS = [
     'READFILE', 'WRITEFILE', 'CLOSEFILE',
 ]
 
-TYPES = ['INTEGER', 'STRING']
+TYPES = ['INTEGER', 'STRING', 'FILE']
 
 NULL = object()
 
