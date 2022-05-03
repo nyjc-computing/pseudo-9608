@@ -26,29 +26,6 @@ def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
     if declaredType:
         expectTypeElseError(frame.getType(name), declaredType)
 
-def declareVar(frame, name, type):
-    """Declare a name in a frame"""
-    if not frame.has(name):
-        raise LogicError("Already declared", name)
-    frame.declare(name, type)
-
-def getType(frame, name):
-    declaredElseError(frame, name)
-    return frame.getType(name)
-
-def getValue(frame, name):
-    """Retrieve value from a frame using a name"""
-    declaredElseError(frame, name)
-    value = frame.getValue(name)
-    if value is None:
-        raise LogicError("No value assigned", name)
-    return value
-
-def setValue(frame, name, value):
-    """Set a value for a declared variable in a frame"""
-    declaredElseError(frame, name)
-    frame. setValue(name, value)
-
 def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
