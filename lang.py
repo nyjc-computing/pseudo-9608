@@ -28,12 +28,12 @@ class Callable(Value):
 
 
 class Function(Callable):
-    pass
+    """Functions are evaluated to return a value."""
 
 
 
 class Procedure(Callable):
-    pass
+    """Procedures are called to execute its statements."""
 
 
 
