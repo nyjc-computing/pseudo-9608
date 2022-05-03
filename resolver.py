@@ -192,7 +192,7 @@ def verifyProcedure(frame, stmt):
         else:
             declareVar(local, expr.name, expr.type)
         # params: replace Declare Expr with slot
-        stmt.params[i] = local[expr.name]
+        stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame

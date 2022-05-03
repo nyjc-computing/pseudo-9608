@@ -119,6 +119,9 @@ class Frame:
     def getValue(self, name):
         return self.data[name].value
 
+    def get(self, name):
+        return self.data[name]
+
     def setValue(self, name, value):
         self.data[name].value = value
 
