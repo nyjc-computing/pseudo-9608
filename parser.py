@@ -28,21 +28,22 @@ def makeExpr(
     frame=None, name=None,
     left=None, oper=None, right=None,
     callable=None, args=None,
+    token=None,
 ):
     if name is not None:
         if frame is not None:
-            return Get(frame, name)
+            return Get(frame, name, token=token)
         else:
-            return Name(name)
+            return Name(name, token=token)
     if type is not None and value is not None:
-        return Literal(type, value)
+        return Literal(type, value, token=token)
     if oper is not None and right is not None:
         if left is not None:
-            return Binary(left, oper, right)
+            return Binary(left, oper, right, token=token)
         else:
-            return Unary(oper, right)
+            return Unary(oper, right, token=token)
     if callable is not None and args is not None:
-        return Call(callable, args)
+        return Call(callable, args, token=token)
     raise ValueError("Could not find valid keyword argument combination")
 
 def expectElseError(tokens, word, addmsg=None):
