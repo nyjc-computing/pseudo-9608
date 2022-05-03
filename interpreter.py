@@ -21,38 +21,6 @@ def undeclaredElseError(frame, name, errmsg="Already declared", declaredType=Non
     if frame.has(name):
         raise RuntimeError(errmsg, name)
 
-def declareVar(frame, name, type, errmsg="Already declared"):
-    """Declare a name in a frame"""
-    undeclaredElseError(frame, name, errmsg)
-    frame.declare(name, type)
-
-def getType(frame, name):
-    declaredElseError(frame, name)
-    return frame.getType(name)
-
-def getValue(frame, name, errmsg="Undeclared"):
-    """Retrieve value from frame using a name"""
-    declaredElseError(frame, name)
-    value = frame.getValue(name)
-    if value is None:
-        raise RuntimeError("No value assigned", name)
-    return value
-
-def setValue(frame, name, value):
-    """
-    Set a new typed value in the frame slot if one exists,
-    otherwise add a new typed value to the frame.
-    """
-    frame.setValue(name, value)
-
-def setValueIfExist(frame, name, value, errmsg="Undeclared"):
-    """
-    Set a new value in the frame slot if one exists,
-    otherwise raise an Error
-    """
-    declaredElseError(frame, name)
-    frame.setValue(name, value)
-
 # Evaluators
 
 def evalLiteral(frame, literal):
@@ -155,7 +123,7 @@ def execFile(frame, stmt):
         expectTypeElseError(frame.getType(name), 'FILE')
         expectTypeElseError(file.mode, 'READ')
         varname = stmt.data.accept(frame, evaluate)
-        declaredElseError(frame, name)
+        declaredElseError(frame, varname)
         # TODO: Catch and handle Python file io errors
         line = file.iohandler.readline().rstrip()
         # TODO: Type conversion
