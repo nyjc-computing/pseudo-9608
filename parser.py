@@ -64,7 +64,7 @@ def match(tokens, *words):
 def identifier(tokens):
     token = consume(tokens)
     if token['type'] == 'name':
-        return Name(token['word'])
+        return makeExpr(name=token['word'], token=token)
     else:
         raise ParseError(f"Expected variable name", token)
 
@@ -75,6 +75,7 @@ def value(tokens):
         expr = makeExpr(
             type=token['type'],
             value=token['value'],
+            token=token,
         )
         consume(tokens)
         return expr
@@ -88,6 +89,7 @@ def value(tokens):
         expr = makeExpr(
             frame=NULL,
             name=name.name,
+            token=name,
         )
         # Function call
         args = []
@@ -101,6 +103,7 @@ def value(tokens):
             expr = makeExpr(
                 callable=expr,
                 args=args,
+                token=name,
             )
         return expr
     else:
@@ -116,6 +119,7 @@ def muldiv(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=token,
         )
     return expr
 
@@ -128,6 +132,7 @@ def addsub(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=token,
         )
     return expr
 
@@ -141,6 +146,7 @@ def comparison(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=token,
         )
     return expr
 
@@ -154,6 +160,7 @@ def equality(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=token,
         )
     return expr
 
@@ -253,12 +260,12 @@ def repeatStmt(tokens):
     return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
-    name = identifier(tokens).name
+    name = identifier(tokens)
     expectElseError(tokens, '<-', "after name")
     start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = makeExpr(type='INTEGER', value=1)
+    step = makeExpr(type='INTEGER', value=1, token=end.token())
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n', "at end of FOR")
@@ -267,14 +274,24 @@ def forStmt(tokens):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFOR")
     # Initialise name to start
-    init = Assign('assign', name, start)
+    init = Assign('assign', name.name, start)
     # Generate loop cond
-    cond = Binary(makeExpr(frame=NULL, name=name), lte, end)
+    cond = Binary(
+        makeExpr(frame=NULL, name=name.name, token=name),
+        lte,
+        end,
+        token=name,
+    )
     # Add increment statement
     incr = Assign(
         'assign',
         name,
-        Binary(makeExpr(frame=NULL, name=name), add, step),
+        Binary(
+            makeExpr(frame=NULL, name=name.name, token=name),
+            add,
+            step,
+            token=name,
+        ),
     )
     return Loop('while', init, cond, stmts + [incr])
 
