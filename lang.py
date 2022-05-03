@@ -27,6 +27,16 @@ class Callable(Value):
 
 
 
+class Function(Callable):
+    pass
+
+
+
+class Procedure(Callable):
+    pass
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
