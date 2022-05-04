@@ -52,7 +52,8 @@ def expectElseError(tokens, word, addmsg=None):
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
-    msg = f"Expected {addmsg}" if addmsg else "Expected"
+    msg = f"Expected {word}"
+    if addmsg: msg += f" {addmsg}"
     raise ParseError(msg, check(tokens))
 
 def match(tokens, *words):
