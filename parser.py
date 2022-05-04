@@ -474,7 +474,7 @@ def parse(tokens):
     while not atEnd(tokens):
         while match(tokens, '\n'):
             pass
-        statements += [statement1(tokens)]
+        statements += [statement2(tokens)]
         while match(tokens, '\n'):
             pass
     return statements
