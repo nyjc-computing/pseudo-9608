@@ -63,6 +63,12 @@ def match(tokens, *words):
     return False
 
 # Precedence parsers
+# Expressions are parsed in the following precedence (highest to lowest):
+# 1. <name> | <literal> | <unary> | calls
+# 2. *, /
+# 3. +, -
+# 4. < | <= | > | >=
+# 5. <> | =
 
 def identifier(tokens):
     token = consume(tokens)
@@ -234,11 +240,11 @@ def caseStmt(tokens):
     while not atEnd(tokens) and check(tokens).word in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
-        stmt = statement(tokens)
+        stmt = statement1(tokens)
         stmts[val] = stmt
     fallback = None
     if match(tokens, 'OTHERWISE'):
-        fallback = statement(tokens)
+        fallback = statement6(tokens)
     expectElseError(tokens, 'ENDCASE', "at end of CASE")
     expectElseError(tokens, '\n', "after ENDCASE")
     return Conditional('case', cond, stmts, fallback)
@@ -251,14 +257,14 @@ def ifStmt(tokens):
     stmts = {}
     true = []
     while not atEnd(tokens) and check(tokens).word in ('ELSE', 'ENDIF'):
-        true += [statement(tokens)]
+        true += [statement1(tokens)]
     stmts[True] = true
     fallback = None
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n', "after ELSE")
         false = []
         while not atEnd(tokens) and check(tokens).word in ('ENDIF',):
-            false += [statement(tokens)]
+            false += [statement5(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF', "at end of IF")
     expectElseError(tokens, '\n', "after statement")
@@ -270,7 +276,7 @@ def whileStmt(tokens):
     expectElseError(tokens, '\n', "after DO")
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDWHILE'):
-        stmts += [statement(tokens)]
+        stmts += [statement5(tokens)]
     expectElseError(tokens, '\n', "after ENDWHILE")
     return Loop('while', None, cond, stmts)
 
@@ -278,7 +284,7 @@ def repeatStmt(tokens):
     expectElseError(tokens, '\n', "after REPEAT")
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'UNTIL'):
-        stmts += [statement(tokens)]
+        stmts += [statement5(tokens)]
     cond = expression(tokens)
     expectElseError(tokens, '\n', "at end of UNTIL")
     return Loop('repeat', None, cond, stmts)
@@ -296,7 +302,7 @@ def forStmt(tokens):
     expectElseError(tokens, '\n', "at end of FOR")
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDFOR'):
-        stmts += [statement(tokens)]
+        stmts += [statement5(tokens)]
     expectElseError(tokens, '\n', "after ENDFOR")
     # Generate loop cond
     getCounter = makeExpr(frame=NULL, name=init.name, token=init.token())
@@ -327,7 +333,7 @@ def procedureStmt(tokens):
     expectElseError(tokens, '\n', "after parameters")
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDPROCEDURE'):
-        stmts += [statement(tokens)]
+        stmts += [statement3(tokens)]
     expectElseError(tokens, '\n', "after ENDPROCEDURE")
     return ProcFunc('procedure', name, passby, params, stmts, None)
 
@@ -354,7 +360,7 @@ def functionStmt(tokens):
     expectElseError(tokens, '\n', "at end of FUNCTION")
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
-        stmts += [statement(tokens)]
+        stmts += [statement3(tokens)]
     expectElseError(tokens, '\n', "after ENDFUNCTION")
     return ProcFunc('function', name, passby, params, stmts, typetoken.word)
 
@@ -391,15 +397,40 @@ def closefileStmt(tokens):
     expectElseError(tokens, '\n')
     return FileAction('file', 'close', name, None, None)
 
-def statement(tokens):
-    if match(tokens, 'OUTPUT'):
-        return outputStmt(tokens)
-    if match(tokens, 'INPUT'):
-        return inputStmt(tokens)
+# Statement hierarchy
+# Statements are parsed in the following order (most to least restrictive):
+# 1. RETURN -> (3)
+#    used within FUNCTION only
+# 2. FUNCTION | PROCEDURE -> (3)
+#    used within global frame only
+# 3. DECLARE -> (4)
+#    used within global frame or FUNCTION/PROCEDURE only
+#    cannot be used in loops and conditionals
+# 4. IF | WHILE | REPEAT | FOR -> (5)
+#    can be used anywhere except in CASE option statements
+# 5. CASE -> (6)
+#    only accepts single-line statements
+# 6. OUTPUT | INPUT | CALL | Assign | OPEN/READ/WRITE/CLOSEFILE
+#    may be used anywhere in a program
+
+def statement1(tokens):
+    if match(tokens, 'RETURN'):
+        return returnStmt(tokens)
+    return statement3(tokens)
+
+def statement2(tokens):
+    if match(tokens, 'FUNCTION'):
+        return functionStmt(tokens)
+    if match(tokens, 'PROCEDURE'):
+        return procedureStmt(tokens)
+    return statement3(tokens)
+
+def statement3(tokens):
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
-    if match(tokens, 'CASE'):
-        return caseStmt(tokens)
+    return statement4(tokens)
+
+def statement4(tokens):
     if match(tokens, 'IF'):
         return ifStmt(tokens)
     if match(tokens, 'WHILE'):
@@ -408,14 +439,20 @@ def statement(tokens):
         return repeatStmt(tokens)
     if match(tokens, 'FOR'):
         return forStmt(tokens)
-    if match(tokens, 'PROCEDURE'):
-        return procedureStmt(tokens)
+    return statement5(tokens)
+
+def statement5(tokens):
+    if match(tokens, 'CASE'):
+        return caseStmt(tokens)
+    return statement6(tokens)
+
+def statement6(tokens):
+    if match(tokens, 'OUTPUT'):
+        return outputStmt(tokens)
+    if match(tokens, 'INPUT'):
+        return inputStmt(tokens)
     if match(tokens, 'CALL'):
         return callStmt(tokens)
-    if match(tokens, 'FUNCTION'):
-        return functionStmt(tokens)
-    if match(tokens, 'RETURN'):
-        return returnStmt(tokens)
     if match(tokens, 'OPENFILE'):
         return openfileStmt(tokens)
     if match(tokens, 'READFILE'):
@@ -424,10 +461,9 @@ def statement(tokens):
         return writefileStmt(tokens)
     if match(tokens, 'CLOSEFILE'):
         return closefileStmt(tokens)
-    elif check(tokens).type == 'name':
+    if check(tokens).type == 'name':
         return assignStmt(tokens)
-    else:
-        raise ParseError("Unrecognised token", check(tokens))
+    raise ParseError("Unrecognised token", check(tokens))
 
 # Main parsing loop
 
@@ -438,7 +474,7 @@ def parse(tokens):
     while not atEnd(tokens):
         while match(tokens, '\n'):
             pass
-        statements += [statement(tokens)]
+        statements += [statement2(tokens)]
         while match(tokens, '\n'):
             pass
     return statements
