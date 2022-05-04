@@ -399,16 +399,16 @@ def closefileStmt(tokens):
 
 # Statement hierarchy
 # Statements are parsed in the following order (most to least restrictive):
-# 1. RETURN -> 
+# 1. RETURN -> (3)
 #    used within FUNCTION only
-# 2. FUNCTION | PROCEDURE ->
+# 2. FUNCTION | PROCEDURE -> (3)
 #    used within global frame only
-# 3. DECLARE -> 
+# 3. DECLARE -> (4)
 #    used within global frame or FUNCTION/PROCEDURE only
 #    cannot be used in loops and conditionals
-# 4. IF | WHILE | REPEAT | FOR
+# 4. IF | WHILE | REPEAT | FOR -> (5)
 #    can be used anywhere except in CASE option statements
-# 5. CASE
+# 5. CASE -> (6)
 #    only accepts single-line statements
 # 6. OUTPUT | INPUT | CALL | Assign | OPEN/READ/WRITE/CLOSEFILE
 #    may be used anywhere in a program
