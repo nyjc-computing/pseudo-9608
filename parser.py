@@ -25,7 +25,7 @@ def consume(tokens):
 def makeExpr(
     *,
     type=None, value=None,
-    frame=None, name=None,
+    frame=None, name=None, expr=None,
     left=None, oper=None, right=None,
     callable=None, args=None,
     token=None,
@@ -33,6 +33,8 @@ def makeExpr(
     if name is not None:
         if frame is not None:
             return Get(frame, name, token=token)
+        elif expr is not None:
+            return Assign(name, expr, token=token)
         else:
             return Name(name, token=token)
     if type is not None and value is not None:
@@ -50,7 +52,8 @@ def expectElseError(tokens, word, addmsg=None):
     if check(tokens)['word'] == word:
         consume(tokens)
         return True
-    msg = f"Expected {addmsg}" if addmsg else "Expected"
+    msg = f"Expected {word}"
+    if addmsg: msg += f" {addmsg}"
     raise ParseError(msg, check(tokens))
 
 def match(tokens, *words):
@@ -64,45 +67,65 @@ def match(tokens, *words):
 def identifier(tokens):
     token = consume(tokens)
     if token['type'] == 'name':
-        return Name(token['word'])
+        return makeExpr(name=token['word'], token=token)
     else:
         raise ParseError(f"Expected variable name", token)
 
+def literal(tokens):
+    token = consume(tokens)
+    return makeExpr(
+        type=token['type'],
+        value=token['value'],
+        token=token,
+    )
+
+def unary(tokens):
+    oper = consume(tokens)
+    right = expression(tokens)
+    return makeExpr(
+        oper=oper['value'],
+        right=right,
+        token=oper,
+    )
+
+def nameExpr(tokens):
+    name = identifier(tokens)
+    expr = makeExpr(
+        frame=NULL,
+        name=name.name,
+        token=name,
+    )
+    # Function call
+    args = []
+    if match(tokens, '('):
+        arg = expression(tokens)
+        args += [arg]
+        while match(tokens, ','):
+            arg = expression(tokens)
+            args += [arg]
+        expectElseError(tokens, ')', "after '('")
+        expr = makeExpr(
+            callable=expr,
+            args=args,
+            token=name,
+        )
+    return expr
+
 def value(tokens):
     token = check(tokens)
+    # Unary expressions
+    if token['word'] in ('-',):
+        return unary(tokens)
     # A single value
-    if token['type'] in ['INTEGER', 'STRING']:
-        expr = makeExpr(
-            type=token['type'],
-            value=token['value'],
-        )
-        consume(tokens)
-        return expr
+    if check(tokens)['type'] in ['INTEGER', 'STRING']:
+        return literal(tokens)
     #  A grouping
     elif match(tokens, '('):
         expr = expression(tokens)
         expectElseError(tokens, ')', "after '('")
-        return expr        
-    elif token['type'] == 'name':
-        name = identifier(tokens)
-        expr = makeExpr(
-            frame=NULL,
-            name=name.name,
-        )
-        # Function call
-        args = []
-        if match(tokens, '('):
-            arg = expression(tokens)
-            args += [arg]
-            while match(tokens, ','):
-                arg = expression(tokens)
-                args += [arg]
-            expectElseError(tokens, ')', "after '('")
-            expr = makeExpr(
-                callable=expr,
-                args=args,
-            )
         return expr
+    elif token['type'] == 'name':
+        return nameExpr(tokens)
     else:
         raise ParseError("Unexpected token", token)
 
@@ -116,6 +139,7 @@ def muldiv(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=oper,
         )
     return expr
 
@@ -128,6 +152,7 @@ def addsub(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=oper,
         )
     return expr
 
@@ -141,6 +166,7 @@ def comparison(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=oper,
         )
     return expr
 
@@ -154,12 +180,19 @@ def equality(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
+            token=oper,
         )
     return expr
 
 def expression(tokens):
     expr = equality(tokens)
     return expr
+
+def assignment(tokens):
+    name = identifier(tokens)
+    expectElseError(tokens, '<-', "after name")
+    expr = expression(tokens)
+    return makeExpr(name=name.name, expr=expr, token=name)
 
 # Statement parsers
 
@@ -189,11 +222,9 @@ def declareStmt(tokens):
     return ExprStmt('declare', expr)
 
 def assignStmt(tokens):
-    name = identifier(tokens).name
-    expectElseError(tokens, '<-', "after name")
-    expr = expression(tokens)
+    expr = assignment(tokens)
     expectElseError(tokens, '\n', "after statement")
-    return Assign('assign', name, expr)
+    return ExprStmt('assign', expr)
 
 def caseStmt(tokens):
     expectElseError(tokens, 'OF', "after CASE")
@@ -253,12 +284,13 @@ def repeatStmt(tokens):
     return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
-    name = identifier(tokens).name
-    expectElseError(tokens, '<-', "after name")
-    start = value(tokens)
+    init = assignment(tokens)
+    # name = identifier(tokens)
+    # expectElseError(tokens, '<-', "after name")
+    # start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = makeExpr(type='INTEGER', value=1)
+    step = makeExpr(type='INTEGER', value=1, token=init.token())
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n', "at end of FOR")
@@ -266,17 +298,18 @@ def forStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDFOR'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFOR")
-    # Initialise name to start
-    init = Assign('assign', name, start)
     # Generate loop cond
-    cond = Binary(makeExpr(frame=NULL, name=name), lte, end)
+    getCounter = makeExpr(frame=NULL, name=init.name, token=init.token())
+    cond = Binary(getCounter, lte, end, token=init.token())
     # Add increment statement
     incr = Assign(
-        'assign',
-        name,
-        Binary(makeExpr(frame=NULL, name=name), add, step),
+        name=init.name,
+        expr=Binary(getCounter, add, step, token=step.token()),
+        token=init.token(),
     )
-    return Loop('while', init, cond, stmts + [incr])
+    initStmt = ExprStmt('assign', init)
+    incrStmt = ExprStmt('assign', incr)
+    return Loop('while', initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens):
     name = identifier(tokens).name

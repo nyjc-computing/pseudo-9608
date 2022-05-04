@@ -74,7 +74,8 @@ class TypedValue:
     Each TypedValue has a type and a value.
     """
     __slots__ = ('type', 'value')
-    def __init__(self, type, value):
+    def __init__(self, type, value, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.type = type
         self.value = value
 
@@ -151,12 +152,21 @@ class Expr:
 
     Methods
     -------
+    - token() -> dict
+        Returns the token asociated with the expr, for error
+        reporting purposes.
     - accept(frame, visitor) -> Any
         Enables a visitor to carry out operations on the
         Expr (with a provided frame).
         The visitor should take in two arguments: a frame,
         and an Expr.
     """
+    def __init__(self, token=None):
+        self._token = token
+
+    def token(self):
+        return self._token
+
     def accept(self, frame, visitor):
         # visitor must be a function that takes
         # a frame and an Expr
@@ -180,22 +190,34 @@ class Literal(TypedValue, Expr):
 
 class Name(Expr):
     __slots__ = ('name',)
-    def __init__(self, name):
+    def __init__(self, name, token=None):
+        super().__init__(token=token)
         self.name = name
 
 
 
 class Declare(Expr):
     __slots__ = ('name', 'type')
-    def __init__(self, name, type):
+    def __init__(self, name, type, token=None):
+        super().__init__(token=token)
         self.name = name
         self.type = type
 
 
 
+class Assign(Expr):
+    __slots__ = ('name', 'expr')
+    def __init__(self, name, expr, token=None):
+        super().__init__(token=token)
+        self.name = name
+        self.expr = expr
+
+
+
 class Unary(Expr):
     __slots__ = ('oper', 'right')
-    def __init__(self, oper, right):
+    def __init__(self, oper, right, token=None):
+        super().__init__(token=token)
         self.oper = oper
         self.right = right
 
@@ -203,7 +225,8 @@ class Unary(Expr):
 
 class Binary(Expr):
     __slots__ = ('left', 'oper', 'right')
-    def __init__(self, left, oper, right):
+    def __init__(self, left, oper, right, token=None):
+        super().__init__(token=token)
         self.left = left
         self.oper = oper
         self.right = right
@@ -212,7 +235,8 @@ class Binary(Expr):
 
 class Get(Expr):
     __slots__ = ('frame', 'name')
-    def __init__(self, frame, name):
+    def __init__(self, frame, name, token=None):
+        super().__init__(token=token)
         self.frame = frame
         self.name = name
 
@@ -220,7 +244,8 @@ class Get(Expr):
 
 class Call(Expr):
     __slots__ = ('callable', 'args')
-    def __init__(self, callable, args):
+    def __init__(self, callable, args, token=None):
+        super().__init__(token=token)
         self.callable = callable
         self.args = args
 
@@ -264,12 +289,12 @@ class Input(Stmt):
 
 
 
-class Assign(Stmt):
-    __slots__ = ('rule', 'name', 'expr')
-    def __init__(self, rule, name, expr):
-        self.rule = rule
-        self.name = name
-        self.expr = expr
+# class Assign(Stmt):
+#     __slots__ = ('rule', 'name', 'expr')
+#     def __init__(self, rule, name, expr):
+#         self.rule = rule
+#         self.name = name
+#         self.expr = expr
 
 
 

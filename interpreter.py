@@ -1,25 +1,25 @@
 from builtin import RuntimeError
 from lang import Frame, File
-from lang import Literal, Unary, Binary, Get, Call
+from lang import Literal, Unary, Binary, Get, Call, Assign
 
 
 
 # Helper functions
 
-def expectTypeElseError(exprmode, expected, errmsg="Expected", name=None):
+def expectTypeElseError(exprmode, expected, errmsg="Expected", token=None):
     if type(expected) is str:
         expected = (expected,)
     if not exprmode in expected:
-        if not name: name = exprmode
-        raise RuntimeError(f"{errmsg} {expected}", name)
+        if not token: token = exprmode
+        raise RuntimeError(f"{errmsg} {expected}", token)
 
-def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None):
+def declaredElseError(frame, name, errmsg="Undeclared", token=None):
     if not frame.has(name):
-        raise RuntimeError(errmsg, name)
+        raise RuntimeError(errmsg, token)
 
-def undeclaredElseError(frame, name, errmsg="Already declared", declaredType=None):
+def undeclaredElseError(frame, name, errmsg="Already declared", token=None):
     if frame.has(name):
-        raise RuntimeError(errmsg, name)
+        raise RuntimeError(errmsg, token)
 
 # Evaluators
 
@@ -51,6 +51,10 @@ def evalCall(frame, expr):
         if returnval:
             return returnval
 
+def evalAssign(frame, expr):
+    value = expr.expr.accept(frame, evaluate)
+    frame.setValue(expr.name, value)
+
 def evaluate(frame, expr):
     if isinstance(expr, Literal):
         return expr.accept(frame, evalLiteral)
@@ -58,6 +62,8 @@ def evaluate(frame, expr):
         return expr.accept(frame, evalUnary)
     if isinstance(expr, Binary):
         return expr.accept(frame, evalBinary)
+    if isinstance(expr, Assign):
+        return expr.accept(frame, evalAssign)
     if isinstance(expr, Get):
         return expr.accept(frame, evalGet)
     if isinstance(expr, Call):
@@ -81,10 +87,6 @@ def execOutput(frame, stmt):
 def execInput(frame, stmt):
     name = stmt.name
     frame.setValue(name, input())
-
-def execAssign(frame, stmt):
-    value = stmt.expr.accept(frame, evaluate)
-    frame.setValue(stmt.name, value)
 
 def execCase(frame, stmt):
     cond = stmt.cond.accept(frame, evaluate)
@@ -113,26 +115,26 @@ def execRepeat(frame, stmt):
 def execFile(frame, stmt):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
-        undeclaredElseError(frame, name, "File already opened")
+        undeclaredElseError(frame, name, "File already opened", stmt.name.token())
         frame.declare(name, 'FILE')
         file = File(name, stmt.mode, open(name, stmt.mode[0].lower()))
         frame.setValue(name, file)
     elif stmt.action == 'read':
-        declaredElseError(frame, name, "File not open")
+        declaredElseError(frame, name, "File not open", stmt.name.token())
         file = frame.getValue(name)
-        expectTypeElseError(frame.getType(name), 'FILE')
-        expectTypeElseError(file.mode, 'READ')
+        expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
+        expectTypeElseError(file.mode, 'READ', stmt.name.token())
         varname = stmt.data.accept(frame, evaluate)
-        declaredElseError(frame, varname)
+        declaredElseError(frame, varname, stmt.data.token())
         # TODO: Catch and handle Python file io errors
         line = file.iohandler.readline().rstrip()
         # TODO: Type conversion
         frame.setValue(varname, line)
     elif stmt.action == 'write':
-        declaredElseError(frame, name, "File not open")
+        declaredElseError(frame, name, "File not open", stmt.name.token())
         file = frame.getValue(name)
-        expectTypeElseError(frame.getType(name), 'FILE')
-        expectTypeElseError(file.mode, ('WRITE', 'APPEND'))
+        expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
+        expectTypeElseError(file.mode, ('WRITE', 'APPEND'), stmt.name.token())
         writedata = str(stmt.data.accept(frame, evaluate))
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
@@ -140,9 +142,9 @@ def execFile(frame, stmt):
         # TODO: Catch and handle Python file io errors
         file.iohandler.write(writedata)
     elif stmt.action == 'close':
-        declaredElseError(frame, name, "File not open")
+        declaredElseError(frame, name, "File not open", stmt.name.token())
         file = frame.getValue(name)
-        expectTypeElseError(frame.getType(name), 'FILE')
+        expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
         file.iohandler.close()
         frame.delete(name)
 
@@ -152,7 +154,7 @@ def execute(frame, stmt):
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
     if stmt.rule == 'assign':
-        stmt.accept(frame, execAssign)
+        stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'case':
         stmt.accept(frame, execCase)
     if stmt.rule == 'if':
