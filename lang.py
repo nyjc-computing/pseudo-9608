@@ -1,3 +1,20 @@
+class Token:
+    """
+    Encapsulates data for a token.
+    """
+    def __init__(self, type, word, value, line, column):
+        self.line = line
+        self.col = column
+        self.type = type
+        self.word = word
+        self.value = value
+
+    def __repr__(self):
+        lineinfo = f"[Line {self.line} column {self.column}]"
+        return f"{lineinfo} <{self.value}> {repr(self.word)}"
+
+
+
 class Value:
     """
     Base class for pseudo values.
