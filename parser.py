@@ -263,7 +263,7 @@ def ifStmt(tokens):
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n', "after ELSE")
         false = []
-        while not atEnd(tokens) and check(tokens).word in ('ENDIF',):
+        while not atEnd(tokens) and not check(tokens).word in ('ENDIF',):
             false += [statement5(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF', "at end of IF")
