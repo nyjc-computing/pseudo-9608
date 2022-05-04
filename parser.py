@@ -78,17 +78,20 @@ def literal(tokens):
         token=token,
     )
 
+def unary(tokens):
+    oper = consume(tokens)
+    right = expression(tokens)
+    return makeExpr(
+        oper=oper['value'],
+        right=right,
+        token=oper,
+    )
+    
 def value(tokens):
     token = check(tokens)
     # Unary expressions
     if token['word'] in ('-',):
-        oper = consume(tokens)
-        right = expression(tokens)
-        return makeExpr(
-            oper=oper['value'],
-            right=right,
-            token=oper,
-        )
+        return unary(tokens)
     # A single value
     if check(tokens)['type'] in ['INTEGER', 'STRING']:
         return literal(tokens)
