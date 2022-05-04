@@ -89,9 +89,9 @@ def scan(src):
             elif text in VALUES:
                 if text == 'NULL':
                     token = makeToken(code, 'NULL', text, NULL)
-                elif word == 'TRUE':
+                elif text == 'TRUE':
                     token = makeToken(code, 'BOOLEAN', text, True)
-                elif word == 'FALSE':
+                elif text == 'FALSE':
                     token = makeToken(code, 'BOOLEAN', text, False)
                 else:
                     raise ValueError(f"Unrecognised value {text}")
