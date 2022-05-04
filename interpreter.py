@@ -81,7 +81,10 @@ def executeStmts(frame, stmts):
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
-        print(str(expr.accept(frame, evaluate)), end='')
+        value = expr.accept(frame, evaluate)
+        if type(value) is bool:
+            value = str(value).upper()
+        print(str(value)), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
