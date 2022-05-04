@@ -414,14 +414,14 @@ def closefileStmt(tokens):
 #    may be used anywhere in a program
 
 def statement(tokens):
-    if match(tokens, 'OUTPUT'):
-        return outputStmt(tokens)
-    if match(tokens, 'INPUT'):
-        return inputStmt(tokens)
+    if match(tokens, 'RETURN'):
+        return returnStmt(tokens)
+    if match(tokens, 'FUNCTION'):
+        return functionStmt(tokens)
+    if match(tokens, 'PROCEDURE'):
+        return procedureStmt(tokens)
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
-    if match(tokens, 'CASE'):
-        return caseStmt(tokens)
     if match(tokens, 'IF'):
         return ifStmt(tokens)
     if match(tokens, 'WHILE'):
@@ -430,14 +430,14 @@ def statement(tokens):
         return repeatStmt(tokens)
     if match(tokens, 'FOR'):
         return forStmt(tokens)
-    if match(tokens, 'PROCEDURE'):
-        return procedureStmt(tokens)
+    if match(tokens, 'CASE'):
+        return caseStmt(tokens)
+    if match(tokens, 'OUTPUT'):
+        return outputStmt(tokens)
+    if match(tokens, 'INPUT'):
+        return inputStmt(tokens)
     if match(tokens, 'CALL'):
         return callStmt(tokens)
-    if match(tokens, 'FUNCTION'):
-        return functionStmt(tokens)
-    if match(tokens, 'RETURN'):
-        return returnStmt(tokens)
     if match(tokens, 'OPENFILE'):
         return openfileStmt(tokens)
     if match(tokens, 'READFILE'):
