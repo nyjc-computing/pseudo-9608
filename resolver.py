@@ -175,7 +175,7 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    frame.declare(stmt.name, NULL)
+    frame.declare(stmt.name, 'NULL')
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
