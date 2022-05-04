@@ -2,7 +2,7 @@ from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
 from builtin import NULL
-from lang import TypedValue, Frame, Function, Procedure
+from lang import Frame, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
@@ -138,11 +138,6 @@ def verifyOutput(frame, stmt):
 
 def verifyInput(frame, stmt):
     declaredElseError(frame, stmt.name)
-
-def verifyAssign(frame, stmt):
-    declaredElseError(frame, stmt.name)
-    exprtype = stmt.expr.accept(frame, resolve)
-    expectTypeElseError(exprtype, frame.getType(stmt.name), token=stmt.expr.token())
 
 def verifyCase(frame, stmt):
     stmt.cond.accept(frame, resolve)
