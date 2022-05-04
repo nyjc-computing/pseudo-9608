@@ -25,7 +25,7 @@ def consume(tokens):
 def makeExpr(
     *,
     type=None, value=None,
-    frame=None, name=None,
+    frame=None, name=None, expr=None,
     left=None, oper=None, right=None,
     callable=None, args=None,
     token=None,
@@ -33,6 +33,8 @@ def makeExpr(
     if name is not None:
         if frame is not None:
             return Get(frame, name, token=token)
+        elif expr is not None:
+            return Assign(name, expr, token=token)
         else:
             return Name(name, token=token)
     if type is not None and value is not None:
@@ -167,6 +169,8 @@ def equality(tokens):
 def expression(tokens):
     expr = equality(tokens)
     return expr
+
+def assignment(tokens):
 
 # Statement parsers
 
