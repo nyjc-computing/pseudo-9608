@@ -169,7 +169,7 @@ def verifyProcedure(frame, stmt):
             # Reference frame vars in local
             local.setValue(expr.name, frame.getValue(expr.name))
         else:
-            local.declare(expr.name, expr.type)
+            expr.accept(local, resolveDeclare)
         # params: replace Declare Expr with slot
         stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
