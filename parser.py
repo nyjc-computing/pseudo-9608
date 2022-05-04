@@ -283,12 +283,13 @@ def repeatStmt(tokens):
     return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
-    name = identifier(tokens)
-    expectElseError(tokens, '<-', "after name")
-    start = value(tokens)
+    init = assignment(tokens)
+    # name = identifier(tokens)
+    # expectElseError(tokens, '<-', "after name")
+    # start = value(tokens)
     expectElseError(tokens, 'TO', "after start value")
     end = value(tokens)
-    step = makeExpr(type='INTEGER', value=1, token=end.token())
+    step = makeExpr(type='INTEGER', value=1, token=init.token())
     if match(tokens, 'STEP'):
         step = value(tokens)
     expectElseError(tokens, '\n', "at end of FOR")
@@ -296,27 +297,13 @@ def forStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDFOR'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFOR")
-    # Initialise name to start
-    init = Assign('assign', name.name, start)
     # Generate loop cond
-    cond = Binary(
-        makeExpr(frame=NULL, name=name.name, token=name),
-        lte,
-        end,
-        token=name,
-    )
+    getCounter = makeExpr(frame=NULL, name=init.name, token=init.token())
+    cond = Binary(getCounter, lte, end, token=init.token())
     # Add increment statement
-    incr = Assign(
-        'assign',
-        name,
-        Binary(
-            makeExpr(frame=NULL, name=name.name, token=name),
-            add,
-            step,
-            token=name,
-        ),
-    )
-    return Loop('while', init, cond, stmts + [incr])
+    incr = Binary(getCounter, add, step, token=step.token())
+    update = Assign(name=init.name, expr=incr, token=init.token())
+    return Loop('while', init, cond, stmts + [update])
 
 def procedureStmt(tokens):
     name = identifier(tokens).name
