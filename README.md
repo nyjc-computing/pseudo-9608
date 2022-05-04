@@ -37,3 +37,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [16e OOP: Values](https://github.com/nyjc-computing/pseudo/pull/38)
 - [16f OOP: Frames](https://github.com/nyjc-computing/pseudo/pull/40)
 - [16g OOP: Error reporting](https://github.com/nyjc-computing/pseudo/pull/41)
+- [16h OOP: Tokens](https://github.com/nyjc-computing/pseudo/pull/43)
