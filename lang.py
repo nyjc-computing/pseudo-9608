@@ -289,12 +289,12 @@ class Input(Stmt):
 
 
 
-class Assign(Stmt):
-    __slots__ = ('rule', 'name', 'expr')
-    def __init__(self, rule, name, expr):
-        self.rule = rule
-        self.name = name
-        self.expr = expr
+# class Assign(Stmt):
+#     __slots__ = ('rule', 'name', 'expr')
+#     def __init__(self, rule, name, expr):
+#         self.rule = rule
+#         self.name = name
+#         self.expr = expr
 
 
 
