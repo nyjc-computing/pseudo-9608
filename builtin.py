@@ -10,8 +10,8 @@ class PseudoError(Exception):
         if line is not None:
             self.line = line
         elif type(token) is dict:
-            self.line = token['line']
-            self.col = token['col']
+            self.line = token.line
+            self.col = token.col
         else:
             self.line = None
 
@@ -20,7 +20,7 @@ class PseudoError(Exception):
 
     def report(self):
         if type(self.token) is dict:
-            token = self.token['word']
+            token = self.token.word
         else:
             token = self.token
         return f"{repr(token)}: {self.msg()}"
