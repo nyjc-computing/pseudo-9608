@@ -335,7 +335,7 @@ def procedureStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     expectElseError(tokens, '\n', "after ENDPROCEDURE")
-    return ProcFunc('procedure', name, passby, params, stmts, None)
+    return ProcFunc('procedure', name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens):
     callable = value(tokens)
