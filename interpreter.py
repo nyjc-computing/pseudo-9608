@@ -48,7 +48,7 @@ def evalCall(frame, expr):
         slot.value = argval
     for stmt in callable.stmts:
         returnval = stmt.accept(callable.frame, execute)
-        if returnval:
+        if returnval is not None:
             return returnval
 
 def evalAssign(frame, expr):
@@ -76,12 +76,15 @@ def evaluate(frame, expr):
 def executeStmts(frame, stmts):
     for stmt in stmts:
         returnval = stmt.accept(frame, execute)
-        if returnval:
+        if returnval is not None:
             return returnval
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
-        print(str(expr.accept(frame, evaluate)), end='')
+        value = expr.accept(frame, evaluate)
+        if type(value) is bool:
+            value = str(value).upper()
+        print(str(value)), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
