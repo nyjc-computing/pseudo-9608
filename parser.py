@@ -117,7 +117,7 @@ def value(tokens):
     if token.word in ('-',):
         return unary(tokens)
     # A single value
-    if check(tokens).type in ['INTEGER', 'STRING']:
+    if check(tokens).type in TYPES:
         return literal(tokens)
     #  A grouping
     elif match(tokens, '('):
