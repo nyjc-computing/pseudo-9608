@@ -205,6 +205,15 @@ class Declare(Expr):
 
 
 
+class Assign(Expr):
+    __slots__ = ('name', 'expr')
+    def __init__(self, name, expr, token=None):
+        super().__init__(token=token)
+        self.name = name
+        self.expr = expr
+
+
+
 class Unary(Expr):
     __slots__ = ('oper', 'right')
     def __init__(self, oper, right, token=None):
