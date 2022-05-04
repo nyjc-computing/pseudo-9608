@@ -171,6 +171,10 @@ def expression(tokens):
     return expr
 
 def assignment(tokens):
+    name = identifier(tokens)
+    expectElseError(tokens, '<-', "after name")
+    expr = expression(tokens)
+    return makeExpr(name=name.name, expr=expr, token=name)
 
 # Statement parsers
 
