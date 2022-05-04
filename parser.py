@@ -237,7 +237,7 @@ def caseStmt(tokens):
     cond = value(tokens)
     expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
-    while not atEnd(tokens) and check(tokens).word in ('OTHERWISE', 'ENDCASE'):
+    while not atEnd(tokens) and not check(tokens).word in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
         stmt = statement1(tokens)
@@ -256,7 +256,7 @@ def ifStmt(tokens):
     expectElseError(tokens, '\n', "after THEN")
     stmts = {}
     true = []
-    while not atEnd(tokens) and check(tokens).word in ('ELSE', 'ENDIF'):
+    while not atEnd(tokens) and not check(tokens).word in ('ELSE', 'ENDIF'):
         true += [statement1(tokens)]
     stmts[True] = true
     fallback = None
