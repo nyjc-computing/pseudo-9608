@@ -1,5 +1,6 @@
 from builtin import ParseError
-from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
+from builtin import KEYWORDS, VALUES, OPERATORS
+from builtin import NULL
 from lang import Token
 
 
@@ -91,6 +92,31 @@ def scan(src):
                     text,
                     None,
                 )
+            elif text in VALUES:
+                if text == 'NULL':
+                    token = Token(
+                        code['line'],
+                        code['cursor'] - code['lineStart'] - len(text),
+                        'NULL',
+                        text,
+                        NULL,
+                    )
+                elif word == 'TRUE':
+                    token = Token(
+                        code['line'],
+                        code['cursor'] - code['lineStart'] - len(text),
+                        'BOOLEAN',
+                        text,
+                        True,
+                    )
+                elif word == 'FALSE':
+                    token = Token(
+                        code['line'],
+                        code['cursor'] - code['lineStart'] - len(text),
+                        'BOOLEAN',
+                        text,
+                        False,
+                    )
             else:
                 token = Token(
                     code['line'],
