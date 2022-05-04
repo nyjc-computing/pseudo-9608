@@ -76,7 +76,7 @@ def evaluate(frame, expr):
 def executeStmts(frame, stmts):
     for stmt in stmts:
         returnval = stmt.accept(frame, execute)
-        if returnval:
+        if returnval is not None:
             return returnval
 
 def execOutput(frame, stmt):
