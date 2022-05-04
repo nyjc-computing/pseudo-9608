@@ -2,7 +2,7 @@ class Token:
     """
     Encapsulates data for a token.
     """
-    def __init__(self, type, word, value, line, column):
+    def __init__(self, line, column, type, word, value):
         self.line = line
         self.col = column
         self.type = type
@@ -10,7 +10,7 @@ class Token:
         self.value = value
 
     def __repr__(self):
-        lineinfo = f"[Line {self.line} column {self.column}]"
+        lineinfo = f"[Line {self.line} column {self.col}]"
         return f"{lineinfo} <{self.value}> {repr(self.word)}"
 
 
