@@ -72,6 +72,15 @@ def identifier(tokens):
 
 def value(tokens):
     token = check(tokens)
+    # Unary expressions
+    if token['word'] in ('-',):
+        oper = consume(tokens)
+        right = expression(tokens)
+        return makeExpr(
+            oper=oper['value'],
+            right=right,
+            token=oper,
+        )
     # A single value
     if token['type'] in ['INTEGER', 'STRING']:
         expr = makeExpr(
