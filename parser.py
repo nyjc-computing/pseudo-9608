@@ -221,11 +221,9 @@ def declareStmt(tokens):
     return ExprStmt('declare', expr)
 
 def assignStmt(tokens):
-    name = identifier(tokens).name
-    expectElseError(tokens, '<-', "after name")
-    expr = expression(tokens)
+    expr = assignment(tokens)
     expectElseError(tokens, '\n', "after statement")
-    return Assign('assign', name, expr)
+    return ExprStmt('assign', expr)
 
 def caseStmt(tokens):
     expectElseError(tokens, 'OF', "after CASE")
