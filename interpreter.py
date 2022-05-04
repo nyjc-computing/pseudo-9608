@@ -48,7 +48,7 @@ def evalCall(frame, expr):
         slot.value = argval
     for stmt in callable.stmts:
         returnval = stmt.accept(callable.frame, execute)
-        if returnval:
+        if returnval is not None:
             return returnval
 
 def evalAssign(frame, expr):
