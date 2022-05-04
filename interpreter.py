@@ -84,7 +84,7 @@ def execOutput(frame, stmt):
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
             value = str(value).upper()
-        print(str(value)), end='')
+        print(str(value), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
