@@ -301,9 +301,14 @@ def forStmt(tokens):
     getCounter = makeExpr(frame=NULL, name=init.name, token=init.token())
     cond = Binary(getCounter, lte, end, token=init.token())
     # Add increment statement
-    incr = Binary(getCounter, add, step, token=step.token())
-    update = Assign(name=init.name, expr=incr, token=init.token())
-    return Loop('while', init, cond, stmts + [update])
+    incr = Assign(
+        name=init.name,
+        expr=Binary(getCounter, add, step, token=step.token()),
+        token=init.token(),
+    )
+    initStmt = ExprStmt('assign', init)
+    incrStmt = ExprStmt('assign', incr)
+    return Loop('while', initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens):
     name = identifier(tokens).name
