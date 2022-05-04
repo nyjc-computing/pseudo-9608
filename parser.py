@@ -1,6 +1,7 @@
 from builtin import TYPES, NULL
 from builtin import ParseError
 from builtin import lte, add
+from lang import Token
 from lang import Literal, Name, Unary, Binary, Get, Call
 from lang import ExprStmt, Output, Input, Declare, Assign
 from lang import Conditional, Loop, ProcFunc, FileAction
@@ -432,7 +433,7 @@ def statement(tokens):
 
 def parse(tokens):
     lastline = tokens[-1].line
-    tokens += [makeToken(lastline, 0, 'EOF', "", None)]
+    tokens += [Token(lastline, 0, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
         while match(tokens, '\n'):
