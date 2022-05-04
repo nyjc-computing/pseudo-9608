@@ -225,7 +225,7 @@ def verify(frame, stmt):
     elif stmt.rule == 'declare':
         stmt.expr.accept(frame, resolveDeclare)
     elif stmt.rule == 'assign':
-        stmt.accept(frame, verifyAssign)
+        stmt.expr.accept(frame, resolveAssign)
     elif stmt.rule == 'case':
         stmt.accept(frame, verifyCase)
     elif stmt.rule == 'if':
