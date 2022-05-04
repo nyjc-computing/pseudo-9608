@@ -17,7 +17,7 @@ def isFunction(callable):
 
 def expectTypeElseError(exprtype, expected, *, token=None):
     if exprtype != expected:
-        if not name: name = exprtype
+        if not token: token = exprtype
         raise LogicError(f"{exprtype} <> {expected}", token)
 
 def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None, *, token=None):
@@ -47,7 +47,7 @@ def resolveDeclare(frame, expr):
 def resolveUnary(frame, expr):
     righttype = expr.right.accept(frame, resolve)
     if expr.oper is sub:
-        expectTypeElseError(righttype, 'INTEGER', token=expr.right,token())
+        expectTypeElseError(righttype, 'INTEGER', token=expr.right.token())
         return 'INTEGER'
     else:
         raise ValueError("Unexpected oper {expr.oper}")
