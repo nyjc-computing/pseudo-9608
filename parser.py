@@ -85,7 +85,7 @@ def value(tokens):
     elif match(tokens, '('):
         expr = expression(tokens)
         expectElseError(tokens, ')', "after '('")
-        return expr        
+        return expr
     elif token['type'] == 'name':
         name = identifier(tokens)
         expr = makeExpr(
@@ -121,7 +121,7 @@ def muldiv(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
-            token=token,
+            token=oper,
         )
     return expr
 
@@ -134,7 +134,7 @@ def addsub(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
-            token=token,
+            token=oper,
         )
     return expr
 
@@ -148,7 +148,7 @@ def comparison(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
-            token=token,
+            token=oper,
         )
     return expr
 
@@ -162,7 +162,7 @@ def equality(tokens):
             left=expr,
             oper=oper['value'],
             right=right,
-            token=token,
+            token=oper,
         )
     return expr
 
