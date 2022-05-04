@@ -162,10 +162,10 @@ class Expr:
         and an Expr.
     """
     def __init__(self, token=None):
-        self.token = token
+        self._token = token
 
     def token(self):
-        return self.token
+        return self._token
 
     def accept(self, frame, visitor):
         # visitor must be a function that takes
