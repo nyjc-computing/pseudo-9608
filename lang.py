@@ -347,14 +347,6 @@ class ProcFunc(Stmt):
 
 
 
-class Return(Stmt):
-    __slots__ = ('rule', 'expr')
-    def __init__(self, rule, expr):
-        self.rule = rule
-        self.expr = expr
-
-
-
 class FileAction(Stmt):
     __slots__ = ('rule', 'action', 'name', 'mode', 'data')
     def __init__(self, rule, action, name, mode, data):
