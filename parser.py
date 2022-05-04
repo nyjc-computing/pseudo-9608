@@ -70,6 +70,14 @@ def identifier(tokens):
     else:
         raise ParseError(f"Expected variable name", token)
 
+def literal(tokens):
+    token = consume(tokens)
+    return makeExpr(
+        type=token['type'],
+        value=token['value'],
+        token=token,
+    )
+
 def value(tokens):
     token = check(tokens)
     # Unary expressions
@@ -82,14 +90,8 @@ def value(tokens):
             token=oper,
         )
     # A single value
-    if token['type'] in ['INTEGER', 'STRING']:
-        expr = makeExpr(
-            type=token['type'],
-            value=token['value'],
-            token=token,
-        )
-        consume(tokens)
-        return expr
+    if check(tokens)['type'] in ['INTEGER', 'STRING']:
+        return literal(tokens)
     #  A grouping
     elif match(tokens, '('):
         expr = expression(tokens)
