@@ -1,6 +1,6 @@
 from builtin import RuntimeError
 from lang import Frame, File
-from lang import Literal, Unary, Binary, Get, Call
+from lang import Literal, Unary, Binary, Get, Call, Assign
 
 
 
@@ -51,6 +51,10 @@ def evalCall(frame, expr):
         if returnval:
             return returnval
 
+def evalAssign(frame, expr):
+    value = expr.expr.accept(frame, evaluate)
+    frame.setValue(expr.name, value)
+
 def evaluate(frame, expr):
     if isinstance(expr, Literal):
         return expr.accept(frame, evalLiteral)
@@ -58,6 +62,8 @@ def evaluate(frame, expr):
         return expr.accept(frame, evalUnary)
     if isinstance(expr, Binary):
         return expr.accept(frame, evalBinary)
+    if isinstance(expr, Assign):
+        return expr.accept(frame, evalAssign)
     if isinstance(expr, Get):
         return expr.accept(frame, evalGet)
     if isinstance(expr, Call):
@@ -81,10 +87,6 @@ def execOutput(frame, stmt):
 def execInput(frame, stmt):
     name = stmt.name
     frame.setValue(name, input())
-
-def execAssign(frame, stmt):
-    value = stmt.expr.accept(frame, evaluate)
-    frame.setValue(stmt.name, value)
 
 def execCase(frame, stmt):
     cond = stmt.cond.accept(frame, evaluate)
@@ -152,7 +154,7 @@ def execute(frame, stmt):
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
     if stmt.rule == 'assign':
-        stmt.accept(frame, execAssign)
+        stmt.expr.accept(frame, evaluate)
     if stmt.rule == 'case':
         stmt.accept(frame, execCase)
     if stmt.rule == 'if':
