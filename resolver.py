@@ -3,7 +3,7 @@ from builtin import add, sub, mul, div
 from builtin import LogicError
 from builtin import NULL
 from lang import TypedValue, Frame, Function, Procedure
-from lang import Literal, Declare, Unary, Binary, Get, Call
+from lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
 
@@ -65,6 +65,11 @@ def resolveBinary(frame, expr):
         expectTypeElseError(righttype, 'INTEGER', token=expr.right.token())
         return 'INTEGER'
 
+def resolveAssign(frame, expr):
+    declaredElseError(frame, expr.name)
+    exprType = expr.expr.accept(frame, resolve)
+    expectTypeElseError(exprType, frame.getType(expr.name), token=expr.token())
+
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
@@ -113,6 +118,8 @@ def resolve(frame, expr):
         return expr.accept(frame, resolveUnary)
     elif isinstance(expr, Binary):
         return expr.accept(frame, resolveBinary)
+    elif isinstance(expr, Assign):
+        return expr.accept(frame, resolveAssign)
     elif isinstance(expr, Get):
         return expr.accept(frame, resolveGet)
     elif isinstance(expr, Call):
