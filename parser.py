@@ -86,7 +86,30 @@ def unary(tokens):
         right=right,
         token=oper,
     )
-    
+
+def nameExpr(tokens):
+    name = identifier(tokens)
+    expr = makeExpr(
+        frame=NULL,
+        name=name.name,
+        token=name,
+    )
+    # Function call
+    args = []
+    if match(tokens, '('):
+        arg = expression(tokens)
+        args += [arg]
+        while match(tokens, ','):
+            arg = expression(tokens)
+            args += [arg]
+        expectElseError(tokens, ')', "after '('")
+        expr = makeExpr(
+            callable=expr,
+            args=args,
+            token=name,
+        )
+    return expr
+
 def value(tokens):
     token = check(tokens)
     # Unary expressions
@@ -101,27 +124,7 @@ def value(tokens):
         expectElseError(tokens, ')', "after '('")
         return expr
     elif token['type'] == 'name':
-        name = identifier(tokens)
-        expr = makeExpr(
-            frame=NULL,
-            name=name.name,
-            token=name,
-        )
-        # Function call
-        args = []
-        if match(tokens, '('):
-            arg = expression(tokens)
-            args += [arg]
-            while match(tokens, ','):
-                arg = expression(tokens)
-                args += [arg]
-            expectElseError(tokens, ')', "after '('")
-            expr = makeExpr(
-                callable=expr,
-                args=args,
-                token=name,
-            )
-        return expr
+        return nameExpr(tokens)
     else:
         raise ParseError("Unexpected token", token)
 
