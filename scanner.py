@@ -1,5 +1,6 @@
 from builtin import ParseError
 from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
+from lang import Token
 
 
 
@@ -15,15 +16,6 @@ def consume(code):
     char = check(code)
     code['cursor'] += 1
     return char
-
-def makeToken(line, column, tokentype, word, value):
-    return {
-        'line': line,
-        'col': column,
-        'type': tokentype,
-        'word': word,
-        'value': value,
-    }
 
 # Scanning functions
 
@@ -78,7 +70,7 @@ def scan(src):
             continue
         elif char == '\n':
             text = consume(code)
-            token = makeToken(
+            token = Token(
                 code['line'],
                 code['cursor'] - code['lineStart'] - len(text),
                 'keyword',
@@ -92,7 +84,7 @@ def scan(src):
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
-                token = makeToken(
+                token = Token(
                     code['line'],
                     code['cursor'] - code['lineStart'] - len(text),
                     'keyword',
@@ -100,7 +92,7 @@ def scan(src):
                     None,
                 )
             else:
-                token = makeToken(
+                token = Token(
                     code['line'],
                     code['cursor'] - code['lineStart'] - len(text),
                     'name',
@@ -109,7 +101,7 @@ def scan(src):
                 )
         elif char.isdigit():
             text = integer(code)
-            token = makeToken(
+            token = Token(
                 code['line'],
                 code['cursor'] - code['lineStart'] - len(text),
                 'INTEGER',
@@ -118,7 +110,7 @@ def scan(src):
             )
         elif char == '"':
             text = string(code)
-            token = makeToken(
+            token = Token(
                 code['line'],
                 code['cursor'] - code['lineStart'] - len(text),
                 'STRING',
@@ -128,7 +120,7 @@ def scan(src):
         elif char in '()[]:,.+-/*=<>':
             text = symbol(code)
             oper = OPERATORS.get(text, None)
-            token = makeToken(
+            token = Token(
                 code['line'],
                 code['cursor'] - code['lineStart'] - len(text),
                 'symbol',
