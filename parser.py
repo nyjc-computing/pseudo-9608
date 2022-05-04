@@ -414,29 +414,23 @@ def closefileStmt(tokens):
 #    may be used anywhere in a program
 
 def statement1(tokens):
-    pass
-
-def statement2(tokens):
-    pass
-
-def statement3(tokens):
-    pass
-
-def statement4(tokens):
-    pass
-
-def statement5(tokens):
-    pass
-
-def statement6(tokens):
     if match(tokens, 'RETURN'):
         return returnStmt(tokens)
+    return statement3(tokens)
+
+def statement2(tokens):
     if match(tokens, 'FUNCTION'):
         return functionStmt(tokens)
     if match(tokens, 'PROCEDURE'):
         return procedureStmt(tokens)
+    return statement3(tokens)
+
+def statement3(tokens):
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    return statement4(tokens)
+
+def statement4(tokens):
     if match(tokens, 'IF'):
         return ifStmt(tokens)
     if match(tokens, 'WHILE'):
@@ -445,8 +439,14 @@ def statement6(tokens):
         return repeatStmt(tokens)
     if match(tokens, 'FOR'):
         return forStmt(tokens)
+    return statement5(tokens)
+
+def statement5(tokens):
     if match(tokens, 'CASE'):
         return caseStmt(tokens)
+    return statement6(tokens)
+
+def statement6(tokens):
     if match(tokens, 'OUTPUT'):
         return outputStmt(tokens)
     if match(tokens, 'INPUT'):
@@ -461,10 +461,9 @@ def statement6(tokens):
         return writefileStmt(tokens)
     if match(tokens, 'CLOSEFILE'):
         return closefileStmt(tokens)
-    elif check(tokens).type == 'name':
+    if check(tokens).type == 'name':
         return assignStmt(tokens)
-    else:
-        raise ParseError("Unrecognised token", check(tokens))
+    raise ParseError("Unrecognised token", check(tokens))
 
 # Main parsing loop
 
