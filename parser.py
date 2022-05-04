@@ -63,6 +63,12 @@ def match(tokens, *words):
     return False
 
 # Precedence parsers
+# Expressions are parsed in the following precedence (highest to lowest):
+# 1. <name> | <literal> | <unary> | calls
+# 2. *, /
+# 3. +, -
+# 4. < | <= | > | >=
+# 5. <> | =
 
 def identifier(tokens):
     token = consume(tokens)
@@ -390,6 +396,22 @@ def closefileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, '\n')
     return FileAction('file', 'close', name, None, None)
+
+# Statement hierarchy
+# Statements are parsed in the following order (most to least restrictive):
+# 1. RETURN -> 
+#    used within FUNCTION only
+# 2. FUNCTION | PROCEDURE ->
+#    used within global frame only
+# 3. DECLARE -> 
+#    used within global frame or FUNCTION/PROCEDURE only
+#    cannot be used in loops and conditionals
+# 4. IF | WHILE | REPEAT | FOR
+#    can be used anywhere except in CASE option statements
+# 5. CASE
+#    only accepts single-line statements
+# 6. OUTPUT | INPUT | CALL | Assign | OPEN/READ/WRITE/CLOSEFILE
+#    may be used anywhere in a program
 
 def statement(tokens):
     if match(tokens, 'OUTPUT'):
