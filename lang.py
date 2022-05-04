@@ -1,3 +1,20 @@
+class Token:
+    """
+    Encapsulates data for a token.
+    """
+    def __init__(self, line, column, type, word, value):
+        self.line = line
+        self.col = column
+        self.type = type
+        self.word = word
+        self.value = value
+
+    def __repr__(self):
+        lineinfo = f"[Line {self.line} column {self.col}]"
+        return f"{lineinfo} <{self.value}> {repr(self.word)}"
+
+
+
 class Value:
     """
     Base class for pseudo values.
@@ -327,14 +344,6 @@ class ProcFunc(Stmt):
         self.params = params
         self.stmts = stmts
         self.returnType = returnType
-
-
-
-class Return(Stmt):
-    __slots__ = ('rule', 'expr')
-    def __init__(self, rule, expr):
-        self.rule = rule
-        self.expr = expr
 
 
 

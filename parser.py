@@ -1,17 +1,17 @@
 from builtin import TYPES, NULL
 from builtin import ParseError
 from builtin import lte, add
-from scanner import makeToken
+from lang import Token
 from lang import Literal, Name, Unary, Binary, Get, Call
 from lang import ExprStmt, Output, Input, Declare, Assign
-from lang import Conditional, Loop, ProcFunc, Return, FileAction
+from lang import Conditional, Loop, ProcFunc, FileAction
 
 
 
 # Helper functions
 
 def atEnd(tokens):
-    if check(tokens)['type'] == 'EOF':
+    if check(tokens).type == 'EOF':
         return True
     return False
 
@@ -49,7 +49,7 @@ def makeExpr(
     raise ValueError("Could not find valid keyword argument combination")
 
 def expectElseError(tokens, word, addmsg=None):
-    if check(tokens)['word'] == word:
+    if check(tokens).word == word:
         consume(tokens)
         return True
     msg = f"Expected {word}"
@@ -57,7 +57,7 @@ def expectElseError(tokens, word, addmsg=None):
     raise ParseError(msg, check(tokens))
 
 def match(tokens, *words):
-    if check(tokens)['word'] in words:
+    if check(tokens).word in words:
         consume(tokens)
         return True
     return False
@@ -66,16 +66,16 @@ def match(tokens, *words):
 
 def identifier(tokens):
     token = consume(tokens)
-    if token['type'] == 'name':
-        return makeExpr(name=token['word'], token=token)
+    if token.type == 'name':
+        return makeExpr(name=token.word, token=token)
     else:
         raise ParseError(f"Expected variable name", token)
 
 def literal(tokens):
     token = consume(tokens)
     return makeExpr(
-        type=token['type'],
-        value=token['value'],
+        type=token.type,
+        value=token.value,
         token=token,
     )
 
@@ -83,7 +83,7 @@ def unary(tokens):
     oper = consume(tokens)
     right = expression(tokens)
     return makeExpr(
-        oper=oper['value'],
+        oper=oper.value,
         right=right,
         token=oper,
     )
@@ -114,17 +114,17 @@ def nameExpr(tokens):
 def value(tokens):
     token = check(tokens)
     # Unary expressions
-    if token['word'] in ('-',):
+    if token.word in ('-',):
         return unary(tokens)
     # A single value
-    if check(tokens)['type'] in ['INTEGER', 'STRING']:
+    if check(tokens).type in TYPES:
         return literal(tokens)
     #  A grouping
     elif match(tokens, '('):
         expr = expression(tokens)
         expectElseError(tokens, ')', "after '('")
         return expr
-    elif token['type'] == 'name':
+    elif token.type == 'name':
         return nameExpr(tokens)
     else:
         raise ParseError("Unexpected token", token)
@@ -132,12 +132,12 @@ def value(tokens):
 def muldiv(tokens):
     # *, /
     expr = value(tokens)
-    while not atEnd(tokens) and check(tokens)['word'] in ('*', '/'):
+    while not atEnd(tokens) and check(tokens).word in ('*', '/'):
         oper = consume(tokens)
         right = value(tokens)
         expr = makeExpr(
             left=expr,
-            oper=oper['value'],
+            oper=oper.value,
             right=right,
             token=oper,
         )
@@ -145,12 +145,12 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    while not atEnd(tokens) and check(tokens)['word'] in ('+', '-'):
+    while not atEnd(tokens) and check(tokens).word in ('+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
         expr = makeExpr(
             left=expr,
-            oper=oper['value'],
+            oper=oper.value,
             right=right,
             token=oper,
         )
@@ -159,12 +159,12 @@ def addsub(tokens):
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    while not atEnd(tokens) and check(tokens)['word'] in ('<', '<=', '>', '>='):
+    while not atEnd(tokens) and check(tokens).word in ('<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
         expr = makeExpr(
             left=expr,
-            oper=oper['value'],
+            oper=oper.value,
             right=right,
             token=oper,
         )
@@ -173,12 +173,12 @@ def comparison(tokens):
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    while not atEnd(tokens) and check(tokens)['word'] in ('<>', '='):
+    while not atEnd(tokens) and check(tokens).word in ('<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
         expr = makeExpr(
             left=expr,
-            oper=oper['value'],
+            oper=oper.value,
             right=right,
             token=oper,
         )
@@ -212,9 +212,9 @@ def declare(tokens):
     name = identifier(tokens).name
     expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
-    if typetoken['word'] not in TYPES:
+    if typetoken.word not in TYPES:
         raise ParseError("Invalid type", typetoken)
-    return Declare(name, typetoken['word'])
+    return Declare(name, typetoken.word)
     
 def declareStmt(tokens):
     expr = declare(tokens)
@@ -231,7 +231,7 @@ def caseStmt(tokens):
     cond = value(tokens)
     expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
-    while not atEnd(tokens) and check(tokens)['word'] in ('OTHERWISE', 'ENDCASE'):
+    while not atEnd(tokens) and check(tokens).word in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
         stmt = statement(tokens)
@@ -250,14 +250,14 @@ def ifStmt(tokens):
     expectElseError(tokens, '\n', "after THEN")
     stmts = {}
     true = []
-    while not atEnd(tokens) and check(tokens)['word'] in ('ELSE', 'ENDIF'):
+    while not atEnd(tokens) and check(tokens).word in ('ELSE', 'ENDIF'):
         true += [statement(tokens)]
     stmts[True] = true
     fallback = None
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n', "after ELSE")
         false = []
-        while not atEnd(tokens) and check(tokens)['word'] in ('ENDIF',):
+        while not atEnd(tokens) and check(tokens).word in ('ENDIF',):
             false += [statement(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF', "at end of IF")
@@ -316,8 +316,8 @@ def procedureStmt(tokens):
     params = []
     if match(tokens, '('):
         passby = 'BYVALUE'
-        if check(tokens)['word'] in ('BYVALUE', 'BYREF'):
-            passby = consume(tokens)['word']
+        if check(tokens).word in ('BYVALUE', 'BYREF'):
+            passby = consume(tokens).word
         expr = declare(tokens)
         params += [expr]
         while match(tokens, ','):
@@ -349,14 +349,14 @@ def functionStmt(tokens):
         expectElseError(tokens, ')', "at end of parameters")
     expectElseError(tokens, 'RETURNS', "after parameters")
     typetoken = consume(tokens)
-    if typetoken['word'] not in TYPES:
+    if typetoken.word not in TYPES:
         raise ParseError("Invalid type", typetoken)
     expectElseError(tokens, '\n', "at end of FUNCTION")
     stmts = []
     while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
         stmts += [statement(tokens)]
     expectElseError(tokens, '\n', "after ENDFUNCTION")
-    return ProcFunc('function', name, passby, params, stmts, typetoken['word'])
+    return ProcFunc('function', name, passby, params, stmts, typetoken.word)
 
 def returnStmt(tokens):
     expr = expression(tokens)
@@ -366,9 +366,9 @@ def returnStmt(tokens):
 def openfileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, 'FOR', "after file identifier")
-    if check(tokens)['word'] not in ('READ', 'WRITE', 'APPEND'):
+    if check(tokens).word not in ('READ', 'WRITE', 'APPEND'):
         raise ParseError("Invalid file mode", check(tokens))
-    mode = consume(tokens)['word']
+    mode = consume(tokens).word
     expectElseError(tokens, '\n')
     return FileAction('file', 'open', name, mode, None)
 
@@ -424,7 +424,7 @@ def statement(tokens):
         return writefileStmt(tokens)
     if match(tokens, 'CLOSEFILE'):
         return closefileStmt(tokens)
-    elif check(tokens)['type'] == 'name':
+    elif check(tokens).type == 'name':
         return assignStmt(tokens)
     else:
         raise ParseError("Unrecognised token", check(tokens))
@@ -432,8 +432,8 @@ def statement(tokens):
 # Main parsing loop
 
 def parse(tokens):
-    lastline = tokens[-1]['line']
-    tokens += [makeToken(lastline, 0, 'EOF', "", None)]
+    lastline = tokens[-1].line
+    tokens += [Token(lastline, 0, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
         while match(tokens, '\n'):
