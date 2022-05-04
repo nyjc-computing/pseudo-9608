@@ -217,10 +217,6 @@ def verify(frame, stmt):
         stmt.accept(frame, verifyOutput)
     if stmt.rule == 'input':
         stmt.accept(frame, verifyInput)
-    elif stmt.rule == 'declare':
-        stmt.expr.accept(frame, resolveDeclare)
-    elif stmt.rule == 'assign':
-        stmt.expr.accept(frame, resolveAssign)
     elif stmt.rule == 'case':
         stmt.accept(frame, verifyCase)
     elif stmt.rule == 'if':
@@ -229,14 +225,14 @@ def verify(frame, stmt):
         stmt.accept(frame, verifyLoop)
     elif stmt.rule == 'procedure':
         stmt.accept(frame, verifyProcedure)
-    elif stmt.rule == 'call':
-        stmt.expr.accept(frame, resolveProcCall)
     elif stmt.rule == 'function':
         stmt.accept(frame, verifyFunction)
     elif stmt.rule == 'file':
         stmt.accept(frame, verifyFile)
-    elif stmt.rule == 'return':
+    elif stmt.rule in ('assign', 'declare', 'return'):
         return stmt.expr.accept(frame, resolve)
+    elif stmt.rule == 'call':
+        stmt.expr.accept(frame, resolveProcCall)
 
 
 
