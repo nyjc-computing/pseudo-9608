@@ -52,11 +52,14 @@ def resolveDeclare(frame, expr):
 def resolveUnary(frame, expr):
     righttype = expr.right.accept(frame, resolve)
     if expr.oper is sub:
-        if righttype not in ('INTEGER', 'REAL'):
-            raise LogicError('Expected numeric type', expr.right.token())
+        expectTypeElseError(
+            righttype, 'INTEGER', 'REAL', token=expr.right.token()
+        )
         return righttype
     if expr.oper is NOT:
-        expectTypeElseError(righttype, 'BOOLEAN', token=expr.right.token())
+        expectTypeElseError(
+            righttype, 'BOOLEAN', token=expr.right.token()
+        )
         return 'BOOLEAN'
     raise ValueError(f"Unexpected oper {expr.oper}")
 
@@ -64,14 +67,20 @@ def resolveBinary(frame, expr):
     lefttype = expr.left.accept(frame, resolve)
     righttype = expr.right.accept(frame, resolve)
     if expr.oper in (AND, OR):
-        expectTypeElseError(lefttype, 'BOOLEAN', token=expr.left.token())
-        expectTypeElseError(righttype, 'BOOLEAN', token=expr.right.token())
+        expectTypeElseError(
+            lefttype, 'BOOLEAN', token=expr.left.token()
+        )
+        expectTypeElseError(
+            righttype, 'BOOLEAN', token=expr.right.token()
+        )
         return 'BOOLEAN'
     if expr.oper in (ne, eq):
-        if lefttype not in ('BOOLEAN', 'INTEGER', 'REAL'):
-            raise LogicError(f"Invalid comparison type", token=expr.left.token())
-        if righttype not in ('BOOLEAN', 'INTEGER', 'REAL'):
-            raise LogicError(f"Invalid comparison type", token=expr.right.token())
+        expectTypeElseError(
+            lefttype, 'BOOLEAN', 'INTEGER', 'REAL', token=expr.left.token()
+        )
+        expectTypeElseError(
+            righttype, 'BOOLEAN', 'INTEGER', 'REAL', token=expr.right.token()
+        )
         if (
             not (lefttype == 'BOOLEAN' and righttype == 'BOOLEAN')
             and not (lefttype in ('INTEGER', 'REAL') and righttype in ('INTEGER', 'REAL'))
@@ -79,21 +88,23 @@ def resolveBinary(frame, expr):
             raise LogicError(f"Illegal comparison of {lefttype} and {righttype}", token=expr.oper.token())
         return 'BOOLEAN'
     if expr.oper in (gt, gte, lt, lte):
-        if lefttype not in ('INTEGER', 'REAL'):
-            raise LogicError('Expected numeric type', expr.left.token())
-        if righttype not in ('INTEGER', 'REAL'):
-            raise LogicError('Expected numeric type', expr.right.token())
+        expectTypeElseError(
+            lefttype, 'INTEGER', 'REAL', token=expr.left.token()
+        )
+        expectTypeElseError(
+            righttype, 'INTEGER', 'REAL', token=expr.left.token()
+        )
         return 'BOOLEAN'
     if expr.oper in (add, sub, mul, div):
-        if lefttype not in ('INTEGER', 'REAL'):
-            raise LogicError('Expected numeric type', expr.left.token())
-        if righttype not in ('INTEGER', 'REAL'):
-            raise LogicError('Expected numeric type', expr.right.token())
-        if expr.oper is div:
-            return 'REAL'
-        if lefttype == 'REAL' or righttype == 'REAL':
-            return 'REAL'
-        return 'INTEGER'
+        expectTypeElseError(
+            lefttype, 'INTEGER', 'REAL', token=expr.left.token()
+        )
+        expectTypeElseError(
+            righttype, 'INTEGER', 'REAL', token=expr.left.token()
+        )
+        if (expr.oper is not div) and (lefttype == righttype == 'INTEGER'):
+            return 'INTEGER'
+        return 'REAL'
 
 def resolveAssign(frame, expr):
     declaredElseError(frame, expr.name)
