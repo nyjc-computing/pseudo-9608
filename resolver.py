@@ -1,3 +1,4 @@
+from builtin import AND, OR, NOT
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
@@ -48,12 +49,17 @@ def resolveUnary(frame, expr):
     if expr.oper is sub:
         expectTypeElseError(righttype, 'INTEGER', token=expr.right.token())
         return 'INTEGER'
-    else:
-        raise ValueError("Unexpected oper {expr.oper}")
+    if expr.oper is NOT:
+        expectTypeElseError(righttype, 'BOOLEAN', token=expr.right.token())
+    raise ValueError("Unexpected oper {expr.oper}")
 
 def resolveBinary(frame, expr):
     lefttype = expr.left.accept(frame, resolve)
     righttype = expr.right.accept(frame, resolve)
+    if expr.oper in (AND, OR):
+        expectTypeElseError(lefttype, 'BOOLEAN', token=expr.left.token())
+        expectTypeElseError(righttype, 'BOOLEAN', token=expr.right.token())
+        return 'BOOLEAN'
     if expr.oper in (ne, eq):
         if lefttype not in ('BOOLEAN', 'INTEGER'):
             raise LogicError(f"Invalid comparison type", token=expr.left.token())
@@ -153,6 +159,7 @@ def verifyCase(frame, stmt):
         stmt.fallback.accept(frame, verify)
 
 def verifyIf(frame, stmt):
+    breakpoint()
     condType = stmt.cond.accept(frame, resolve)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmtMap[True])
