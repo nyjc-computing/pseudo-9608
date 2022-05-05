@@ -15,10 +15,15 @@ def isProcedure(callable):
 def isFunction(callable):
     return isinstance(callable, Function)
 
-def expectTypeElseError(exprtype, expected, *, token=None):
-    if exprtype != expected:
-        if not token: token = exprtype
-        raise LogicError(f"Expected {expected}, got {exprtype}", token)
+def expectTypeElseError(exprtype, *expected, token=None):
+    assert token, "Missing token"
+    if exprtype not in expected:
+        # Stringify expected types
+        if len(expected) == 1:
+            expected = expected[0]
+        else:
+            expected = f"({', '.join(expected)})"
+        raise LogicError(f"Expected {expected}, is {exprtype}", token)
 
 def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None, *, token=None):
     if not frame.has(name):
