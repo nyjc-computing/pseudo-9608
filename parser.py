@@ -120,7 +120,7 @@ def nameExpr(tokens):
 def value(tokens):
     token = check(tokens)
     # Unary expressions
-    if token.word in ('-',):
+    if token.word in ('-', 'NOT'):
         return unary(tokens)
     # A single value
     if check(tokens).type in TYPES:
@@ -190,8 +190,22 @@ def equality(tokens):
         )
     return expr
 
-def expression(tokens):
+def logical(tokens):
+    # AND, OR
     expr = equality(tokens)
+    while not atEnd(tokens) and check(tokens).word in ('AND', 'OR'):
+        oper = consume(tokens)
+        right = equality(tokens)
+        expr = makeExpr(
+            left=expr,
+            oper=oper.value,
+            right=right,
+            token=oper,
+        )
+    return expr
+
+def expression(tokens):
+    expr = logical(tokens)
     return expr
 
 def assignment(tokens):
