@@ -81,11 +81,14 @@ def resolveBinary(frame, expr):
     if expr.oper in (ne, eq):
         expectTypeElseError(lType, *EQUATABLE, token=expr.left.token())
         expectTypeElseError(rType, *EQUATABLE, token=expr.right.token())
-        if (
-            not (lType == 'BOOLEAN' and rType == 'BOOLEAN')
-            and not (lType in NUMERIC and rType in NUMERIC)
+        if not (
+            (lType == 'BOOLEAN' and rType == 'BOOLEAN')
+            or (lType in NUMERIC and rType in NUMERIC)
         ):
-            raise LogicError(f"Illegal comparison of {lType} and {rType}", token=expr.oper.token())
+            raise LogicError(
+                f"Illegal comparison of {lType} and {rType}",
+                token=expr.oper.token(),
+            )
         return 'BOOLEAN'
     if expr.oper in (gt, gte, lt, lte):
         expectTypeElseError(lType, *NUMERIC, token=expr.left.token())
