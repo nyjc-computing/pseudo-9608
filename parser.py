@@ -46,7 +46,9 @@ def makeExpr(
             return Unary(oper, right, token=token)
     if callable is not None and args is not None:
         return Call(callable, args, token=token)
-    raise ValueError("Could not find valid keyword argument combination")
+    raise ValueError(
+        "Could not find valid keyword argument combination"
+    )
 
 def expectElseError(tokens, word, addmsg=None):
     if check(tokens).word == word:
@@ -63,7 +65,7 @@ def match(tokens, *words):
     return False
 
 # Precedence parsers
-# Expressions are parsed in the following precedence (highest to lowest):
+# Expressions are parsed with this precedence (highest to lowest):
 # 1. <name> | <literal> | <unary> | calls
 # 2. *, /
 # 3. +, -
@@ -251,7 +253,10 @@ def caseStmt(tokens):
     cond = value(tokens)
     expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
-    while not atEnd(tokens) and not check(tokens).word in ('OTHERWISE', 'ENDCASE'):
+    while not (
+        atEnd(tokens)
+        or check(tokens).word in ('OTHERWISE', 'ENDCASE')
+    ):
         val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
         stmt = statement1(tokens)
@@ -270,7 +275,10 @@ def ifStmt(tokens):
     expectElseError(tokens, '\n', "after THEN")
     stmts = {}
     true = []
-    while not atEnd(tokens) and not check(tokens).word in ('ELSE', 'ENDIF'):
+    while not (
+        atEnd(tokens)
+        or check(tokens).word in ('ELSE', 'ENDIF')
+    ):
         true += [statement1(tokens)]
     stmts[True] = true
     fallback = None
@@ -319,7 +327,11 @@ def forStmt(tokens):
         stmts += [statement5(tokens)]
     expectElseError(tokens, '\n', "after ENDFOR")
     # Generate loop cond
-    getCounter = makeExpr(frame=NULL, name=init.name, token=init.token())
+    getCounter = makeExpr(
+        frame=NULL,
+        name=init.name,
+        token=init.token(),
+    )
     cond = Binary(getCounter, lte, end, token=init.token())
     # Add increment statement
     incr = Assign(
@@ -376,7 +388,9 @@ def functionStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     expectElseError(tokens, '\n', "after ENDFUNCTION")
-    return ProcFunc('function', name, passby, params, stmts, typetoken.word)
+    return ProcFunc(
+        'function', name, passby, params, stmts, typetoken.word
+    )
 
 def returnStmt(tokens):
     expr = expression(tokens)
@@ -412,7 +426,7 @@ def closefileStmt(tokens):
     return FileAction('file', 'close', name, None, None)
 
 # Statement hierarchy
-# Statements are parsed in the following order (most to least restrictive):
+# Statements are parsed in this order (most to least restrictive):
 # 1. RETURN -> (3)
 #    used within FUNCTION only
 # 2. FUNCTION | PROCEDURE -> (3)
