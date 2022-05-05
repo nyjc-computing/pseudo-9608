@@ -1,5 +1,5 @@
 PROCEDURE TestBool(Succeeded : BOOLEAN)
-    IF Succeeded = TRUE AND 1 = 1
+    IF Succeeded = TRUE OR NOT 1 = 1
       THEN
         OUTPUT "Yay!"
       ELSE
