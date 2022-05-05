@@ -42,3 +42,4 @@ It is also an attempt to write a programming book in a new style. Each chapter o
 - [18a Boolean](https://github.com/nyjc-computing/pseudo/pull/45)
 - [18b Logical operators](https://github.com/nyjc-computing/pseudo/pull/48)
 - [18c Fix: logical operators](https://github.com/nyjc-computing/pseudo/pull/49) (This is an addendum to 18b)
+- [19 REALs](https://github.com/nyjc-computing/pseudo/pull/51)
