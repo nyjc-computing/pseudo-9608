@@ -51,7 +51,8 @@ def resolveUnary(frame, expr):
         return 'INTEGER'
     if expr.oper is NOT:
         expectTypeElseError(righttype, 'BOOLEAN', token=expr.right.token())
-    raise ValueError("Unexpected oper {expr.oper}")
+        return 'BOOLEAN'
+    raise ValueError(f"Unexpected oper {expr.oper}")
 
 def resolveBinary(frame, expr):
     lefttype = expr.left.accept(frame, resolve)
