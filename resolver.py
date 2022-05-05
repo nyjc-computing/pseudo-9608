@@ -17,7 +17,7 @@ def isFunction(callable):
 def expectTypeElseError(exprtype, expected, *, token=None):
     if exprtype != expected:
         if not token: token = exprtype
-        raise LogicError(f"{exprtype} <> {expected}", token)
+        raise LogicError(f"Expected {expected}, got {exprtype}", token)
 
 def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None, *, token=None):
     if not frame.has(name):
