@@ -100,7 +100,7 @@ KEYWORDS = [
 
 VALUES = ['NULL', 'TRUE', 'FALSE']
 
-TYPES = ['BOOLEAN', 'INTEGER', 'STRING', 'FILE']
+TYPES = ['BOOLEAN', 'INTEGER', 'REAL', 'STRING', 'FILE']
 
 NULL = object()
 
