@@ -41,7 +41,9 @@ class LogicError(PseudoError):
 def add(x, y):
     return x + y
 
-def sub(x, y):
+def sub(x, y=None):
+    if y is None:
+        return -x
     return x - y
 
 def mul(x, y):
@@ -67,6 +69,15 @@ def ne(x, y):
 
 def eq(x, y):
     return x == y
+
+def AND(x, y):
+    return x and y
+
+def OR(x, y):
+    return x or y
+
+def NOT(x):
+    return not x
 
 
 
@@ -104,6 +115,9 @@ OPERATORS = {
     '>=': gte,
     '<>': ne,
     '=': eq,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
 }
 
 SYMBOLS = [',', ':']
