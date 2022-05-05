@@ -84,7 +84,7 @@ def execOutput(frame, stmt):
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
             value = str(value).upper()
-        print(str(value)), end='')
+        print(str(value), end='')
     print('')  # Add \n
 
 def execInput(frame, stmt):
@@ -138,7 +138,11 @@ def execFile(frame, stmt):
         file = frame.getValue(name)
         expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
         expectTypeElseError(file.mode, ('WRITE', 'APPEND'), stmt.name.token())
-        writedata = str(stmt.data.accept(frame, evaluate))
+        writedata = stmt.data.accept(frame, evaluate)
+        if type(writedata) is bool:
+            writedata = str(writedata).upper()
+        else:
+            writedata = str(writedata)
         # Move pointer to next line after writing
         if not writedata.endswith('\n'):
             writedata += '\n'

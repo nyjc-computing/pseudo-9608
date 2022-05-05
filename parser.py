@@ -237,7 +237,7 @@ def caseStmt(tokens):
     cond = value(tokens)
     expectElseError(tokens, '\n', "after CASE OF")
     stmts = {}
-    while not atEnd(tokens) and check(tokens).word in ('OTHERWISE', 'ENDCASE'):
+    while not atEnd(tokens) and not check(tokens).word in ('OTHERWISE', 'ENDCASE'):
         val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
         stmt = statement1(tokens)
@@ -256,14 +256,14 @@ def ifStmt(tokens):
     expectElseError(tokens, '\n', "after THEN")
     stmts = {}
     true = []
-    while not atEnd(tokens) and check(tokens).word in ('ELSE', 'ENDIF'):
+    while not atEnd(tokens) and not check(tokens).word in ('ELSE', 'ENDIF'):
         true += [statement1(tokens)]
     stmts[True] = true
     fallback = None
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n', "after ELSE")
         false = []
-        while not atEnd(tokens) and check(tokens).word in ('ENDIF',):
+        while not atEnd(tokens) and not check(tokens).word in ('ENDIF',):
             false += [statement5(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF', "at end of IF")
@@ -335,7 +335,7 @@ def procedureStmt(tokens):
     while not atEnd(tokens) and not match(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     expectElseError(tokens, '\n', "after ENDPROCEDURE")
-    return ProcFunc('procedure', name, passby, params, stmts, None)
+    return ProcFunc('procedure', name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens):
     callable = value(tokens)

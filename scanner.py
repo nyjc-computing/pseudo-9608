@@ -1,5 +1,6 @@
 from builtin import ParseError
-from builtin import KEYWORDS, TYPES, OPERATORS, SYMBOLS
+from builtin import KEYWORDS, VALUES, OPERATORS
+from builtin import NULL
 from lang import Token
 
 
@@ -16,6 +17,12 @@ def consume(code):
     char = check(code)
     code['cursor'] += 1
     return char
+
+def makeToken(code, type, word, value):
+    line = code['line']
+    column = code['cursor'] - code['lineStart'] - len(word)
+    return Token(line, column, type, word, value)
+
 
 # Scanning functions
 
@@ -70,13 +77,7 @@ def scan(src):
             continue
         elif char == '\n':
             text = consume(code)
-            token = Token(
-                code['line'],
-                code['cursor'] - code['lineStart'] - len(text),
-                'keyword',
-                text,
-                None,
-            )
+            token = makeToken(code, 'keyword', text, None)
             start, end = code['lineStart'], code['cursor'] - 1
             code['lines'] += [code['src'][start:end]]
             code['line'] += 1
@@ -84,49 +85,28 @@ def scan(src):
         elif char.isalpha():
             text = word(code)
             if text in KEYWORDS:
-                token = Token(
-                    code['line'],
-                    code['cursor'] - code['lineStart'] - len(text),
-                    'keyword',
-                    text,
-                    None,
-                )
+                token = makeToken(code, 'keyword', text, None)
+            elif text in VALUES:
+                if text == 'NULL':
+                    token = makeToken(code, 'NULL', text, NULL)
+                elif text == 'TRUE':
+                    token = makeToken(code, 'BOOLEAN', text, True)
+                elif text == 'FALSE':
+                    token = makeToken(code, 'BOOLEAN', text, False)
+                else:
+                    raise ValueError(f"Unrecognised value {text}")
             else:
-                token = Token(
-                    code['line'],
-                    code['cursor'] - code['lineStart'] - len(text),
-                    'name',
-                    text,
-                    None,
-                )
+                token = makeToken(code, 'name', text, None)
         elif char.isdigit():
             text = integer(code)
-            token = Token(
-                code['line'],
-                code['cursor'] - code['lineStart'] - len(text),
-                'INTEGER',
-                text,
-                int(text),
-            )
+            token = makeToken(code, 'INTEGER', text, int(text))
         elif char == '"':
             text = string(code)
-            token = Token(
-                code['line'],
-                code['cursor'] - code['lineStart'] - len(text),
-                'STRING',
-                text,
-                text[1:-1],
-            )
+            token = makeToken(code, 'STRING', text, text[1:-1])
         elif char in '()[]:,.+-/*=<>':
             text = symbol(code)
             oper = OPERATORS.get(text, None)
-            token = Token(
-                code['line'],
-                code['cursor'] - code['lineStart'] - len(text),
-                'symbol',
-                text,
-                oper,
-            )
+            token = makeToken(code, 'symbol', text, oper)
         else:
             raise ParseError(
                 f"Unrecognised character",

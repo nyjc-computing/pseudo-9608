@@ -1,10 +1,10 @@
-PROCEDURE WriteNumber(Start : INTEGER, End : INTEGER)
-    DECLARE Number : INTEGER
-    OPENFILE "data.txt" FOR WRITE
-    FOR Number <- Start TO End
-        WRITEFILE "data.txt", Number
-    ENDFOR
-    CLOSEFILE "data.txt"
+PROCEDURE TestBool(Succeeded : BOOLEAN)
+    IF Succeeded = TRUE
+      THEN
+        OUTPUT "Yay!"
+      ELSE
+        OUTPUT "Awww!"
+    ENDIF
 ENDPROCEDURE
 
-CALL WriteNumber(1, 10)
+CALL TestBool(TRUE)
