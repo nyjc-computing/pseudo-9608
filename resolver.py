@@ -2,6 +2,7 @@ from builtin import AND, OR, NOT
 from builtin import lt, lte, gt, gte, ne, eq
 from builtin import add, sub, mul, div
 from builtin import LogicError
+from builtin import NUMERIC, EQUATABLE
 from lang import Frame, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
@@ -53,7 +54,7 @@ def resolveUnary(frame, expr):
     righttype = expr.right.accept(frame, resolve)
     if expr.oper is sub:
         expectTypeElseError(
-            righttype, 'INTEGER', 'REAL', token=expr.right.token()
+            righttype, *NUMERIC, token=expr.right.token()
         )
         return righttype
     if expr.oper is NOT:
@@ -76,31 +77,31 @@ def resolveBinary(frame, expr):
         return 'BOOLEAN'
     if expr.oper in (ne, eq):
         expectTypeElseError(
-            lefttype, 'BOOLEAN', 'INTEGER', 'REAL', token=expr.left.token()
+            lefttype, *EQUATABLE, token=expr.left.token()
         )
         expectTypeElseError(
-            righttype, 'BOOLEAN', 'INTEGER', 'REAL', token=expr.right.token()
+            righttype, *EQUATABLE, token=expr.right.token()
         )
         if (
             not (lefttype == 'BOOLEAN' and righttype == 'BOOLEAN')
-            and not (lefttype in ('INTEGER', 'REAL') and righttype in ('INTEGER', 'REAL'))
+            and not (lefttype in NUMERIC and righttype in NUMERIC)
         ):
             raise LogicError(f"Illegal comparison of {lefttype} and {righttype}", token=expr.oper.token())
         return 'BOOLEAN'
     if expr.oper in (gt, gte, lt, lte):
         expectTypeElseError(
-            lefttype, 'INTEGER', 'REAL', token=expr.left.token()
+            lefttype, *NUMERIC, token=expr.left.token()
         )
         expectTypeElseError(
-            righttype, 'INTEGER', 'REAL', token=expr.left.token()
+            righttype, *NUMERIC, token=expr.left.token()
         )
         return 'BOOLEAN'
     if expr.oper in (add, sub, mul, div):
         expectTypeElseError(
-            lefttype, 'INTEGER', 'REAL', token=expr.left.token()
+            lefttype, *NUMERIC, token=expr.left.token()
         )
         expectTypeElseError(
-            righttype, 'INTEGER', 'REAL', token=expr.left.token()
+            righttype, *NUMERIC, token=expr.left.token()
         )
         if (expr.oper is not div) and (lefttype == righttype == 'INTEGER'):
             return 'INTEGER'
