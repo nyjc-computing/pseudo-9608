@@ -159,7 +159,6 @@ def verifyCase(frame, stmt):
         stmt.fallback.accept(frame, verify)
 
 def verifyIf(frame, stmt):
-    breakpoint()
     condType = stmt.cond.accept(frame, resolve)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmtMap[True])
