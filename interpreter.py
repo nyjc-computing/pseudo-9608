@@ -6,7 +6,12 @@ from lang import Literal, Unary, Binary, Get, Call, Assign
 
 # Helper functions
 
-def expectTypeElseError(exprmode, expected, errmsg="Expected", token=None):
+def expectTypeElseError(
+    exprmode,
+    expected,
+    errmsg="Expected",
+    token=None,
+):
     if type(expected) is str:
         expected = (expected,)
     if not exprmode in expected:
@@ -17,7 +22,12 @@ def declaredElseError(frame, name, errmsg="Undeclared", token=None):
     if not frame.has(name):
         raise RuntimeError(errmsg, token)
 
-def undeclaredElseError(frame, name, errmsg="Already declared", token=None):
+def undeclaredElseError(
+    frame,
+    name,
+    errmsg="Already declared",
+    token=None,
+):
     if frame.has(name):
         raise RuntimeError(errmsg, token)
 
@@ -118,14 +128,20 @@ def execRepeat(frame, stmt):
 def execFile(frame, stmt):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
-        undeclaredElseError(frame, name, "File already opened", stmt.name.token())
+        undeclaredElseError(
+            frame, name, "File already opened", stmt.name.token()
+        )
         frame.declare(name, 'FILE')
         file = File(name, stmt.mode, open(name, stmt.mode[0].lower()))
         frame.setValue(name, file)
     elif stmt.action == 'read':
-        declaredElseError(frame, name, "File not open", stmt.name.token())
+        declaredElseError(
+            frame, name, "File not open", stmt.name.token()
+        )
         file = frame.getValue(name)
-        expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
+        expectTypeElseError(
+            frame.getType(name), 'FILE', stmt.name.token()
+        )
         expectTypeElseError(file.mode, 'READ', stmt.name.token())
         varname = stmt.data.accept(frame, evaluate)
         declaredElseError(frame, varname, stmt.data.token())
@@ -134,10 +150,16 @@ def execFile(frame, stmt):
         # TODO: Type conversion
         frame.setValue(varname, line)
     elif stmt.action == 'write':
-        declaredElseError(frame, name, "File not open", stmt.name.token())
+        declaredElseError(
+            frame, name, "File not open", stmt.name.token()
+        )
         file = frame.getValue(name)
-        expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
-        expectTypeElseError(file.mode, ('WRITE', 'APPEND'), stmt.name.token())
+        expectTypeElseError(
+            frame.getType(name), 'FILE', stmt.name.token()
+        )
+        expectTypeElseError(
+            file.mode, ('WRITE', 'APPEND'), stmt.name.token()
+        )
         writedata = stmt.data.accept(frame, evaluate)
         if type(writedata) is bool:
             writedata = str(writedata).upper()
@@ -149,9 +171,13 @@ def execFile(frame, stmt):
         # TODO: Catch and handle Python file io errors
         file.iohandler.write(writedata)
     elif stmt.action == 'close':
-        declaredElseError(frame, name, "File not open", stmt.name.token())
+        declaredElseError(
+            frame, name, "File not open", stmt.name.token()
+        )
         file = frame.getValue(name)
-        expectTypeElseError(frame.getType(name), 'FILE', stmt.name.token())
+        expectTypeElseError(
+            frame.getType(name), 'FILE', stmt.name.token()
+        )
         file.iohandler.close()
         frame.delete(name)
 

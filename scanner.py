@@ -32,8 +32,14 @@ def word(code):
         token += consume(code)
     return token
 
-def integer(code):
+def number(code):
     token = consume(code)
+    while not atEnd(code) and check(code).isdigit():
+        token += consume(code)
+    if check(code) != '.':
+        return token  # INTEGER
+    # Scan REAL
+    token += consume(code)  # '.'
     while not atEnd(code) and check(code).isdigit():
         token += consume(code)
     return token
@@ -101,8 +107,11 @@ def scan(src):
             else:
                 token = makeToken(code, 'name', text, None)
         elif char.isdigit():
-            text = integer(code)
-            token = makeToken(code, 'INTEGER', text, int(text))
+            text = number(code)
+            if '.' in text:
+                token = makeToken(code, 'REAL', text, float(text))
+            else:
+                token = makeToken(code, 'INTEGER', text, int(text))
         elif char == '"':
             text = string(code)
             token = makeToken(code, 'STRING', text, text[1:-1])
