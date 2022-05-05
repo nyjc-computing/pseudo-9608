@@ -5,7 +5,7 @@ from builtin import LogicError
 from builtin import NUMERIC, EQUATABLE
 from lang import Frame, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call, Assign
-                                                                        |
+
 
 
 # Helper functions
@@ -104,7 +104,9 @@ def resolveBinary(frame, expr):
 def resolveAssign(frame, expr):
     declaredElseError(frame, expr.name)
     exprType = expr.expr.accept(frame, resolve)
-    expectTypeElseError(exprType, frame.getType(expr.name), token=expr.token())
+    expectTypeElseError(
+        exprType, frame.getType(expr.name), token=expr.token()
+    )
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
