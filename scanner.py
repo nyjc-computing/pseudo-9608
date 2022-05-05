@@ -39,7 +39,7 @@ def number(code):
     if check(code) != '.':
         return token  # INTEGER
     # Scan REAL
-    token = consume(code)  # '.'
+    token += consume(code)  # '.'
     while not atEnd(code) and check(code).isdigit():
         token += consume(code)
     return token
