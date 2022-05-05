@@ -41,7 +41,9 @@ class LogicError(PseudoError):
 def add(x, y):
     return x + y
 
-def sub(x, y):
+def sub(x, y=None):
+    if y is None:
+        return -x
     return x - y
 
 def mul(x, y):
