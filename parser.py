@@ -87,7 +87,7 @@ def literal(tokens):
 
 def unary(tokens):
     oper = consume(tokens)
-    right = expression(tokens)
+    right = value(tokens)
     return makeExpr(
         oper=oper.value,
         right=right,
