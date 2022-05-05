@@ -155,7 +155,6 @@ def verifyCase(frame, stmt):
 def verifyIf(frame, stmt):
     condType = stmt.cond.accept(frame, resolve)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
-    breakpoint()
     verifyStmts(frame, stmt.stmtMap[True])
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
