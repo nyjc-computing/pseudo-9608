@@ -5,7 +5,7 @@ from builtin import LogicError
 from builtin import NUMERIC, EQUATABLE
 from lang import Frame, Function, Procedure
 from lang import Literal, Declare, Unary, Binary, Get, Call, Assign
-
+                                                                        |
 
 
 # Helper functions
@@ -26,11 +26,20 @@ def expectTypeElseError(exprtype, *expected, token=None):
             expected = f"({', '.join(expected)})"
         raise LogicError(f"Expected {expected}, is {exprtype}", token)
 
-def declaredElseError(frame, name, errmsg="Undeclared", declaredType=None, *, token=None):
+def declaredElseError(
+    frame,
+    name,
+    errmsg="Undeclared",
+    declaredType=None,
+    *,
+    token=None,
+):
     if not frame.has(name):
         raise LogicError(errmsg, name, token)
     if declaredType:
-        expectTypeElseError(frame.getType(name), declaredType, token=token)
+        expectTypeElseError(
+            frame.getType(name), declaredType, token=token
+        )
 
 def value(frame, expr):
     """Return the value of a Literal"""
@@ -51,59 +60,41 @@ def resolveDeclare(frame, expr):
     return expr.type
 
 def resolveUnary(frame, expr):
-    righttype = expr.right.accept(frame, resolve)
+    rType = expr.right.accept(frame, resolve)
     if expr.oper is sub:
-        expectTypeElseError(
-            righttype, *NUMERIC, token=expr.right.token()
-        )
-        return righttype
+        expectTypeElseError(rType, *NUMERIC, token=expr.right.token())
+        return rType
     if expr.oper is NOT:
         expectTypeElseError(
-            righttype, 'BOOLEAN', token=expr.right.token()
+            rType, 'BOOLEAN', token=expr.right.token()
         )
         return 'BOOLEAN'
     raise ValueError(f"Unexpected oper {expr.oper}")
 
 def resolveBinary(frame, expr):
-    lefttype = expr.left.accept(frame, resolve)
-    righttype = expr.right.accept(frame, resolve)
+    lType = expr.left.accept(frame, resolve)
+    rType = expr.right.accept(frame, resolve)
     if expr.oper in (AND, OR):
-        expectTypeElseError(
-            lefttype, 'BOOLEAN', token=expr.left.token()
-        )
-        expectTypeElseError(
-            righttype, 'BOOLEAN', token=expr.right.token()
-        )
+        expectTypeElseError(lType, 'BOOLEAN', token=expr.left.token())
+        expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token())
         return 'BOOLEAN'
     if expr.oper in (ne, eq):
-        expectTypeElseError(
-            lefttype, *EQUATABLE, token=expr.left.token()
-        )
-        expectTypeElseError(
-            righttype, *EQUATABLE, token=expr.right.token()
-        )
+        expectTypeElseError(lType, *EQUATABLE, token=expr.left.token())
+        expectTypeElseError(rType, *EQUATABLE, token=expr.right.token())
         if (
-            not (lefttype == 'BOOLEAN' and righttype == 'BOOLEAN')
-            and not (lefttype in NUMERIC and righttype in NUMERIC)
+            not (lType == 'BOOLEAN' and rType == 'BOOLEAN')
+            and not (lType in NUMERIC and rType in NUMERIC)
         ):
-            raise LogicError(f"Illegal comparison of {lefttype} and {righttype}", token=expr.oper.token())
+            raise LogicError(f"Illegal comparison of {lType} and {rType}", token=expr.oper.token())
         return 'BOOLEAN'
     if expr.oper in (gt, gte, lt, lte):
-        expectTypeElseError(
-            lefttype, *NUMERIC, token=expr.left.token()
-        )
-        expectTypeElseError(
-            righttype, *NUMERIC, token=expr.left.token()
-        )
+        expectTypeElseError(lType, *NUMERIC, token=expr.left.token())
+        expectTypeElseError(rType, *NUMERIC, token=expr.left.token())
         return 'BOOLEAN'
     if expr.oper in (add, sub, mul, div):
-        expectTypeElseError(
-            lefttype, *NUMERIC, token=expr.left.token()
-        )
-        expectTypeElseError(
-            righttype, *NUMERIC, token=expr.left.token()
-        )
-        if (expr.oper is not div) and (lefttype == righttype == 'INTEGER'):
+        expectTypeElseError(lType, *NUMERIC, token=expr.left.token())
+        expectTypeElseError(rType, *NUMERIC, token=expr.left.token())
+        if (expr.oper is not div) and (lType == rType == 'INTEGER'):
             return 'INTEGER'
         return 'REAL'
 
@@ -207,7 +198,9 @@ def verifyProcedure(frame, stmt):
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(exprtype, frame.getType(expr.name), token=expr.token())
+            expectTypeElseError(
+                exprtype, frame.getType(expr.name), token=expr.token()
+            )
             # Reference frame vars in local
             local.setValue(expr.name, frame.getValue(expr.name))
         else:
@@ -234,7 +227,9 @@ def verifyFunction(frame, stmt):
         stmtType = procstmt.accept(local, verify)
         if stmtType:
             hasReturn = True
-            expectTypeElseError(stmtType, stmt.returnType, token=stmt.name.token())
+            expectTypeElseError(
+                stmtType, stmt.returnType, token=stmt.name.token()
+            )
     if not hasReturn:
         raise LogicError("No RETURN in function", stmt.name.token())
     # Declare function in frame
