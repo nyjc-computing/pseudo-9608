@@ -95,6 +95,9 @@ def scan(src):
                     token = makeToken(code, 'BOOLEAN', text, False)
                 else:
                     raise ValueError(f"Unrecognised value {text}")
+            elif text in OPERATORS:  # AND, OR, NOT
+                oper = OPERATORS.get(text, None)
+                token = makeToken(code, 'symbol', text, oper)
             else:
                 token = makeToken(code, 'name', text, None)
         elif char.isdigit():

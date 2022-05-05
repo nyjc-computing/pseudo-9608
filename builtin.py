@@ -68,6 +68,15 @@ def ne(x, y):
 def eq(x, y):
     return x == y
 
+def AND(x, y):
+    return x and y
+
+def OR(x, y):
+    return x or y
+
+def NOT(x):
+    return not x
+
 
 
 # Token types
@@ -104,6 +113,9 @@ OPERATORS = {
     '>=': gte,
     '<>': ne,
     '=': eq,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
 }
 
 SYMBOLS = [',', ':']
