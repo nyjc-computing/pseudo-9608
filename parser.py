@@ -87,7 +87,7 @@ def literal(tokens):
 
 def unary(tokens):
     oper = consume(tokens)
-    right = expression(tokens)
+    right = value(tokens)
     return makeExpr(
         oper=oper.value,
         right=right,
@@ -99,7 +99,7 @@ def nameExpr(tokens):
     expr = makeExpr(
         frame=NULL,
         name=name.name,
-        token=name,
+        token=name.token(),
     )
     # Function call
     args = []
@@ -113,7 +113,7 @@ def nameExpr(tokens):
         expr = makeExpr(
             callable=expr,
             args=args,
-            token=name,
+            token=name.token(),
         )
     return expr
 
