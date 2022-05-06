@@ -119,10 +119,6 @@ def executeStmts(frame, stmts, *args, **kwargs):
             return returnval
 
 def execOutput(frame, stmt, *, output=None, **kwargs):
-    # Use print() as default output
-    if not output:
-        output=print
-    breakpoint()
     for expr in stmt.exprs:
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
