@@ -12,6 +12,16 @@ __version__ = '0.2.1'
 
 
 
+def error(lines, err):
+    errType = type(err).__name__ + ':'
+    if err.line:
+        lineinfo = f"[Line {err.line}]"
+        print(lineinfo, lines[err.line - 1])
+    if err.col:
+        leftmargin = len(lineinfo) + 1 + err.col
+        print((' ' * leftmargin) + '^')
+    print(errType, err.report())
+    
 def run(srcfile):
     with open(srcfile, 'r') as f:
         src = f.read()
@@ -20,14 +30,7 @@ def run(srcfile):
         statements = parser.parse(tokens)
         statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
-        errType = type(err).__name__ + ':'
-        if err.line:
-            lineinfo = f"[Line {err.line}]"
-            print(lineinfo, lines[err.line - 1])
-        if err.col:
-            leftmargin = len(lineinfo) + 1 + err.col
-            print((' ' * leftmargin) + '^')
-        print(errType, err.report())
+        error(lines, err)
         sys.exit(65)
     try:
         frame = interpreter.interpret(statements, frame)
