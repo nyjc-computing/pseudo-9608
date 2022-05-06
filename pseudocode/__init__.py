@@ -33,8 +33,11 @@ class Pseudo:
             'input': input,
         }
 
-    def registerHandlers(self, output):
-        self.handlers['output'] = output
+    def registerHandlers(self, **kwargs):
+        for key, handler in kwargs.items():
+            if key not in self.handlers:
+                raise KeyError(f"Invalid handler key {repr(key)}")
+            self.handlers[key] = handler
 
     def runFile(self, srcfile):
         with open(srcfile, 'r') as f:
