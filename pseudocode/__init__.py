@@ -1,5 +1,4 @@
 import sys
-from pprint import PrettyPrinter
 
 from pseudocode.builtin import ParseError, RuntimeError, LogicError
 from pseudocode import scanner
@@ -13,10 +12,9 @@ __version__ = '0.2.1'
 
 
 
-def run(srcfile='main.pseudo'):
+def run(srcfile):
     with open(srcfile, 'r') as f:
         src = f.read()
-    pp = PrettyPrinter(indent=2, compact=True)
     try:
         tokens, lines = scanner.scan(src)
         statements = parser.parse(tokens)
@@ -33,7 +31,6 @@ def run(srcfile='main.pseudo'):
         sys.exit(65)
     try:
         frame = interpreter.interpret(statements, frame)
-        pp.pprint(frame)
     except RuntimeError as err:
         print(err)
         sys.exit(70)
