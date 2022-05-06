@@ -13,10 +13,8 @@ __version__ = '0.1.0'
 
 
 
-def run():
-    if len(sys.argv) == 1:
-        srcfile = 'main.pseudo'
-    else:
+def run(srcfile='main.pseudo'):
+    if len(sys.argv) != 1:
         srcfile = sys.argv[1]
     with open(srcfile, 'r') as f:
         src = f.read()
