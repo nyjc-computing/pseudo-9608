@@ -30,6 +30,7 @@ class Pseudo:
         self.handlers = {
             'output': print,
             'error': error,
+            'input': input,
         }
 
     def registerHandlers(self, output):
