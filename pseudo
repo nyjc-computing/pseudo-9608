@@ -20,7 +20,8 @@ if __name__ == "__main__":
     # print("""Usage: pseudo [FILE]""")
     # sys.exit(65)
 
-    result = pseudocode.runFile(srcfile)
+    pseudo = pseudocode.Pseudo()
+    result = pseudo.runFile(srcfile)
     lines = result['lines']
     err = result['error']
     if err:

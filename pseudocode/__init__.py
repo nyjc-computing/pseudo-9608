@@ -41,7 +41,7 @@ class Pseudo:
     def runFile(self, srcfile):
         with open(srcfile, 'r') as f:
             src = f.read()
-        self.run(src)
+        return self.run(src)
     
     def run(self, src):
         result = {
@@ -58,8 +58,9 @@ class Pseudo:
         except (ParseError, LogicError) as err:
             result['error'] = err
             return result
+
         interpreter = Interpreter(frame, statements)
-        interpreter.registerOutputHandler(self.handler['output'])
+        interpreter.registerOutputHandler(self.handlers['output'])
         try:
             frame = interpreter.interpret()
             result['frame'] = frame
