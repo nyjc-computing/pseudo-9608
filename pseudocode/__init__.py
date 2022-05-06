@@ -12,26 +12,28 @@ __version__ = '0.2.1'
 
 
 
+def error(lines, err):
+    errType = type(err).__name__ + ':'
+    if err.line:
+        lineinfo = f"[Line {err.line}]"
+        print(lineinfo, lines[err.line - 1])
+    if err.col:
+        leftmargin = len(lineinfo) + 1 + err.col
+        print((' ' * leftmargin) + '^')
+        print(errType, err.report())
+
+
+
 class Pseudo:
     """A 9608 pseudocode interpreter"""
     def __init__(self):
         self.handlers = {
-            'output': None,
+            'output': print,
+            'error': error,
         }
 
     def registerHandlers(self, output):
         self.handlers['output'] = output
-
-    @staticmethod
-    def error(lines, err):
-        errType = type(err).__name__ + ':'
-        if err.line:
-            lineinfo = f"[Line {err.line}]"
-            print(lineinfo, lines[err.line - 1])
-        if err.col:
-            leftmargin = len(lineinfo) + 1 + err.col
-            print((' ' * leftmargin) + '^')
-            print(errType, err.report())
 
     def runFile(self, srcfile):
         with open(srcfile, 'r') as f:
@@ -39,6 +41,7 @@ class Pseudo:
         self.run(src)
     
     def run(self, src):
+        error = self.handlers['error']
         result = {
             'frame': None,
             'error': None,
@@ -50,7 +53,7 @@ class Pseudo:
             statements, frame = resolver.inspect(statements)
         except (ParseError, LogicError) as err:
             result['error'] = err
-            self.error(lines, err)
+            error(lines, err)
             sys.exit(65)
         else:
             result['frame'] = frame
@@ -59,7 +62,7 @@ class Pseudo:
             frame = interpreter.interpret()
         except RuntimeError as err:
             result['error'] = err
-            self.error(lines, err)
+            error(lines, err)
             sys.exit(70)
         else:
             result['frame'] = frame
