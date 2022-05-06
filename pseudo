@@ -19,5 +19,5 @@ if __name__ == "__main__":
     # print("""Usage: pseudo [FILE]""")
     # sys.exit(65)
 
-    pseudocode.run(srcfile)
+    pseudocode.runFile(srcfile)
     
