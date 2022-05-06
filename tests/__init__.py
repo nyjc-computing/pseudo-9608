@@ -1,23 +1,30 @@
-import sys
-
-
-
 def capture(captureType):
-    # Initialise a storage object to capture results
+    """
+    Returns functions for data capture and retrieval.
+    
+    Arguments
+    ---------
+    - captureType: str
+        The type of capture-return function pair to return
+
+    Return
+    ------
+    capture(), return()
+    """
     storage = {'data': None}
     
     def captureOutput(
         *objects,
         sep=' ',
         end='\n',
-        file=sys.stdout,
-        flush=False,
+        **_,
     ):
         """
         Captures output into a storage object.
         Can be used interchangeably with Python's built-in print().
         """
-        pass
+        outputstr = sep.join([str(obj) for obj in objects]) + end
+        storage['data'] += outputstr
 
     def returnData():
         """Returns the captured data"""
