@@ -14,8 +14,6 @@ __version__ = '0.2.1'
 
 
 def run(srcfile='main.pseudo'):
-    if len(sys.argv) != 1:
-        srcfile = sys.argv[1]
     with open(srcfile, 'r') as f:
         src = f.read()
     pp = PrettyPrinter(indent=2, compact=True)
