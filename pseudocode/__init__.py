@@ -35,5 +35,5 @@ def run(srcfile):
     try:
         frame = interpreter.interpret(statements, frame)
     except RuntimeError as err:
-        print(err)
+        error(lines, err)
         sys.exit(70)
