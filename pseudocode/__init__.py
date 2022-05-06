@@ -29,7 +29,6 @@ class Pseudo:
     def __init__(self):
         self.handlers = {
             'output': print,
-            'error': error,
             'input': input,
         }
 
@@ -45,29 +44,25 @@ class Pseudo:
         self.run(src)
     
     def run(self, src):
-        error = self.handlers['error']
         result = {
+            'lines': None,
             'frame': None,
             'error': None,
-            'output': [],
         }
         try:
             tokens, lines = scanner.scan(src)
+            result['lines'] = lines
             statements = parser.parse(tokens)
             statements, frame = resolver.inspect(statements)
+            result['frame'] = frame
         except (ParseError, LogicError) as err:
             result['error'] = err
-            error(lines, err)
-            sys.exit(65)
-        else:
-            result['frame'] = frame
+            return result
         interpreter = Interpreter(frame, statements)
         try:
             frame = interpreter.interpret()
+            result['frame'] = frame
         except RuntimeError as err:
             result['error'] = err
-            error(lines, err)
-            sys.exit(70)
-        else:
-            result['frame'] = frame
-        return result
+        finally:
+            return result
