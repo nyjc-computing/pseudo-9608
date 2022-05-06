@@ -50,8 +50,14 @@ class Interpreter:
         """
         self.outputHandler = handler
 
+    def executeStmts(frame, stmts):
+        for stmt in stmts:
+            returnval = stmt.accept(frame, execute)
+            if returnval is not None:
+                return returnval
+
     def interpret(self):
-        executeStmts(self.frame, self.statements)
+        self.executeStmts(self.frame, self.statements)
         return self.frame
 
 
@@ -107,12 +113,6 @@ def evaluate(frame, expr):
         raise TypeError(f"Unexpected expr {expr}")
 
 # Executors
-
-def executeStmts(frame, stmts):
-    for stmt in stmts:
-        returnval = stmt.accept(frame, execute)
-        if returnval is not None:
-            return returnval
 
 def execOutput(frame, stmt):
     for expr in stmt.exprs:
