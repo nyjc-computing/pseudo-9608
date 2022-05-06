@@ -1,6 +1,6 @@
-import pseudo
+import pseudocode
 
 
 
 if __name__ == "__main__":
-    pseudo.run()
+    pseudocode.run()

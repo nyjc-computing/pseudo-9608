@@ -1,11 +1,11 @@
 import sys
 from pprint import PrettyPrinter
 
-from pseudo.builtin import ParseError, RuntimeError, LogicError
-from pseudo import scanner
-from pseudo import parser
-from pseudo import resolver
-from pseudo import interpreter
+from pseudocode.builtin import ParseError, RuntimeError, LogicError
+from pseudocode import scanner
+from pseudocode import parser
+from pseudocode import resolver
+from pseudocode import interpreter
 
 
 
