@@ -4,7 +4,7 @@ from pseudocode.builtin import ParseError, RuntimeError, LogicError
 from pseudocode import scanner
 from pseudocode import parser
 from pseudocode import resolver
-from pseudocode import interpreter
+from pseudocode.interpreter import Interpreter
 
 
 
@@ -43,8 +43,9 @@ def run(src):
         sys.exit(65)
     else:
         result['frame'] = frame
+    interpreter = Interpreter(frame, statements)
     try:
-        frame = interpreter.interpret(statements, frame)
+        frame = interpreter.interpret()
     except RuntimeError as err:
         result['error'] = err
         error(lines, err)
