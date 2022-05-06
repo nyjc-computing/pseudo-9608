@@ -13,11 +13,11 @@ Pseudo {pseudocode.__version__}
 
 if __name__ == "__main__":
     srcfile = "main.pseudo"
-    print(HELP)
     if len(sys.argv) > 1:
         srcfile = sys.argv[1]
+    # print(HELP)
     # print("""Usage: pseudo [FILE]""")
     # sys.exit(65)
-    breakpoint()
-    pseudocode.run(srcfile)
+
+    pseudocode.runFile(srcfile)
     
