@@ -1,7 +1,7 @@
-from builtin import ParseError
-from builtin import KEYWORDS, VALUES, OPERATORS
-from builtin import NULL
-from lang import Token
+from .builtin import ParseError
+from .builtin import KEYWORDS, VALUES, OPERATORS
+from .builtin import NULL
+from .lang import Token
 
 
 

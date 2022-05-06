@@ -1,6 +1,6 @@
-from builtin import RuntimeError
-from lang import Frame, File
-from lang import Literal, Unary, Binary, Get, Call, Assign
+from .builtin import RuntimeError
+from .lang import Frame, File
+from .lang import Literal, Unary, Binary, Get, Call, Assign
 
 
 

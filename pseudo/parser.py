@@ -1,10 +1,10 @@
-from builtin import TYPES, NULL
-from builtin import ParseError
-from builtin import lte, add
-from lang import Token
-from lang import Literal, Name, Unary, Binary, Get, Call
-from lang import ExprStmt, Output, Input, Declare, Assign
-from lang import Conditional, Loop, ProcFunc, FileAction
+from .builtin import TYPES, NULL
+from .builtin import ParseError
+from .builtin import lte, add
+from .lang import Token
+from .lang import Literal, Name, Unary, Binary, Get, Call
+from .lang import ExprStmt, Output, Input, Declare, Assign
+from .lang import Conditional, Loop, ProcFunc, FileAction
 
 
 

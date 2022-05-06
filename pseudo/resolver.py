@@ -1,10 +1,10 @@
-from builtin import AND, OR, NOT
-from builtin import lt, lte, gt, gte, ne, eq
-from builtin import add, sub, mul, div
-from builtin import LogicError
-from builtin import NUMERIC, EQUATABLE
-from lang import Frame, Function, Procedure
-from lang import Literal, Declare, Unary, Binary, Get, Call, Assign
+from .builtin import AND, OR, NOT
+from .builtin import lt, lte, gt, gte, ne, eq
+from .builtin import add, sub, mul, div
+from .builtin import LogicError
+from .builtin import NUMERIC, EQUATABLE
+from .lang import Frame, Function, Procedure
+from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
 
