@@ -122,6 +122,7 @@ def execOutput(frame, stmt, *, output=None, **kwargs):
     # Use print() as default output
     if not output:
         output=print
+    breakpoint()
     for expr in stmt.exprs:
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
@@ -217,23 +218,23 @@ def execute(frame, stmt, *args, **kwargs):
     if stmt.rule == 'output':
         stmt.accept(frame, execOutput, **kwargs)
     if stmt.rule == 'input':
-        stmt.accept(frame, execInput)
+        stmt.accept(frame, execInput, **kwargs)
     if stmt.rule == 'assign':
-        stmt.expr.accept(frame, evaluate)
+        stmt.expr.accept(frame, evaluate, **kwargs)
     if stmt.rule == 'case':
-        stmt.accept(frame, execCase)
+        stmt.accept(frame, execCase, **kwargs)
     if stmt.rule == 'if':
-        stmt.accept(frame, execIf)
+        stmt.accept(frame, execIf, **kwargs)
     if stmt.rule == 'while':
-        stmt.accept(frame, execWhile)
+        stmt.accept(frame, execWhile, **kwargs)
     if stmt.rule == 'repeat':
-        stmt.accept(frame, execRepeat)
+        stmt.accept(frame, execRepeat, **kwargs)
     if stmt.rule == 'call':
-        stmt.expr.accept(frame, evalCall)
+        stmt.expr.accept(frame, evalCall, **kwargs)
     if stmt.rule == 'return':
-        return stmt.expr.accept(frame, evaluate)
+        return stmt.expr.accept(frame, evaluate, **kwargs)
     if stmt.rule == 'file':
-        stmt.accept(frame, execFile)
+        stmt.accept(frame, execFile, **kwargs)
     if stmt.rule in ('declare', 'procedure', 'function'):
         pass
 
