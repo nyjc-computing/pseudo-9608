@@ -51,7 +51,7 @@ class Interpreter:
         self.outputHandler = handler
 
     def interpret(self):
-        executeStmts(self.frame, self.statements)
+        self.executeStmts(self.frame, self.statements)
         return self.frame
 
 
@@ -114,13 +114,16 @@ def executeStmts(frame, stmts):
         if returnval is not None:
             return returnval
 
-def execOutput(frame, stmt):
+def execOutput(frame, stmt, *, output=None, **kwargs):
+    # Use print() as default output
+    if not output:
+        output=print
     for expr in stmt.exprs:
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
             value = str(value).upper()
-        print(str(value), end='')
-    print('')  # Add \n
+        output(str(value), end='')
+    output('')  # Add \n
 
 def execInput(frame, stmt):
     name = stmt.name
