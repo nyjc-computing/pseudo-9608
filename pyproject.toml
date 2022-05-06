@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://github.com/nyjc-computing/pseudo-9608"
 repository = "https://github.com/nyjc-computing/pseudo-9608.git"
 packages = [
-    { include = "pseudo" },
+    { include = "pseudocode" },
 ]
 
 [tool.poetry.dependencies]
