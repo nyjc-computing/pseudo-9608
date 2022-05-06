@@ -3,6 +3,9 @@ name = "pseudo-9608"
 version = "0.1.0"
 description = "An interpreter for 9608 pseudocode"
 authors = ["JS Ng <ngjunsiang@gmail.com>"]
+packages = [
+    { include = "pseudo" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
