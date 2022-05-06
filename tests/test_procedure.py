@@ -2,15 +2,13 @@ import unittest
 
 import pseudocode
 
-file = 'procedure.pseudo'
+file = 'tests/procedure.pseudo'
 
 class ProcedureTestCase(unittest.TestCase):
     def setUp(self):
         with open(file) as f:
             src = f.read()
-        pseudocode.run(src)
-        # Pass src to interpreter
-        # Retrieve result: frame, errors, output, etc
+        self.result = pseudocode.run(src)
         
     def test_procedure(self):
         pass
