@@ -18,6 +18,6 @@ if __name__ == "__main__":
         srcfile = sys.argv[1]
     # print("""Usage: pseudo [FILE]""")
     # sys.exit(65)
-    breakpoint()
+
     pseudocode.run(srcfile)
     
