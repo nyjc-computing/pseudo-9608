@@ -59,6 +59,7 @@ class Pseudo:
             result['error'] = err
             return result
         interpreter = Interpreter(frame, statements)
+        interpreter.registerOutputHandler(self.handler['output'])
         try:
             frame = interpreter.interpret()
             result['frame'] = frame
