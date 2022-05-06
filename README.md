@@ -11,9 +11,9 @@ pip install pseudo-9608
 ## Usage
 
 ```
-import pseudo
+import pseudocode
 
-pseudo.run('myfile.pseudo')
+pseudocode.run('myfile.pseudo')
 ```
 
 # Chapters
