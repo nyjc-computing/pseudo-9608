@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pseudo-9608"
-version = "0.2.0"
+version = "0.2.1"
 description = "An interpreter for 9608 pseudocode"
 license = "MIT"
 authors = ["JS Ng <ngjunsiang@gmail.com>"]
