@@ -80,6 +80,7 @@ def evalGet(frame, expr):
     return expr.frame.getValue(expr.name)
 
 def evalCall(frame, expr):
+    breakpoint()
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
     for arg, slot in zip(expr.args, callable.params):
@@ -119,6 +120,7 @@ def executeStmts(frame, stmts, *args, **kwargs):
             return returnval
 
 def execOutput(frame, stmt, *, output=None, **kwargs):
+    breakpoint()
     for expr in stmt.exprs:
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
@@ -233,9 +235,3 @@ def execute(frame, stmt, *args, **kwargs):
         stmt.accept(frame, execFile, **kwargs)
     if stmt.rule in ('declare', 'procedure', 'function'):
         pass
-
-def interpret(statements, frame=None):
-    if frame is None:
-        frame = Frame()
-    executeStmts(frame, statements)
-    return frame
