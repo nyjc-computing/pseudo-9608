@@ -28,15 +28,27 @@ def runFile(srcfile):
     run(src)
     
 def run(src):
+    result = {
+        'frame': None,
+        'error': None,
+        'output': [],
+    }
     try:
         tokens, lines = scanner.scan(src)
         statements = parser.parse(tokens)
         statements, frame = resolver.inspect(statements)
     except (ParseError, LogicError) as err:
+        result['error'] = err
         error(lines, err)
         sys.exit(65)
+    else:
+        result['frame'] = frame
     try:
         frame = interpreter.interpret(statements, frame)
     except RuntimeError as err:
+        result['error'] = err
         error(lines, err)
         sys.exit(70)
+    else:
+        result['frame'] = frame
+    return result
