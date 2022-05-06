@@ -21,10 +21,13 @@ def error(lines, err):
         leftmargin = len(lineinfo) + 1 + err.col
         print((' ' * leftmargin) + '^')
     print(errType, err.report())
-    
-def run(srcfile):
+
+def runFile(srcfile):
     with open(srcfile, 'r') as f:
         src = f.read()
+    run(src)
+    
+def run(src):
     try:
         tokens, lines = scanner.scan(src)
         statements = parser.parse(tokens)
