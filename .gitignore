@@ -93,3 +93,4 @@ poetry.lock
 replit.nix
 .replit
 .config/
+main.py
