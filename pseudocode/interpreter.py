@@ -31,6 +31,22 @@ def undeclaredElseError(
     if frame.has(name):
         raise RuntimeError(errmsg, token)
 
+
+
+class Interpreter:
+    """
+    Interprets a list of statements with a given frame.
+    """
+    def __init__(self, frame, statements):
+        self.frame = frame
+        self.statements = statements
+
+    def interpret(self):
+        executeStmts(self.frame, self.statements)
+        return self.frame
+
+
+
 # Evaluators
 
 def evalLiteral(frame, literal):
