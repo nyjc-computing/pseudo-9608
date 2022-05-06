@@ -37,9 +37,18 @@ class Interpreter:
     """
     Interprets a list of statements with a given frame.
     """
+    outputHandler = print
     def __init__(self, frame, statements):
         self.frame = frame
         self.statements = statements
+
+    def registerOutputHandler(self, handler):
+        """
+        Register handler as the function to use to handle
+        any output from the executed statements.
+        The default handler is Python's print().
+        """
+        self.outputHandler = handler
 
     def interpret(self):
         executeStmts(self.frame, self.statements)
