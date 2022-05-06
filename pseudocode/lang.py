@@ -269,10 +269,10 @@ class Call(Expr):
 
 
 class Stmt:
-    def accept(self, frame, visitor):
+    def accept(self, frame, visitor, *args, **kwargs):
         # visitor must be a function that takes
         # a frame and a Stmt
-        return visitor(frame, self)
+        return visitor(frame, self, *args, **kwargs)
 
     def __repr__(self):
         attrstr = ", ".join([

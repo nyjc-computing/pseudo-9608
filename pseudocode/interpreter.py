@@ -51,7 +51,11 @@ class Interpreter:
         self.outputHandler = handler
 
     def interpret(self):
-        self.executeStmts(self.frame, self.statements)
+        executeStmts(
+            self.frame,
+            self.statements,
+            output=self.outputHandler,
+        )
         return self.frame
 
 
@@ -108,9 +112,9 @@ def evaluate(frame, expr):
 
 # Executors
 
-def executeStmts(frame, stmts):
+def executeStmts(frame, stmts, *args, **kwargs):
     for stmt in stmts:
-        returnval = stmt.accept(frame, execute)
+        returnval = stmt.accept(frame, execute, *args, **kwargs)
         if returnval is not None:
             return returnval
 
@@ -209,9 +213,9 @@ def execFile(frame, stmt):
         file.iohandler.close()
         frame.delete(name)
 
-def execute(frame, stmt):
+def execute(frame, stmt, *args, **kwargs):
     if stmt.rule == 'output':
-        stmt.accept(frame, execOutput)
+        stmt.accept(frame, execOutput, **kwargs)
     if stmt.rule == 'input':
         stmt.accept(frame, execInput)
     if stmt.rule == 'assign':
