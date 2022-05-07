@@ -3,7 +3,18 @@ import unittest
 import pseudocode
 from tests import capture
 
-file = 'tests/procedure.pseudo'
+TESTCODE = """
+PROCEDURE TestBool(Succeeded : BOOLEAN)
+    IF Succeeded = TRUE AND NOT (-1.2 = -1.5)
+      THEN
+        OUTPUT "Yay!"
+      ELSE
+        OUTPUT "Awww!"
+    ENDIF
+ENDPROCEDURE
+
+CALL TestBool(TRUE)
+"""
 
 class ProcedureTestCase(unittest.TestCase):
     def setUp(self):
@@ -12,12 +23,12 @@ class ProcedureTestCase(unittest.TestCase):
         pseudo.registerHandlers(
             output=captureOutput,
         )
-        with open(file) as f:
-            src = f.read()
-        self.result = pseudo.run(src)
+        self.result = pseudo.run(TESTCODE)
         self.result['output'] = returnOutput()
         
     def test_procedure(self):
+        # Procedure should complete successfully
+        self.assertIsNone(self.result['error'])
         frame = self.result['frame']
         self.assertIs(
             frame.getType('TestBool'),
