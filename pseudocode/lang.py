@@ -184,10 +184,10 @@ class Expr:
     def token(self):
         return self._token
 
-    def accept(self, frame, visitor):
+    def accept(self, frame, visitor, *args, **kwargs):
         # visitor must be a function that takes
         # a frame and an Expr
-        return visitor(frame, self)
+        return visitor(frame, self, *args, **kwargs)
 
     def __repr__(self):
         attrstr = ", ".join([
