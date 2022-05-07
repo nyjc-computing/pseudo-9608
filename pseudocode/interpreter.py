@@ -79,7 +79,7 @@ def evalGet(frame, expr):
     # So ignore the frame that is passed here
     return expr.frame.getValue(expr.name)
 
-def evalCall(frame, expr):
+def evalCall(frame, expr, **kwargs):
     breakpoint()
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
@@ -87,7 +87,7 @@ def evalCall(frame, expr):
         argval = arg.accept(frame, evaluate)
         slot.value = argval
     for stmt in callable.stmts:
-        returnval = stmt.accept(callable.frame, execute)
+        returnval = stmt.accept(callable.frame, execute, **kwargs)
         if returnval is not None:
             return returnval
 
@@ -128,35 +128,35 @@ def execOutput(frame, stmt, *, output=None, **kwargs):
         output(str(value), end='')
     output('')  # Add \n
 
-def execInput(frame, stmt):
+def execInput(frame, stmt, **kwargs):
     name = stmt.name
     frame.setValue(name, input())
 
-def execCase(frame, stmt):
+def execCase(frame, stmt, **kwargs):
     cond = stmt.cond.accept(frame, evaluate)
     if cond in stmt.stmtMap:
-        execute(frame, stmt.stmtMap[cond])
+        execute(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
-        execute(frame, stmt.fallback)
+        execute(frame, stmt.fallback, **kwargs)
 
-def execIf(frame, stmt):
+def execIf(frame, stmt, **kwargs):
     if stmt.cond.accept(frame, evaluate):
-        executeStmts(frame, stmt.stmtMap[True])
+        executeStmts(frame, stmt.stmtMap[True], **kwargs)
     elif stmt.fallback:
-        executeStmts(frame, stmt.fallback)
+        executeStmts(frame, stmt.fallback, **kwargs)
 
-def execWhile(frame, stmt):
+def execWhile(frame, stmt, **kwargs):
     if stmt.init:
-        execute(frame, stmt.init)
+        execute(frame, stmt.init, **kwargs)
     while stmt.cond.accept(frame, evaluate) is True:
-        executeStmts(frame, stmt.stmts)
+        executeStmts(frame, stmt.stmts, **kwargs)
 
-def execRepeat(frame, stmt):
+def execRepeat(frame, stmt, **kwargs):
     executeStmts(frame, stmt.stmts)
     while stmt.cond.accept(frame, evaluate) is False:
         executeStmts(frame, stmt.stmts)
 
-def execFile(frame, stmt):
+def execFile(frame, stmt, **kwargs):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
         undeclaredElseError(
