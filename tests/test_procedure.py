@@ -29,7 +29,10 @@ class ProcedureTestCase(unittest.TestCase):
     def test_procedure(self):
         # Procedure should complete successfully
         self.assertIsNone(self.result['error'])
+        
         frame = self.result['frame']
+
+        # Check procedure type
         self.assertIs(
             frame.getType('TestBool'),
             'NULL',
@@ -38,7 +41,10 @@ class ProcedureTestCase(unittest.TestCase):
             type(frame.getValue('TestBool')),
             pseudocode.lang.Procedure,
         )
+        
         procedure = frame.getValue('TestBool')
+
+        # Check procedure params
         self.assertTrue(
             procedure.frame.getValue('Succeeded')
         )
@@ -48,5 +54,6 @@ class ProcedureTestCase(unittest.TestCase):
         )
 
     def test_output(self):
+        # Check output
         output = self.result['output']
         self.assertEqual(output, "Yay!\n")
