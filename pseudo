@@ -2,6 +2,7 @@
 import sys
 
 import pseudocode
+from pseudocode.builtin import ParseError, LogicError, RuntimeError
 
 
 
@@ -19,5 +20,14 @@ if __name__ == "__main__":
     # print("""Usage: pseudo [FILE]""")
     # sys.exit(65)
 
-    pseudocode.runFile(srcfile)
-    
+    pseudo = pseudocode.Pseudo()
+    result = pseudo.runFile(srcfile)
+    lines = result['lines']
+    err = result['error']
+    if err:
+        if type(err) in (ParseError, LogicError):
+            pseudocode.error(lines, err)
+            sys.exit(65)
+        elif type(err) in (RuntimeError,):
+            pseudocode.error(lines, err)
+            sys.exit(70)

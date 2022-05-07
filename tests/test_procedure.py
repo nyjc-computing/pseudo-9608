@@ -1,14 +1,21 @@
 import unittest
 
 import pseudocode
+from tests import capture
 
 file = 'tests/procedure.pseudo'
 
 class ProcedureTestCase(unittest.TestCase):
     def setUp(self):
+        pseudo = pseudocode.Pseudo()
+        captureOutput, returnOutput = capture('output')
+        pseudo.registerHandlers(
+            output=captureOutput,
+        )
         with open(file) as f:
             src = f.read()
-        self.result = pseudocode.run(src)
+        self.result = pseudo.run(src)
+        self.result['output'] = returnOutput()
         
     def test_procedure(self):
         frame = self.result['frame']
@@ -28,3 +35,7 @@ class ProcedureTestCase(unittest.TestCase):
             procedure.frame.getType('Succeeded'),
             'BOOLEAN'
         )
+
+    def test_output(self):
+        output = self.result['output']
+        self.assertEqual(output, "Yay!\n")

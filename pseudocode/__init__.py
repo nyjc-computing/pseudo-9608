@@ -4,7 +4,7 @@ from pseudocode.builtin import ParseError, RuntimeError, LogicError
 from pseudocode import scanner
 from pseudocode import parser
 from pseudocode import resolver
-from pseudocode import interpreter
+from pseudocode.interpreter import Interpreter
 
 
 
@@ -20,35 +20,51 @@ def error(lines, err):
     if err.col:
         leftmargin = len(lineinfo) + 1 + err.col
         print((' ' * leftmargin) + '^')
-    print(errType, err.report())
+        print(errType, err.report())
 
-def runFile(srcfile):
-    with open(srcfile, 'r') as f:
-        src = f.read()
-    run(src)
+
+
+class Pseudo:
+    """A 9608 pseudocode interpreter"""
+    def __init__(self):
+        self.handlers = {
+            'output': print,
+            'input': input,
+        }
+
+    def registerHandlers(self, **kwargs):
+        for key, handler in kwargs.items():
+            if key not in self.handlers:
+                raise KeyError(f"Invalid handler key {repr(key)}")
+            self.handlers[key] = handler
+
+    def runFile(self, srcfile):
+        with open(srcfile, 'r') as f:
+            src = f.read()
+        return self.run(src)
     
-def run(src):
-    result = {
-        'frame': None,
-        'error': None,
-        'output': [],
-    }
-    try:
-        tokens, lines = scanner.scan(src)
-        statements = parser.parse(tokens)
-        statements, frame = resolver.inspect(statements)
-    except (ParseError, LogicError) as err:
-        result['error'] = err
-        error(lines, err)
-        sys.exit(65)
-    else:
-        result['frame'] = frame
-    try:
-        frame = interpreter.interpret(statements, frame)
-    except RuntimeError as err:
-        result['error'] = err
-        error(lines, err)
-        sys.exit(70)
-    else:
-        result['frame'] = frame
-    return result
+    def run(self, src):
+        result = {
+            'lines': None,
+            'frame': None,
+            'error': None,
+        }
+        try:
+            tokens, lines = scanner.scan(src)
+            result['lines'] = lines
+            statements = parser.parse(tokens)
+            statements, frame = resolver.inspect(statements)
+            result['frame'] = frame
+        except (ParseError, LogicError) as err:
+            result['error'] = err
+            return result
+
+        interpreter = Interpreter(frame, statements)
+        interpreter.registerOutputHandler(self.handlers['output'])
+        try:
+            frame = interpreter.interpret()
+            result['frame'] = frame
+        except RuntimeError as err:
+            result['error'] = err
+        finally:
+            return result

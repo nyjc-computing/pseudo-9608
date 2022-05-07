@@ -31,6 +31,35 @@ def undeclaredElseError(
     if frame.has(name):
         raise RuntimeError(errmsg, token)
 
+
+
+class Interpreter:
+    """
+    Interprets a list of statements with a given frame.
+    """
+    outputHandler = print
+    def __init__(self, frame, statements):
+        self.frame = frame
+        self.statements = statements
+
+    def registerOutputHandler(self, handler):
+        """
+        Register handler as the function to use to handle
+        any output from the executed statements.
+        The default handler is Python's print().
+        """
+        self.outputHandler = handler
+
+    def interpret(self):
+        executeStmts(
+            self.frame,
+            self.statements,
+            output=self.outputHandler,
+        )
+        return self.frame
+
+
+
 # Evaluators
 
 def evalLiteral(frame, literal):
@@ -50,14 +79,14 @@ def evalGet(frame, expr):
     # So ignore the frame that is passed here
     return expr.frame.getValue(expr.name)
 
-def evalCall(frame, expr):
+def evalCall(frame, expr, **kwargs):
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
     for arg, slot in zip(expr.args, callable.params):
         argval = arg.accept(frame, evaluate)
         slot.value = argval
     for stmt in callable.stmts:
-        returnval = stmt.accept(callable.frame, execute)
+        returnval = stmt.accept(callable.frame, execute, **kwargs)
         if returnval is not None:
             return returnval
 
@@ -83,49 +112,49 @@ def evaluate(frame, expr):
 
 # Executors
 
-def executeStmts(frame, stmts):
+def executeStmts(frame, stmts, *args, **kwargs):
     for stmt in stmts:
-        returnval = stmt.accept(frame, execute)
+        returnval = stmt.accept(frame, execute, *args, **kwargs)
         if returnval is not None:
             return returnval
 
-def execOutput(frame, stmt):
+def execOutput(frame, stmt, *, output=None, **kwargs):
     for expr in stmt.exprs:
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
             value = str(value).upper()
-        print(str(value), end='')
-    print('')  # Add \n
+        output(str(value), end='')
+    output('')  # Add \n
 
-def execInput(frame, stmt):
+def execInput(frame, stmt, **kwargs):
     name = stmt.name
     frame.setValue(name, input())
 
-def execCase(frame, stmt):
+def execCase(frame, stmt, **kwargs):
     cond = stmt.cond.accept(frame, evaluate)
     if cond in stmt.stmtMap:
-        execute(frame, stmt.stmtMap[cond])
+        execute(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
-        execute(frame, stmt.fallback)
+        execute(frame, stmt.fallback, **kwargs)
 
-def execIf(frame, stmt):
+def execIf(frame, stmt, **kwargs):
     if stmt.cond.accept(frame, evaluate):
-        executeStmts(frame, stmt.stmtMap[True])
+        executeStmts(frame, stmt.stmtMap[True], **kwargs)
     elif stmt.fallback:
-        executeStmts(frame, stmt.fallback)
+        executeStmts(frame, stmt.fallback, **kwargs)
 
-def execWhile(frame, stmt):
+def execWhile(frame, stmt, **kwargs):
     if stmt.init:
-        execute(frame, stmt.init)
+        execute(frame, stmt.init, **kwargs)
     while stmt.cond.accept(frame, evaluate) is True:
-        executeStmts(frame, stmt.stmts)
+        executeStmts(frame, stmt.stmts, **kwargs)
 
-def execRepeat(frame, stmt):
+def execRepeat(frame, stmt, **kwargs):
     executeStmts(frame, stmt.stmts)
     while stmt.cond.accept(frame, evaluate) is False:
         executeStmts(frame, stmt.stmts)
 
-def execFile(frame, stmt):
+def execFile(frame, stmt, **kwargs):
     name = stmt.name.accept(frame, evalLiteral)
     if stmt.action == 'open':
         undeclaredElseError(
@@ -181,32 +210,26 @@ def execFile(frame, stmt):
         file.iohandler.close()
         frame.delete(name)
 
-def execute(frame, stmt):
+def execute(frame, stmt, *args, **kwargs):
     if stmt.rule == 'output':
-        stmt.accept(frame, execOutput)
+        stmt.accept(frame, execOutput, **kwargs)
     if stmt.rule == 'input':
-        stmt.accept(frame, execInput)
+        stmt.accept(frame, execInput, **kwargs)
     if stmt.rule == 'assign':
-        stmt.expr.accept(frame, evaluate)
+        stmt.expr.accept(frame, evaluate, **kwargs)
     if stmt.rule == 'case':
-        stmt.accept(frame, execCase)
+        stmt.accept(frame, execCase, **kwargs)
     if stmt.rule == 'if':
-        stmt.accept(frame, execIf)
+        stmt.accept(frame, execIf, **kwargs)
     if stmt.rule == 'while':
-        stmt.accept(frame, execWhile)
+        stmt.accept(frame, execWhile, **kwargs)
     if stmt.rule == 'repeat':
-        stmt.accept(frame, execRepeat)
+        stmt.accept(frame, execRepeat, **kwargs)
     if stmt.rule == 'call':
-        stmt.expr.accept(frame, evalCall)
+        stmt.expr.accept(frame, evalCall, **kwargs)
     if stmt.rule == 'return':
-        return stmt.expr.accept(frame, evaluate)
+        return stmt.expr.accept(frame, evaluate, **kwargs)
     if stmt.rule == 'file':
-        stmt.accept(frame, execFile)
+        stmt.accept(frame, execFile, **kwargs)
     if stmt.rule in ('declare', 'procedure', 'function'):
         pass
-
-def interpret(statements, frame=None):
-    if frame is None:
-        frame = Frame()
-    executeStmts(frame, statements)
-    return frame
