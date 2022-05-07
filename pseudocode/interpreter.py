@@ -80,7 +80,6 @@ def evalGet(frame, expr):
     return expr.frame.getValue(expr.name)
 
 def evalCall(frame, expr, **kwargs):
-    breakpoint()
     callable = expr.callable.accept(frame, evalGet)
     # Assign args to param slots
     for arg, slot in zip(expr.args, callable.params):
@@ -120,7 +119,6 @@ def executeStmts(frame, stmts, *args, **kwargs):
             return returnval
 
 def execOutput(frame, stmt, *, output=None, **kwargs):
-    breakpoint()
     for expr in stmt.exprs:
         value = expr.accept(frame, evaluate)
         if type(value) is bool:
