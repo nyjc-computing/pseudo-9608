@@ -38,4 +38,4 @@ class ProcedureTestCase(unittest.TestCase):
 
     def test_output(self):
         output = self.result['output']
-        self.assertEqual(output, "Awww!\n")
+        self.assertEqual(output, "Yay!\n")
