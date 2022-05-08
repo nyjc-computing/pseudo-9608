@@ -1,5 +1,5 @@
 from .builtin import RuntimeError
-from .lang import Frame, File
+from .lang import Frame, File, Callable, Builtin
 from .lang import Literal, Unary, Binary, Get, Call, Assign
 
 
@@ -81,14 +81,18 @@ def evalGet(frame, expr):
 
 def evalCall(frame, expr, **kwargs):
     callable = expr.callable.accept(frame, evalGet)
-    # Assign args to param slots
-    for arg, slot in zip(expr.args, callable.params):
-        argval = arg.accept(frame, evaluate)
-        slot.value = argval
-    for stmt in callable.stmts:
-        returnval = stmt.accept(callable.frame, execute, **kwargs)
-        if returnval is not None:
-            return returnval
+    if isinstance(callable, Builtin):
+        argvals = [arg.accept(frame, evaluate) for arg in expr.args]
+        return callable.func(*argvals)
+    elif isinstance(callable, Callable):
+        # Assign args to param slots
+        for arg, slot in zip(expr.args, callable.params):
+            argval = arg.accept(frame, evaluate)
+            slot.value = argval
+        for stmt in callable.stmts:
+            returnval = stmt.accept(callable.frame, execute, **kwargs)
+            if returnval is not None:
+                return returnval
 
 def evalAssign(frame, expr):
     value = expr.expr.accept(frame, evaluate)
