@@ -1,6 +1,6 @@
 from .builtin import ParseError, RuntimeError, LogicError
 from .lang import Frame
-from .function import system
+from .system import system
 
 from . import scanner, parser
 from .resolver import Resolver
