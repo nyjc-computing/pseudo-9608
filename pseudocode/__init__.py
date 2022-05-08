@@ -2,7 +2,8 @@ from .builtin import ParseError, RuntimeError, LogicError
 from .lang import Frame
 from .function import system
 
-from . import scanner, parser, resolver
+from . import scanner, parser
+from .resolver import Resolver
 from .interpreter import Interpreter
 
 
@@ -53,17 +54,18 @@ class Pseudo:
             tokens, lines = scanner.scan(src)
             result['lines'] = lines
             statements = parser.parse(tokens)
-            statements, frame = resolver.inspect(statements)
-            result['frame'] = frame
+            resolver = Resolver(globalFrame, statements)
+            resolver.inspect()
+            result['frame'] = globalFrame
         except (ParseError, LogicError) as err:
             result['error'] = err
             return result
 
-        interpreter = Interpreter(frame, statements)
+        interpreter = Interpreter(globalFrame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
-            frame = interpreter.interpret()
-            result['frame'] = frame
+            globalFrame = interpreter.interpret()
+            result['frame'] = globalFrame
         except RuntimeError as err:
             result['error'] = err
         finally:
