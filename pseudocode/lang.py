@@ -61,6 +61,30 @@ class Procedure(Callable):
 
 
 
+class Builtin(Value):
+    """
+    Represents a system function in pseudo.
+
+    Attributes
+    ----------
+    - params
+        A list of parameters used by the callable
+    - func
+        the Python function to call when invoked
+    """
+    __slots__ = ('params', 'func')
+    def __init__(self, params, func):
+        self.params = params
+        self.func = func
+
+    def __repr__(self):
+        attrstr = ", ".join([
+            repr(getattr(self, attr)) for attr in self.__slots__
+        ])
+        return f'{type(self).__name__}({attrstr})'
+
+
+
 class File(Value):
     """
     Represents a file object in a frame.
@@ -312,15 +336,6 @@ class Input(Stmt):
     def __init__(self, rule, name):
         self.rule = rule
         self.name = name
-
-
-
-# class Assign(Stmt):
-#     __slots__ = ('rule', 'name', 'expr')
-#     def __init__(self, rule, name, expr):
-#         self.rule = rule
-#         self.name = name
-#         self.expr = expr
 
 
 
