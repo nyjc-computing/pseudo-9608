@@ -45,6 +45,21 @@ def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
 
+
+
+class Resolver:
+    """
+    Resolves a list of statements with the given frame.
+    """
+    def __init__(self, frame, statements):
+        self.frame = frame
+        self.statements = statements
+
+    def inspect(frame, statements):
+        verifyStmts(frame, statements)
+
+
+    
 # Resolvers
 
 def resolveExprs(frame, exprs):

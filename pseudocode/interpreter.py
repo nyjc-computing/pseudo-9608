@@ -56,7 +56,6 @@ class Interpreter:
             self.statements,
             output=self.outputHandler,
         )
-        return self.frame
 
 
 
