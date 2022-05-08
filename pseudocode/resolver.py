@@ -111,19 +111,27 @@ def resolveAssign(frame, expr):
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
+    if not frame.has(expr.name):
+        frame = frame.lookup(expr.name)
+    if not frame:
+        raise LogicError("Undeclared", expr.token())
     expr.frame = frame
     return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
-    callable = frame.getValue(expr.callable.name)
+    # Resolve global frame where procedure is declared
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise LogicError("Not PROCEDURE", token=expr.callable.token())
     resolveCall(frame, expr)
 
 def resolveFuncCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
-    callable = frame.getValue(expr.callable.name)
+    # Resolve global frame where function is declared
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(expr.callable.name)
     if not isFunction(callable):
         raise LogicError("Not FUNCTION", token=expr.callable.token())
     resolveCall(frame, expr)
@@ -134,7 +142,7 @@ def resolveCall(frame, expr):
     type-checking. These should be carried out first (e.g. in a wrapper
     function) before resolveCall() is invoked.
     """
-    callable = frame.getValue(expr.callable.name)
+    callable = expr.callable.frame.getValue(expr.callable.name)
     numArgs, numParams = len(expr.args), len(callable.params)
     if numArgs != numParams:
         raise LogicError(
@@ -199,7 +207,12 @@ def verifyLoop(frame, stmt):
 
 def verifyProcedure(frame, stmt):
     # Set up local frame
-    local = Frame()
+    local = Frame(outer=frame)
+    # Assign procedure in frame first, to make recursive calls work
+    frame.declare(stmt.name, 'NULL')
+    frame.setValue(stmt.name, Procedure(
+        local, stmt.params, stmt.stmts
+    ))
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
@@ -214,15 +227,15 @@ def verifyProcedure(frame, stmt):
         stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
-    # Declare procedure in frame
-    frame.declare(stmt.name, 'NULL')
-    frame.setValue(stmt.name, Procedure(
-        local, stmt.params, stmt.stmts
-    ))
 
 def verifyFunction(frame, stmt):
     # Set up local frame
-    local = Frame()
+    local = Frame(outer=frame)
+    # Assign function in frame first, to make recursive calls work
+    frame.declare(stmt.name, stmt.returnType)
+    frame.setValue(stmt.name, Function(
+        local, stmt.params, stmt.stmts
+    ))
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
@@ -237,11 +250,6 @@ def verifyFunction(frame, stmt):
             )
     if not hasReturn:
         raise LogicError("No RETURN in function", stmt.name.token())
-    # Declare function in frame
-    frame.declare(stmt.name, stmt.returnType)
-    frame.setValue(stmt.name, Function(
-        local, stmt.params, stmt.stmts
-    ))
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)
@@ -278,7 +286,7 @@ def verify(frame, stmt):
 
 
 
-def inspect(statements):
+def inspect(frame, statements):
     frame = Frame()
     verifyStmts(frame, statements)
     return statements, frame
