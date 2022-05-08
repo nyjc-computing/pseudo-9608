@@ -142,7 +142,7 @@ def resolveCall(frame, expr):
     type-checking. These should be carried out first (e.g. in a wrapper
     function) before resolveCall() is invoked.
     """
-    callable = frame.getValue(expr.callable.name)
+    callable = expr.callable.frame.getValue(expr.callable.name)
     numArgs, numParams = len(expr.args), len(callable.params)
     if numArgs != numParams:
         raise LogicError(

@@ -8,7 +8,7 @@ PROCEDURE CountDown(Num : INTEGER)
     OUTPUT Num
     IF Num > 0
       THEN
-        OUTPUT CountDown(Num - 1)
+        CALL CountDown(Num - 1)
     ENDIF
 ENDPROCEDURE
 
@@ -33,6 +33,6 @@ class RecursionTestCase(unittest.TestCase):
         # Check output
         output = self.result['output']
         self.assertEqual(
-            output,
+            output.strip(),
             "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0",
         )
