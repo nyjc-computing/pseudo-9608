@@ -55,8 +55,8 @@ class Resolver:
         self.frame = frame
         self.statements = statements
 
-    def inspect(frame, statements):
-        verifyStmts(frame, statements)
+    def inspect(self):
+        verifyStmts(self.frame, self.statements)
 
 
     
