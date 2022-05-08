@@ -206,9 +206,13 @@ def verifyLoop(frame, stmt):
     verifyStmts(frame, stmt.stmts)
 
 def verifyProcedure(frame, stmt):
-    frame.declare(stmt.name, 'NULL')
     # Set up local frame
     local = Frame(outer=frame)
+    # Assign procedure in frame first, to make recursive calls work
+    frame.declare(stmt.name, 'NULL')
+    frame.setValue(stmt.name, Procedure(
+        local, stmt.params, stmt.stmts
+    ))
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
@@ -221,24 +225,20 @@ def verifyProcedure(frame, stmt):
             expr.accept(local, resolveDeclare)
         # params: replace Declare Expr with slot
         stmt.params[i] = local.get(expr.name)
-    # Assign procedure in frame first, to make recursive calls work
-    frame.setValue(stmt.name, Procedure(
-        local, stmt.params, stmt.stmts
-    ))
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
 def verifyFunction(frame, stmt):
-    frame.declare(stmt.name, stmt.returnType)
     # Set up local frame
     local = Frame(outer=frame)
-    for expr in stmt.params:
-        # Declare vars in local
-        expr.accept(local, resolveDeclare)
     # Assign function in frame first, to make recursive calls work
+    frame.declare(stmt.name, stmt.returnType)
     frame.setValue(stmt.name, Function(
         local, stmt.params, stmt.stmts
     ))
+    for expr in stmt.params:
+        # Declare vars in local
+        expr.accept(local, resolveDeclare)
     # Resolve procedure statements using local
     hasReturn = False
     for procstmt in stmt.stmts:
