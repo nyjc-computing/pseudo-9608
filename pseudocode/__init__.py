@@ -1,4 +1,7 @@
 from .builtin import ParseError, RuntimeError, LogicError
+from .lang import Frame
+from .function import system
+
 from . import scanner, parser, resolver
 from .interpreter import Interpreter
 
@@ -45,6 +48,7 @@ class Pseudo:
             'frame': None,
             'error': None,
         }
+        globalFrame = Frame(outer=system)
         try:
             tokens, lines = scanner.scan(src)
             result['lines'] = lines
