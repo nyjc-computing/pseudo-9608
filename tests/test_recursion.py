@@ -4,7 +4,7 @@ import pseudocode
 from tests import capture
 
 TESTCODE = """
-PROCEDURE CountDownThenUp(Num : INTEGER)
+PROCEDURE CountDown(Num : INTEGER)
     OUTPUT Num
     IF Num > 0
       THEN
@@ -12,7 +12,7 @@ PROCEDURE CountDownThenUp(Num : INTEGER)
     ENDIF
 ENDPROCEDURE
 
-CALL CountDownThenUp(10)
+CALL CountDown(10)
 """
 
 class RecursionTestCase(unittest.TestCase):
