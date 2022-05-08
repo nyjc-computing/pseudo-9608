@@ -111,6 +111,10 @@ def resolveAssign(frame, expr):
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
+    if not frame.has(expr.name):
+        frame = frame.lookup(expr.name)
+    if not frame:
+        raise LogicError("Undeclared", expr.name.token())
     expr.frame = frame
     return frame.getType(expr.name)
 
