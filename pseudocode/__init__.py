@@ -1,5 +1,3 @@
-import sys
-
 from pseudocode.builtin import ParseError, RuntimeError, LogicError
 from pseudocode import scanner
 from pseudocode import parser
