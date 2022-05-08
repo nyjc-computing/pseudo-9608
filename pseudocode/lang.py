@@ -126,7 +126,8 @@ class Frame:
     delete(name)
         deletes the slot associated with the name
     """
-    def __init__(self):
+    def __init__(self, outer=None):
+        self.outer = outer
         self.data = {}
 
     def __repr__(self):
