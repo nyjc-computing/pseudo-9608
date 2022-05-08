@@ -68,6 +68,7 @@ class Pseudo:
             result['error'] = err
             return result
 
+        # Interpreting
         interpreter = Interpreter(globalFrame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
