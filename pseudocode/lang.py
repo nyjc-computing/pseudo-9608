@@ -125,6 +125,8 @@ class Frame:
         updates the value associated with the name
     delete(name)
         deletes the slot associated with the name
+    lookup(name)
+        returns the first frame containing the name
     """
     def __init__(self, outer=None):
         self.outer = outer
@@ -157,6 +159,12 @@ class Frame:
 
     def delete(self, name):
         del self.data[name]
+
+    def lookup(self, name):
+        if self.has(name):
+            return self
+        if self.outer:
+            return self.outer.lookup(name)
 
 
 
