@@ -221,19 +221,24 @@ def verifyProcedure(frame, stmt):
             expr.accept(local, resolveDeclare)
         # params: replace Declare Expr with slot
         stmt.params[i] = local.get(expr.name)
-    # Resolve procedure statements using local
-    verifyStmts(local, stmt.stmts)
-    # Declare procedure in frame
+    # Assign procedure in frame first, to make recursive calls work
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
+    # Resolve procedure statements using local
+    verifyStmts(local, stmt.stmts)
 
 def verifyFunction(frame, stmt):
+    frame.declare(stmt.name, stmt.returnType)
     # Set up local frame
     local = Frame(outer=frame)
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
+    # Assign function in frame first, to make recursive calls work
+    frame.setValue(stmt.name, Function(
+        local, stmt.params, stmt.stmts
+    ))
     # Resolve procedure statements using local
     hasReturn = False
     for procstmt in stmt.stmts:
@@ -245,11 +250,6 @@ def verifyFunction(frame, stmt):
             )
     if not hasReturn:
         raise LogicError("No RETURN in function", stmt.name.token())
-    # Declare function in frame
-    frame.declare(stmt.name, stmt.returnType)
-    frame.setValue(stmt.name, Function(
-        local, stmt.params, stmt.stmts
-    ))
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)
