@@ -114,20 +114,24 @@ def resolveGet(frame, expr):
     if not frame.has(expr.name):
         frame = frame.lookup(expr.name)
     if not frame:
-        raise LogicError("Undeclared", expr.name.token())
+        raise LogicError("Undeclared", expr.token())
     expr.frame = frame
     return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
-    callable = frame.getValue(expr.callable.name)
+    # Resolve global frame where procedure is declared
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise LogicError("Not PROCEDURE", token=expr.callable.token())
     resolveCall(frame, expr)
 
 def resolveFuncCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
-    callable = frame.getValue(expr.callable.name)
+    # Resolve global frame where function is declared
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(expr.callable.name)
     if not isFunction(callable):
         raise LogicError("Not FUNCTION", token=expr.callable.token())
     resolveCall(frame, expr)
@@ -202,8 +206,9 @@ def verifyLoop(frame, stmt):
     verifyStmts(frame, stmt.stmts)
 
 def verifyProcedure(frame, stmt):
+    frame.declare(stmt.name, 'NULL')
     # Set up local frame
-    local = Frame()
+    local = Frame(outer=frame)
     for i, expr in enumerate(stmt.params):
         if stmt.passby == 'BYREF':
             exprtype = expr.accept(local, resolveDeclare)
@@ -219,14 +224,13 @@ def verifyProcedure(frame, stmt):
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
     # Declare procedure in frame
-    frame.declare(stmt.name, 'NULL')
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
 
 def verifyFunction(frame, stmt):
     # Set up local frame
-    local = Frame()
+    local = Frame(outer=frame)
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
@@ -282,7 +286,7 @@ def verify(frame, stmt):
 
 
 
-def inspect(statements):
+def inspect(frame, statements):
     frame = Frame()
     verifyStmts(frame, statements)
     return statements, frame
