@@ -298,10 +298,3 @@ def verify(frame, stmt):
         return stmt.expr.accept(frame, resolve)
     elif stmt.rule == 'call':
         stmt.expr.accept(frame, resolveProcCall)
-
-
-
-def inspect(frame, statements):
-    frame = Frame()
-    verifyStmts(frame, statements)
-    return statements, frame
