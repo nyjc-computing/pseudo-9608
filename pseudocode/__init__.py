@@ -1,8 +1,6 @@
-from pseudocode.builtin import ParseError, RuntimeError, LogicError
-from pseudocode import scanner
-from pseudocode import parser
-from pseudocode import resolver
-from pseudocode.interpreter import Interpreter
+from .builtin import ParseError, RuntimeError, LogicError
+from . import scanner, parser, resolver
+from .interpreter import Interpreter
 
 
 
