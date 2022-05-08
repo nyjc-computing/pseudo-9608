@@ -44,28 +44,34 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src):
+        globalFrame = Frame(outer=system)
         result = {
             'lines': None,
-            'frame': None,
+            'frame': globalFrame,
             'error': None,
         }
-        globalFrame = Frame(outer=system)
+
+        # Parsing
         try:
             tokens, lines = scanner.scan(src)
             result['lines'] = lines
             statements = parser.parse(tokens)
-            resolver = Resolver(globalFrame, statements)
+        except ParseError as err:
+            result['error'] = err
+            return result
+
+        # Resolving
+        resolver = Resolver(globalFrame, statements)
+        try:
             resolver.inspect()
-            result['frame'] = globalFrame
-        except (ParseError, LogicError) as err:
+        except LogicError as err:
             result['error'] = err
             return result
 
         interpreter = Interpreter(globalFrame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
-            globalFrame = interpreter.interpret()
-            result['frame'] = globalFrame
+            interpreter.interpret()
         except RuntimeError as err:
             result['error'] = err
         finally:
