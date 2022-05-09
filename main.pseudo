@@ -1,10 +1,2 @@
-PROCEDURE TestBool(Succeeded : BOOLEAN)
-    IF Succeeded = TRUE AND NOT (-1.2 = -1.5)
-      THEN
-        OUTPUT "Yay!"
-      ELSE
-        OUTPUT "Awww!"
-    ENDIF
-ENDPROCEDURE
-
-CALL TestBool(TRUE)
+OUTPUT RND()
+OUTPUT RANDOMBETWEEN(2, 9)
