@@ -62,3 +62,4 @@ This project is also an attempt to write a programming book in a new style. Each
 - [21b Test: Checking output](https://github.com/nyjc-computing/pseudo-9608/pull/54)
 - [21c Test: Checking Errors](https://github.com/nyjc-computing/pseudo-9608/pull/55)
 - [22a Scoping: Recursion](https://github.com/nyjc-computing/pseudo-9608/pull/56)
+- [22b Scoping: System](https://github.com/nyjc-computing/pseudo-9608/pull/57)
