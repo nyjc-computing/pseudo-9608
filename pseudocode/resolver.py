@@ -3,7 +3,7 @@ from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
 from .builtin import NUMERIC, EQUATABLE
-from .lang import Frame, Function, Procedure
+from .lang import Frame, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
@@ -14,7 +14,7 @@ def isProcedure(callable):
     return isinstance(callable, Procedure)
 
 def isFunction(callable):
-    return isinstance(callable, Function)
+    return type(callable) in (Builtin, Function)
 
 def expectTypeElseError(exprtype, *expected, token=None):
     assert token, "Missing token"
