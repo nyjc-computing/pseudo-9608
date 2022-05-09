@@ -106,9 +106,8 @@ def nameExpr(tokens):
     # Function call
     args = []
     if match(tokens, '('):
-        arg = expression(tokens)
-        args += [arg]
-        while match(tokens, ','):
+        while not check(tokens).word in (')',):
+            match(tokens, ',')  # ,
             arg = expression(tokens)
             args += [arg]
         expectElseError(tokens, ')', "after '('")

@@ -3,7 +3,7 @@ from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
 from .builtin import NUMERIC, EQUATABLE
-from .lang import Frame, Function, Procedure
+from .lang import Frame, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
@@ -14,7 +14,7 @@ def isProcedure(callable):
     return isinstance(callable, Procedure)
 
 def isFunction(callable):
-    return isinstance(callable, Function)
+    return type(callable) in (Builtin, Function)
 
 def expectTypeElseError(exprtype, *expected, token=None):
     assert token, "Missing token"
@@ -45,6 +45,21 @@ def value(frame, expr):
     """Return the value of a Literal"""
     return expr.value
 
+
+
+class Resolver:
+    """
+    Resolves a list of statements with the given frame.
+    """
+    def __init__(self, frame, statements):
+        self.frame = frame
+        self.statements = statements
+
+    def inspect(self):
+        verifyStmts(self.frame, self.statements)
+
+
+    
 # Resolvers
 
 def resolveExprs(frame, exprs):
@@ -283,10 +298,3 @@ def verify(frame, stmt):
         return stmt.expr.accept(frame, resolve)
     elif stmt.rule == 'call':
         stmt.expr.accept(frame, resolveProcCall)
-
-
-
-def inspect(frame, statements):
-    frame = Frame()
-    verifyStmts(frame, statements)
-    return statements, frame

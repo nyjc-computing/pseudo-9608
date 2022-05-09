@@ -1,10 +1,10 @@
-import sys
+from .builtin import ParseError, RuntimeError, LogicError
+from .lang import Frame
+from .system import system
 
-from pseudocode.builtin import ParseError, RuntimeError, LogicError
-from pseudocode import scanner
-from pseudocode import parser
-from pseudocode import resolver
-from pseudocode.interpreter import Interpreter
+from . import scanner, parser
+from .resolver import Resolver
+from .interpreter import Interpreter
 
 
 
@@ -20,7 +20,7 @@ def error(lines, err):
     if err.col:
         leftmargin = len(lineinfo) + 1 + err.col
         print((' ' * leftmargin) + '^')
-        print(errType, err.report())
+    print(errType, err.report())
 
 
 
@@ -44,26 +44,35 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src):
+        globalFrame = Frame(outer=system)
         result = {
             'lines': None,
-            'frame': None,
+            'frame': globalFrame,
             'error': None,
         }
+
+        # Parsing
         try:
             tokens, lines = scanner.scan(src)
             result['lines'] = lines
             statements = parser.parse(tokens)
-            statements, frame = resolver.inspect(statements)
-            result['frame'] = frame
-        except (ParseError, LogicError) as err:
+        except ParseError as err:
             result['error'] = err
             return result
 
-        interpreter = Interpreter(frame, statements)
+        # Resolving
+        resolver = Resolver(globalFrame, statements)
+        try:
+            resolver.inspect()
+        except LogicError as err:
+            result['error'] = err
+            return result
+
+        # Interpreting
+        interpreter = Interpreter(globalFrame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
-            frame = interpreter.interpret()
-            result['frame'] = frame
+            interpreter.interpret()
         except RuntimeError as err:
             result['error'] = err
         finally:
