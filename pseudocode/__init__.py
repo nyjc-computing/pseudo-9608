@@ -20,7 +20,7 @@ def error(lines, err):
     if err.col:
         leftmargin = len(lineinfo) + 1 + err.col
         print((' ' * leftmargin) + '^')
-        print(errType, err.report())
+    print(errType, err.report())
 
 
 
