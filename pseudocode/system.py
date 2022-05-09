@@ -1,5 +1,6 @@
 import random
 
+from .builtin import RuntimeError
 from .lang import Frame, Builtin, TypedValue
 
 
@@ -27,4 +28,22 @@ system.setValue('RANDOMBETWEEN', Builtin(
         TypedValue(type='INTEGER', value=None),
     ],
     func=RANDOMBETWEEN,
+))
+
+def EOF(file):
+    # Python has no in-built EOF support;
+    # if read() or readline() return an empty string,
+    # that's considered EOF
+    # So we'll have to seek back to the previous position
+    # after read()
+    pos = file.tell()
+    iseof = (file.read(1) == '')
+    file.seek(pos)
+    return iseof
+system.declare('EOF', 'BOOLEAN')
+system.setValue('EOF', Builtin(
+    params=[
+        TypedValue(type='STRING', value=None),
+    ],
+    func=EOF,
 ))
