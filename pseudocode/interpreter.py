@@ -1,6 +1,7 @@
 from .builtin import RuntimeError
 from .lang import Frame, File, Callable, Builtin
 from .lang import Literal, Unary, Binary, Get, Call, Assign
+from .system import EOF
 
 
 
@@ -81,6 +82,10 @@ def evalGet(frame, expr):
 def evalCall(frame, expr, **kwargs):
     callable = expr.callable.accept(frame, evalGet)
     if isinstance(callable, Builtin):
+        if callable.func is EOF:
+            name = expr.args[0].accept(frame, evaluate)
+            file = frame.getValue(name)
+            return callable.func(file.iohandler)
         argvals = [arg.accept(frame, evaluate) for arg in expr.args]
         return callable.func(*argvals)
     elif isinstance(callable, Callable):
