@@ -387,7 +387,7 @@ class ProcFunc(Stmt):
 class TypeStmt(Stmt):
     __slots__ = ('stmts',)
     def __init__(self, exprs):
-        self.stmts = exprs
+        self.exprs = exprs
 
 
 
