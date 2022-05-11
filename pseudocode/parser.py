@@ -4,7 +4,7 @@ from .builtin import lte, add
 from .lang import Token
 from .lang import Literal, Name, Unary, Binary, Get, Call
 from .lang import ExprStmt, Output, Input, Declare, Assign
-from .lang import Conditional, Loop, ProcFunc, FileAction
+from .lang import Conditional, Loop, ProcFunc, TypeStmt, FileAction
 
 
 
@@ -242,6 +242,9 @@ def declareStmt(tokens):
     expectElseError(tokens, '\n', "after statement")
     return ExprStmt('declare', expr)
 
+def typeStmt(tokens):
+    return TypeStmt('declaretype', exprs)
+
 def assignStmt(tokens):
     expr = assignment(tokens)
     expectElseError(tokens, '\n', "after statement")
@@ -455,6 +458,8 @@ def statement2(tokens):
 def statement3(tokens):
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    if match(tokens, 'TYPE'):
+        return typeStmt(tokens)
     return statement4(tokens)
 
 def statement4(tokens):
