@@ -384,6 +384,13 @@ class ProcFunc(Stmt):
 
 
 
+class TypeStmt(Stmt):
+    __slots__ = ('stmts',)
+    def __init__(self, stmts):
+        self.stmts = stmts
+
+
+
 class FileAction(Stmt):
     __slots__ = ('rule', 'action', 'name', 'mode', 'data')
     def __init__(self, rule, action, name, mode, data):
