@@ -244,9 +244,12 @@ def declareStmt(tokens):
 
 def typeStmt(tokens):
     name = identifier(tokens).name
+    expectElseError(tokens, '\n')
     exprs = []
     while not atEnd(tokens) and not check(tokens).word in ('ENDTYPE',):
+        expectElseError(tokens, 'DECLARE')
         exprs += [declare(tokens)]
+        expectElseError(tokens, '\n')
     expectElseError(tokens, 'ENDTYPE')
     expectElseError(tokens, '\n')
     return TypeStmt('declaretype', name, exprs)
