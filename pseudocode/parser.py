@@ -243,7 +243,13 @@ def declareStmt(tokens):
     return ExprStmt('declare', expr)
 
 def typeStmt(tokens):
-    return TypeStmt('declaretype', exprs)
+    name = identifier(tokens).name
+    exprs = []
+    while not atEnd(tokens) and not check(tokens).word in ('ENDTYPE',):
+        exprs += [declare(tokens)]
+    expectElseError(tokens, 'ENDTYPE')
+    expectElseError(tokens, '\n')
+    return TypeStmt('declaretype', name, exprs)
 
 def assignStmt(tokens):
     expr = assignment(tokens)
