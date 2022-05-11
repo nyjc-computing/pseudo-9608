@@ -125,10 +125,9 @@ class TypedValue:
 
 
 
-class Frame:
+class Object:
     """
-    Represents a space for storing of TypedValues
-    in 9608 pseudocode.
+    Represents a space for storing of TypedValues in 9608 pseudocode.
     Provides methods for managing TypedValues.
 
     Methods
@@ -147,14 +146,10 @@ class Frame:
         retrieves the value associated with the name
     setValue(name, value)
         updates the value associated with the name
-    delete(name)
-        deletes the slot associated with the name
-    lookup(name)
-        returns the first frame containing the name
     """
     def __init__(self, outer=None):
+        super().__init__()
         self.outer = outer
-        self.data = {}
 
     def __repr__(self):
         nameTypePairs = [
@@ -180,6 +175,24 @@ class Frame:
 
     def setValue(self, name, value):
         self.data[name].value = value
+
+
+
+class Frame(Object):
+    """
+    Represents a space for storing of TypedValues in 9608 pseudocode.
+    Frames differ from Objects in that they can be chained, and slots can be
+    deleted after declaration.
+
+    Methods
+    -------
+    delete(name)
+        deletes the slot associated with the name
+    lookup(name)
+        returns the first frame containing the name
+    """
+    def __init__(self):
+        self.data = {}
 
     def delete(self, name):
         del self.data[name]
