@@ -233,7 +233,7 @@ def declare(tokens):
     name = identifier(tokens).name
     expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
-    if typetoken.word not in TYPES:
+    if typetoken.word not in TYPES and typetoken.type != 'name':
         raise ParseError("Invalid type", typetoken)
     return Declare(name, typetoken.word)
     
