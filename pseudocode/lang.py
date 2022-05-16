@@ -225,10 +225,13 @@ class Frame(Object):
     lookup(name)
         returns the first frame containing the name
     """
-    def __init__(self, typesys, outer=None):
+    def __init__(self, typesys=None, outer=None):
         super().__init__()
         self.outer = outer
-        self.types = typesys
+        if typesys:
+            self.types = typesys
+        elif outer:
+            self.types = self.outer.types
 
     def delete(self, name):
         del self.data[name]
