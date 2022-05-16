@@ -109,6 +109,41 @@ class File(Value):
 
 
 
+class TypeSystem:
+    """
+    Handles registration of types in 9608 pseudocode.
+    Each type is registered with a name, and an optional template.
+    Existence checks should be carried out (using has()) before using the
+    methods here.
+
+    Methods
+    -------
+    has(name)
+        returns True if the type has been declared, otherwise returns False
+    declare(name)
+        declares the existence of a type
+    setTemplate(name, template)
+        set the template used to initialise a TypedValue with this type
+    getTemplate(name)
+        return the template of the type
+    """
+    def __init__(self, *types):
+        self.data = {type_: None for type_ in types}
+
+    def has(self, name):
+        return name in self.data
+
+    def declare(self, name):
+        self.data[name] = None
+
+    def setTemplate(self, name, template):
+        self.data[name] = template
+
+    def getTemplate(self, name):
+        return self.data[name]
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
