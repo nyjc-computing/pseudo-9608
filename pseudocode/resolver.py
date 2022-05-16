@@ -3,7 +3,7 @@ from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
 from .builtin import NUMERIC, EQUATABLE
-from .lang import Frame, Builtin, Function, Procedure
+from .lang import Object, Frame, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
@@ -277,6 +277,15 @@ def verifyFile(frame, stmt):
     elif stmt.action == 'close':
         pass
 
+def verifyDeclareType(frame, stmt):
+    frame.types.declare(stmt.name)
+    obj = Object()
+    for expr in stmt.exprs:
+        resolveDeclare(obj, expr)
+    frame.types.setTemplate(stmt.name, obj)
+    
+
+
 def verify(frame, stmt):
     if stmt.rule == 'output':
         stmt.accept(frame, verifyOutput)
@@ -294,6 +303,8 @@ def verify(frame, stmt):
         stmt.accept(frame, verifyFunction)
     elif stmt.rule == 'file':
         stmt.accept(frame, verifyFile)
+    elif stmt.rule == 'declaretype':
+        stmt.accept(frame, verifyDeclareType)
     elif stmt.rule in ('assign', 'declare', 'return'):
         return stmt.expr.accept(frame, resolve)
     elif stmt.rule == 'call':
