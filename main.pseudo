@@ -1,4 +1,9 @@
-TYPE Mytype
-    DECLARE Aaa : INTEGER
-    DECLARE Bbb : INTEGER
+TYPE Student
+    DECLARE Surname : STRING
+    DECLARE FirstName : STRING
+    DECLARE YearGroup : INTEGER
 ENDTYPE
+DECLARE Pupil1 : Student
+Pupil1.Surname <- "Johnson"
+Pupil1.Firstname <- "Leroy"
+Pupil1.YearGroup <- 6
