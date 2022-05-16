@@ -1,5 +1,6 @@
 from .builtin import ParseError, RuntimeError, LogicError
-from .lang import Frame
+from .builtin import TYPES
+from .lang import Frame, TypeSystem
 from .system import system
 
 from . import scanner, parser
@@ -44,7 +45,7 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src):
-        globalFrame = Frame(outer=system)
+        globalFrame = Frame(typesys=TypeSystem(*TYPES), outer=system)
         result = {
             'lines': None,
             'frame': globalFrame,
