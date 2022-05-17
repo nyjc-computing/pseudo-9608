@@ -131,7 +131,7 @@ class TypeSystem:
         self.data = {}
         for typeName in types:
             self.declare(typeName)
-            self.setTemplate(typeName, TypedValue(typeName, None)
+            self.setTemplate(typeName, TypedValue(typeName, None))
 
     def has(self, name):
         return name in self.data
