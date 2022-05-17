@@ -196,7 +196,8 @@ class Object:
         return name in self.data
 
     def declare(self, name, type):
-        self.data[name] = TypedValue(type=type, value=None)
+        template = self.types.getTemplate(type)
+        self.data[name] = template.copy()
 
     def getType(self, name):
         return self.data[name].type
