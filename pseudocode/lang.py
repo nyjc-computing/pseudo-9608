@@ -158,6 +158,13 @@ class TypedValue:
     def __repr__(self):
         return f"<{self.type}: {repr(self.value)}>"
 
+    def copy(self):
+        """This returns an empty copy of the typedvalue"""
+        Class = type(self)
+        if isinstance(self.value, Object):
+            return Class(self.type, self.value.copy())
+        return Class(self.type, self.value)
+
 
 
 class Object:
