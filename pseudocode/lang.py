@@ -128,7 +128,10 @@ class TypeSystem:
         return the template of the type
     """
     def __init__(self, *types):
-        self.data = {type_: None for type_ in types}
+        self.data = {}
+        for typeName in types:
+            self.declare(typeName)
+            self.setTemplate(typeName, TypedValue(typeName, None)
 
     def has(self, name):
         return name in self.data
