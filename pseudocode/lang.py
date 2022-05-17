@@ -181,6 +181,8 @@ class Object:
         retrieves the value associated with the name
     setValue(name, value)
         updates the value associated with the name
+    copy()
+        return a copy of the object
     """
     def __init__(self, typesys):
         self.data = {}
@@ -211,6 +213,14 @@ class Object:
 
     def setValue(self, name, value):
         self.data[name].value = value
+
+    def copy(self):
+        """This returns an empty copy of the object"""
+        Class = type(self)
+        newobj = Class(typesys=self.types)
+        for name in self.data:
+            obj.declare(name, obj.getType(name))
+        return newobj
 
 
 
