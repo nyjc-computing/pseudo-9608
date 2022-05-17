@@ -226,7 +226,7 @@ class Object:
         Class = type(self)
         newobj = Class(typesys=self.types)
         for name in self.data:
-            obj.declare(name, obj.getType(name))
+            newobj.declare(name, newobj.getType(name))
         return newobj
 
 
