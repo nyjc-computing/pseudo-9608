@@ -45,7 +45,7 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src):
-        globalFrame = Frame(typesys=TypeSystem(*TYPES), outer=system)
+        globalFrame = Frame(typesys=system.types, outer=system)
         result = {
             'lines': None,
             'frame': globalFrame,
