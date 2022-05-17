@@ -1,11 +1,11 @@
 import random
 
-from .builtin import RuntimeError
-from .lang import Frame, Builtin, TypedValue
+from .builtin import TYPES, RuntimeError
+from .lang import Frame, TypeSystem, Builtin, TypedValue
 
 
 
-system = Frame()
+system = Frame(typesys=TypeSystem(*TYPES))
 
 
 
