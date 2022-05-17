@@ -182,8 +182,9 @@ class Object:
     setValue(name, value)
         updates the value associated with the name
     """
-    def __init__(self):
+    def __init__(self, typesys):
         self.data = {}
+        self.types = typesys
 
     def __repr__(self):
         nameTypePairs = [
@@ -226,13 +227,9 @@ class Frame(Object):
     lookup(name)
         returns the first frame containing the name
     """
-    def __init__(self, typesys=None, outer=None):
-        super().__init__()
+    def __init__(self, typesys, outer=None):
+        super().__init__(typesys=typesys)
         self.outer = outer
-        if typesys:
-            self.types = typesys
-        elif outer:
-            self.types = self.outer.types
 
     def delete(self, name):
         del self.data[name]
