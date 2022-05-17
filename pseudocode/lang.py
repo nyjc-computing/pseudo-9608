@@ -171,7 +171,7 @@ class Object:
         returns True if the var exists in frame,
         otherwise returns False
     declare(name, type)
-        initialises a named TypedValue in the frame
+        initialises a named TypedValue from the type system
     get(name)
         retrieves the slot associated with the name
     getType(name)
