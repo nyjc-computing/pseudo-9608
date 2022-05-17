@@ -279,7 +279,7 @@ def verifyFile(frame, stmt):
 
 def verifyDeclareType(frame, stmt):
     frame.types.declare(stmt.name)
-    obj = Object()
+    obj = Object(typesys=frame.types)
     for expr in stmt.exprs:
         resolveDeclare(obj, expr)
     frame.types.setTemplate(stmt.name, obj)
