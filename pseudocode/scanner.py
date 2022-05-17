@@ -28,7 +28,7 @@ def makeToken(code, type, word, value):
 
 def word(code):
     token = consume(code)
-    while not atEnd(code) and check(code).isalpha():
+    while not atEnd(code) and (check(code).isalpha() or check(code).isdigit()):
         token += consume(code)
     return token
 
