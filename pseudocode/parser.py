@@ -37,6 +37,8 @@ def makeExpr(
             if assignee is None:
                 assignee = name
             return Assign(name, assignee, expr, token=token)
+        elif type is not None:
+            return Declare(name, type, token=token)
         else:
             return Name(name, token=token)
     if type is not None and value is not None:
@@ -244,12 +246,16 @@ def inputStmt(tokens):
     return Input('input', name)
 
 def declare(tokens):
-    name = identifier(tokens).name
+    name = identifier(tokens)
     expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
     if typetoken.word not in TYPES and typetoken.type != 'name':
         raise ParseError("Invalid type", typetoken)
-    return Declare(name, typetoken.word)
+    return makeExpr(
+        name=name.name,
+        type=typetoken.word,
+        token=name.token(),
+    )
     
 def declareStmt(tokens):
     expr = declare(tokens)
