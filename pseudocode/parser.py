@@ -25,7 +25,7 @@ def consume(tokens):
 def makeExpr(
     *,
     type=None, value=None,
-    frame=None, name=None, expr=None,
+    frame=None, name=None, assignee=None, expr=None,
     left=None, oper=None, right=None,
     callable=None, args=None,
     token=None,
@@ -34,7 +34,9 @@ def makeExpr(
         if frame is not None:
             return Get(frame, name, token=token)
         elif expr is not None:
-            return Assign(name, expr, token=token)
+            if assignee is None:
+                assignee = name
+            return Assign(name, assignee, expr, token=token)
         else:
             return Name(name, token=token)
     if type is not None and value is not None:

@@ -326,10 +326,11 @@ class Declare(Expr):
 
 
 class Assign(Expr):
-    __slots__ = ('name', 'expr')
-    def __init__(self, name, expr, token=None):
+    __slots__ = ('name', 'assignee', 'expr')
+    def __init__(self, name, assignee, expr, token=None):
         super().__init__(token=token)
         self.name = name
+        self.assignee = assignee
         self.expr = expr
 
 
