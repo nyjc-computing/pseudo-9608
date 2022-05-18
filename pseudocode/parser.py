@@ -118,7 +118,7 @@ def nameExpr(tokens):
             token=name.token(),
         )
     # Attribute get
-    if match(tokens, '.'):
+    while match(tokens, '.'):
         # Insert Get Expr for Object
         # in place of frame
         name = identifier(tokens)
