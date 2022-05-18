@@ -132,6 +132,7 @@ def value(tokens):
         expr = expression(tokens)
         expectElseError(tokens, ')', "after '('")
         return expr
+    # A name or call or attribute
     elif token.type == 'name':
         return nameExpr(tokens)
     else:
