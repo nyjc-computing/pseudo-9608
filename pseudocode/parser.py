@@ -4,7 +4,7 @@ from .builtin import lte, add
 from .lang import Token
 from .lang import Literal, Name, Unary, Binary, Get, Call
 from .lang import ExprStmt, Output, Input, Declare, Assign
-from .lang import Conditional, Loop, ProcFunc, FileAction
+from .lang import Conditional, Loop, ProcFunc, TypeStmt, FileAction
 
 
 
@@ -233,7 +233,7 @@ def declare(tokens):
     name = identifier(tokens).name
     expectElseError(tokens, ':', "after name")
     typetoken = consume(tokens)
-    if typetoken.word not in TYPES:
+    if typetoken.word not in TYPES and typetoken.type != 'name':
         raise ParseError("Invalid type", typetoken)
     return Declare(name, typetoken.word)
     
@@ -241,6 +241,18 @@ def declareStmt(tokens):
     expr = declare(tokens)
     expectElseError(tokens, '\n', "after statement")
     return ExprStmt('declare', expr)
+
+def typeStmt(tokens):
+    name = identifier(tokens).name
+    expectElseError(tokens, '\n')
+    exprs = []
+    while not atEnd(tokens) and not check(tokens).word in ('ENDTYPE',):
+        expectElseError(tokens, 'DECLARE')
+        exprs += [declare(tokens)]
+        expectElseError(tokens, '\n')
+    expectElseError(tokens, 'ENDTYPE')
+    expectElseError(tokens, '\n')
+    return TypeStmt('declaretype', name, exprs)
 
 def assignStmt(tokens):
     expr = assignment(tokens)
@@ -455,6 +467,8 @@ def statement2(tokens):
 def statement3(tokens):
     if match(tokens, 'DECLARE'):
         return declareStmt(tokens)
+    if match(tokens, 'TYPE'):
+        return typeStmt(tokens)
     return statement4(tokens)
 
 def statement4(tokens):

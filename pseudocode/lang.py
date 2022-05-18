@@ -109,6 +109,44 @@ class File(Value):
 
 
 
+class TypeSystem:
+    """
+    Handles registration of types in 9608 pseudocode.
+    Each type is registered with a name, and an optional template.
+    Existence checks should be carried out (using has()) before using the
+    methods here.
+
+    Methods
+    -------
+    has(name)
+        returns True if the type has been declared, otherwise returns False
+    declare(name)
+        declares the existence of a type
+    setTemplate(name, template)
+        set the template used to initialise a TypedValue with this type
+    getTemplate(name)
+        return the template of the type
+    """
+    def __init__(self, *types):
+        self.data = {}
+        for typeName in types:
+            self.declare(typeName)
+            self.setTemplate(typeName, TypedValue(typeName, None))
+
+    def has(self, name):
+        return name in self.data
+
+    def declare(self, name):
+        self.data[name] = None
+
+    def setTemplate(self, name, template):
+        self.data[name] = template
+
+    def getTemplate(self, name):
+        return self.data[name]
+
+
+
 class TypedValue:
     """
     Represents a value in 9608 pseudocode.
@@ -123,12 +161,18 @@ class TypedValue:
     def __repr__(self):
         return f"<{self.type}: {repr(self.value)}>"
 
+    def copy(self):
+        """This returns an empty copy of the typedvalue"""
+        Class = type(self)
+        if isinstance(self.value, Object):
+            return Class(self.type, self.value.copy())
+        return Class(self.type, self.value)
 
 
-class Frame:
+
+class Object:
     """
-    Represents a space for storing of TypedValues
-    in 9608 pseudocode.
+    Represents a space for storing of TypedValues in 9608 pseudocode.
     Provides methods for managing TypedValues.
 
     Methods
@@ -137,7 +181,7 @@ class Frame:
         returns True if the var exists in frame,
         otherwise returns False
     declare(name, type)
-        initialises a named TypedValue in the frame
+        initialises a named TypedValue from the type system
     get(name)
         retrieves the slot associated with the name
     getType(name)
@@ -147,14 +191,12 @@ class Frame:
         retrieves the value associated with the name
     setValue(name, value)
         updates the value associated with the name
-    delete(name)
-        deletes the slot associated with the name
-    lookup(name)
-        returns the first frame containing the name
+    copy()
+        return a copy of the object
     """
-    def __init__(self, outer=None):
-        self.outer = outer
+    def __init__(self, typesys):
         self.data = {}
+        self.types = typesys
 
     def __repr__(self):
         nameTypePairs = [
@@ -167,7 +209,8 @@ class Frame:
         return name in self.data
 
     def declare(self, name, type):
-        self.data[name] = TypedValue(type=type, value=None)
+        template = self.types.getTemplate(type)
+        self.data[name] = template.copy()
 
     def getType(self, name):
         return self.data[name].type
@@ -180,6 +223,33 @@ class Frame:
 
     def setValue(self, name, value):
         self.data[name].value = value
+
+    def copy(self):
+        """This returns an empty copy of the object"""
+        Class = type(self)
+        newobj = Class(typesys=self.types)
+        for name in self.data:
+            newobj.declare(name, newobj.getType(name))
+        return newobj
+
+
+
+class Frame(Object):
+    """
+    Represents a space for storing of TypedValues in 9608 pseudocode.
+    Frames differ from Objects in that they can be chained, and slots can be
+    deleted after declaration.
+
+    Methods
+    -------
+    delete(name)
+        deletes the slot associated with the name
+    lookup(name)
+        returns the first frame containing the name
+    """
+    def __init__(self, typesys, outer=None):
+        super().__init__(typesys=typesys)
+        self.outer = outer
 
     def delete(self, name):
         del self.data[name]
@@ -368,6 +438,15 @@ class ProcFunc(Stmt):
         self.params = params
         self.stmts = stmts
         self.returnType = returnType
+
+
+
+class TypeStmt(Stmt):
+    __slots__ = ('rule', 'name', 'exprs')
+    def __init__(self, rule, name, exprs):
+        self.rule = rule
+        self.name = name
+        self.exprs = exprs
 
 
 
