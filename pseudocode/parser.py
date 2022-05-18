@@ -71,6 +71,7 @@ def match(tokens, *words):
 # 3. +, -
 # 4. < | <= | > | >=
 # 5. <> | =
+# 6. AND | OR
 
 def identifier(tokens):
     token = consume(tokens)
