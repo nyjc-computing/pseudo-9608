@@ -117,6 +117,17 @@ def nameExpr(tokens):
             args=args,
             token=name.token(),
         )
+    # Attribute get
+    if match(tokens, '.'):
+        # Create Get Expr
+        # Get Exprs usually insert frame=NULL
+        # Here our frame will be an Object, which has to be retrieved
+        # from the frame
+        # So we'll insert a Get Expr for the Object in place of frame.
+        expr = makeExpr(
+            frame=expr,
+            name="???",
+        )
     return expr
 
 def value(tokens):
