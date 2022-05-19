@@ -131,7 +131,14 @@ class TypeSystem:
         self.data = {}
         for typeName in types:
             self.declare(typeName)
-            self.setTemplate(typeName, TypedValue(typeName, None))
+            self.setTemplate(typeName, None)
+
+    def __repr__(self):
+        nameTypePairs = [
+            f"{name}: {self.getTemplate(name)}"
+            for name in self.data
+        ]
+        return f"{{{', '.join(nameTypePairs)}}}"
 
     def has(self, name):
         return name in self.data
@@ -140,7 +147,7 @@ class TypeSystem:
         self.data[name] = None
 
     def setTemplate(self, name, template):
-        self.data[name] = template
+        self.data[name] = TypedValue(name, template)
 
     def getTemplate(self, name):
         return self.data[name]
@@ -209,10 +216,17 @@ class Object:
         return name in self.data
 
     def declare(self, name, type):
-        template = self.types.getTemplate(type)
-        self.data[name] = template.copy()
+        if name == 'Pupil1':
+            breakpoint()
+        try:
+            template = self.types.getTemplate(type)
+            self.data[name] = template.copy()
+        except:
+            breakpoint()
 
     def getType(self, name):
+        if type(self.data[name]) is not TypedValue:
+            breakpoint()
         return self.data[name].type
 
     def getValue(self, name):
@@ -229,7 +243,7 @@ class Object:
         Class = type(self)
         newobj = Class(typesys=self.types)
         for name in self.data:
-            newobj.declare(name, newobj.getType(name))
+            newobj.declare(name, self.getType(name))
         return newobj
 
 
