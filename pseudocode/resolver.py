@@ -133,12 +133,16 @@ def resolveGet(frame, expr):
         # Pass original frame for recursive resolving
         objType = expr.frame.accept(frame, resolveGet)
         # Resolve object type in typesystem
-        if not frame.types.has(objType):
-            raise LogicError("Undeclared type", expr.token())
+        declaredElseError(
+            frame.types, objType,
+            errmsg="Undeclared type", token=expr.token()
+        )
         objTemplate = frame.types.getTemplate(objType).value
         # Attribute type is different from object type
-        if not objTemplate.has(expr.name):
-            raise LogicError("Undeclared attribute", expr.token())
+        declaredElseError(
+            objTemplate, expr.name,
+            errmsg="Undeclared attribute", token=expr.token()
+        )
         return objTemplate.getType(expr.name)
     if expr.frame is NULL:
         while not frame.has(expr.name):
