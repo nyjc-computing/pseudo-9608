@@ -252,7 +252,7 @@ def verifyProcedure(frame, stmt):
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
-    for expr in stmt.params:
+    for i, expr in enumerate(stmt.params):
         exprtype = resolveDeclare(local, expr)
         if stmt.passby == 'BYREF':
             expectTypeElseError(
