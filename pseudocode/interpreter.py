@@ -78,8 +78,11 @@ def evalGet(frame, expr):
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
     obj = expr.frame
+    if isinstance(obj, Object):
+        return obj.getValue(expr.name)
     # evaluate obj until object is retrieved
-    return obj.getValue(expr.name)
+    if type(obj) in (Get, Call):
+        return evaluate(frame, obj)
 
 def evalCall(frame, expr, **kwargs):
     callable = expr.callable.accept(frame, evalGet)
