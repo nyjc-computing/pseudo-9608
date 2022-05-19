@@ -7,3 +7,6 @@ DECLARE Pupil1 : Student
 Pupil1.Surname <- "Johnson"
 Pupil1.FirstName <- "Leroy"
 Pupil1.YearGroup <- 6
+OUTPUT Pupil1.Surname
+OUTPUT Pupil1.FirstName
+OUTPUT Pupil1.YearGroup
