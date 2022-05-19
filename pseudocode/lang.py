@@ -216,17 +216,10 @@ class Object:
         return name in self.data
 
     def declare(self, name, type):
-        if name == 'Pupil1':
-            breakpoint()
-        try:
-            template = self.types.getTemplate(type)
-            self.data[name] = template.copy()
-        except:
-            breakpoint()
+        template = self.types.getTemplate(type)
+        self.data[name] = template.copy()
 
     def getType(self, name):
-        if type(self.data[name]) is not TypedValue:
-            breakpoint()
         return self.data[name].type
 
     def getValue(self, name):
