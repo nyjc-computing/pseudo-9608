@@ -252,16 +252,14 @@ def verifyProcedure(frame, stmt):
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
-    for i, expr in enumerate(stmt.params):
+    for expr in stmt.params:
+        exprtype = resolveDeclare(local, expr)
         if stmt.passby == 'BYREF':
-            exprtype = expr.accept(local, resolveDeclare)
             expectTypeElseError(
                 exprtype, frame.getType(expr.name), token=expr.token()
             )
             # Reference frame vars in local
             local.set(expr.name, frame.get(expr.name))
-        else:
-            expr.accept(local, resolveDeclare)
         # params: replace Declare Expr with slot
         stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
@@ -277,7 +275,7 @@ def verifyFunction(frame, stmt):
     ))
     for expr in stmt.params:
         # Declare vars in local
-        expr.accept(local, resolveDeclare)
+        exprtype = resolveDeclare(local, expr)
     # Check for return statements
     if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise LogicError("No RETURN in function", stmt.name.token())
