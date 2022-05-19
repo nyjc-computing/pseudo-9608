@@ -385,6 +385,7 @@ def forStmt(tokens):
     # Add increment statement
     incr = makeExpr(
         name=init.name,
+        assignee=init.assignee,
         expr=makeExpr(
             left=getCounter,
             oper=add,
