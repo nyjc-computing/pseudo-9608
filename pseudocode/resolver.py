@@ -278,17 +278,11 @@ def verifyFunction(frame, stmt):
     for expr in stmt.params:
         # Declare vars in local
         expr.accept(local, resolveDeclare)
-    # Resolve procedure statements using local
-    hasReturn = False
-    for procstmt in stmt.stmts:
-        stmtType = procstmt.accept(local, verify)
-        if stmtType:
-            hasReturn = True
-            expectTypeElseError(
-                stmtType, stmt.returnType, token=stmt.name.token()
-            )
-    if not hasReturn:
+    # Check for return statements
+    if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise LogicError("No RETURN in function", stmt.name.token())
+    # Resolve procedure statements using local
+    verifyStmts(local, stmt.stmts)
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)
