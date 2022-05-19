@@ -117,17 +117,18 @@ def resolveBinary(frame, expr):
         return 'REAL'
 
 def resolveAssign(frame, expr):
-    declaredElseError(frame, expr.name)
+    # assignee frame might be a Frame or Get(Object)
+    assnType = expr.assignee.accept(frame, resolveGet)
     exprType = expr.expr.accept(frame, resolve)
     expectTypeElseError(
-        exprType, frame.getType(expr.name), token=expr.token()
+        exprType, assnType, token=expr.token()
     )
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
+    assert isinstance(expr, Get), "Not a Get Expr"
     # frame can be a Frame, or a Get Expr (for an Object)
     # If frame is a Get Expr, resolve it recursively
-    assert isinstance(expr, Get), "Not a Get Expr"
     if isinstance(expr.frame, Get):
         # Pass original frame for recursive resolving
         expr.frame.accept(frame, resolveGet)
@@ -137,7 +138,7 @@ def resolveGet(frame, expr):
             if not frame:
                 raise LogicError("Undeclared", expr.token())
         expr.frame = frame
-        return frame.getType(expr.name)
+    return expr.frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
