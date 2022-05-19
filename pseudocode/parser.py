@@ -62,11 +62,12 @@ def expectElseError(tokens, word, addmsg=None):
     if addmsg: msg += f" {addmsg}"
     raise ParseError(msg, check(tokens))
 
-def match(tokens, *words):
-    if check(tokens).word in words:
+def match(tokens, *words, advance=True):
+    if check(tokens).word not in words:
+        return False
+    if advance:
         consume(tokens)
-        return True
-    return False
+    return True
 
 # Precedence parsers
 # Expressions are parsed with this precedence (highest to lowest):
