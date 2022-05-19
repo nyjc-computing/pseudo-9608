@@ -229,7 +229,16 @@ def assignment(tokens):
     name = identifier(tokens)
     expectElseError(tokens, '<-', "after name")
     expr = expression(tokens)
-    return makeExpr(name=name.name, expr=expr, token=name)
+    return makeExpr(
+        name=name.name,
+        assignee=makeExpr(
+            frame=NULL,
+            name=name.name,
+            token=name.token(),
+        ),
+        expr=expr,
+        token=name,
+    )
 
 # Statement parsers
 
@@ -370,7 +379,7 @@ def forStmt(tokens):
         token=init.token(),
     )
     # Add increment statement
-    incr = makeExpr(
+    incr = Assign(
         name=init.name,
         expr=makeExpr(
             left=getCounter,
