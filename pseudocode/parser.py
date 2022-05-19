@@ -379,7 +379,7 @@ def forStmt(tokens):
         token=init.token(),
     )
     # Add increment statement
-    incr = Assign(
+    incr = makeExpr(
         name=init.name,
         expr=makeExpr(
             left=getCounter,
