@@ -252,6 +252,12 @@ def verifyLoop(frame, stmt):
     expectTypeElseError(condtype, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
+def verifyParams(frame, params, passby):
+    for i, expr in enumerate(params):
+        resolveDeclare(frame, expr, passby=passby)
+        # params: replace Declare Expr with slot
+        params[i] = frame.get(expr.name)
+
 def verifyProcedure(frame, stmt):
     # Set up local frame
     local = Frame(outer=frame)
@@ -260,10 +266,7 @@ def verifyProcedure(frame, stmt):
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
-    for i, expr in enumerate(stmt.params):
-        resolveDeclare(local, expr, passby=stmt.passby)
-        # params: replace Declare Expr with slot
-        stmt.params[i] = local.get(expr.name)
+    verifyParams(local, stmt.params, stmt.passby)
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
@@ -275,10 +278,7 @@ def verifyFunction(frame, stmt):
     frame.setValue(stmt.name, Function(
         local, stmt.params, stmt.stmts
     ))
-    for i, expr in enumerate(stmt.params):
-        resolveDeclare(local, expr, passby=stmt.passby)
-        # params: replace Declare Expr with slot
-        stmt.params[i] = local.get(expr.name)
+    verifyParams(local, stmt.params, stmt.passby)
     # Check for return statements
     if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise LogicError("No RETURN in function", stmt.name.token())
