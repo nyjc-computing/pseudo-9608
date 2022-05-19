@@ -69,10 +69,18 @@ def resolveExprs(frame, exprs):
 def resolveLiteral(frame, literal):
     return literal.type
 
-def resolveDeclare(frame, expr):
+def resolveDeclare(frame, expr, passby='BYVALUE'):
     """Declare variable in frame"""
-    frame.declare(expr.name, expr.type)
-    return expr.type
+    if passby == 'BYVALUE':
+        frame.declare(expr.name, expr.type)
+        return expr.type
+    assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
+    # BYREF
+    expectTypeElseError(
+        expr.type, frame.outer.getType(expr.name), token=expr.token()
+    )
+    # Reference frame vars in local
+    frame.set(expr.name, frame.outer.get(expr.name))
 
 def resolveUnary(frame, expr):
     rType = expr.right.accept(frame, resolve)
@@ -253,13 +261,7 @@ def verifyProcedure(frame, stmt):
         local, stmt.params, stmt.stmts
     ))
     for i, expr in enumerate(stmt.params):
-        exprtype = resolveDeclare(local, expr)
-        if stmt.passby == 'BYREF':
-            expectTypeElseError(
-                exprtype, frame.getType(expr.name), token=expr.token()
-            )
-            # Reference frame vars in local
-            local.set(expr.name, frame.get(expr.name))
+        resolveDeclare(local, expr, passby=stmt.passby)
         # params: replace Declare Expr with slot
         stmt.params[i] = local.get(expr.name)
     # Resolve procedure statements using local
@@ -273,9 +275,10 @@ def verifyFunction(frame, stmt):
     frame.setValue(stmt.name, Function(
         local, stmt.params, stmt.stmts
     ))
-    for expr in stmt.params:
-        # Declare vars in local
-        exprtype = resolveDeclare(local, expr)
+    for i, expr in enumerate(stmt.params):
+        resolveDeclare(local, expr, passby=stmt.passby)
+        # params: replace Declare Expr with slot
+        stmt.params[i] = local.get(expr.name)
     # Check for return statements
     if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise LogicError("No RETURN in function", stmt.name.token())
