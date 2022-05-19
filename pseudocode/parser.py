@@ -241,7 +241,7 @@ def assignment(tokens):
         name=assignee.name,
         assignee=assignee,
         expr=expr,
-        token=name,
+        token=assignee.token(),
     )
 
 # Statement parsers
