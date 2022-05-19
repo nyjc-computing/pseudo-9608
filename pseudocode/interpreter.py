@@ -77,7 +77,9 @@ def evalBinary(frame, expr):
 def evalGet(frame, expr):
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
-    return expr.frame.getValue(expr.name)
+    obj = expr.frame
+    # evaluate obj until object is retrieved
+    return obj.getValue(expr.name)
 
 def evalCall(frame, expr, **kwargs):
     callable = expr.callable.accept(frame, evalGet)
@@ -100,7 +102,9 @@ def evalCall(frame, expr, **kwargs):
 
 def evalAssign(frame, expr):
     value = expr.expr.accept(frame, evaluate)
-    frame.setValue(expr.name, value)
+    obj = expr.assignee
+    # evaluate assignee until object is retrieved
+    obj.setValue(expr.name, value)
 
 def evaluate(frame, expr):
     if isinstance(expr, Literal):
