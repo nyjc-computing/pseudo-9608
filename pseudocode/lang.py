@@ -249,6 +249,8 @@ class Frame(Object):
 
     Methods
     -------
+    set(name, typedValue)
+        assigns the given TypedValue to the name
     delete(name)
         deletes the slot associated with the name
     lookup(name)
@@ -257,6 +259,9 @@ class Frame(Object):
     def __init__(self, typesys, outer=None):
         super().__init__(typesys=typesys)
         self.outer = outer
+
+    def set(self, typedValue):
+        self.data[name] = typedValue
 
     def delete(self, name):
         del self.data[name]
