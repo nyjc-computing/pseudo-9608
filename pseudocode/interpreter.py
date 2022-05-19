@@ -106,7 +106,9 @@ def evalCall(frame, expr, **kwargs):
 
 def evalAssign(frame, expr):
     value = expr.expr.accept(frame, evaluate)
-    obj = evaluate(frame, expr.assignee.frame)
+    obj = expr.assignee.frame
+    if type(obj) in (Get, Call):
+        obj = evaluate(frame, obj)
     obj.setValue(expr.name, value)
 
 def evaluate(frame, expr, **kwargs):
