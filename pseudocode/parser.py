@@ -231,16 +231,15 @@ def expression(tokens):
     return expr
 
 def assignment(tokens):
-    name = identifier(tokens)
+    assignee = name(tokens)  # Get Expr
+    while not atEnd(tokens) and match(tokens, '.'):
+        # Attribute get
+        assignee = attrExpr(tokens, assignee)
     expectElseError(tokens, '<-', "after name")
     expr = expression(tokens)
     return makeExpr(
-        name=name.name,
-        assignee=makeExpr(
-            frame=NULL,
-            name=name.name,
-            token=name.token(),
-        ),
+        name=assignee.name,
+        assignee=assignee,
         expr=expr,
         token=name,
     )
