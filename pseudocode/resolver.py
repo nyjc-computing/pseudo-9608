@@ -259,7 +259,7 @@ def verifyProcedure(frame, stmt):
                 exprtype, frame.getType(expr.name), token=expr.token()
             )
             # Reference frame vars in local
-            local.setValue(expr.name, frame.getValue(expr.name))
+            local.set(expr.name, frame.get(expr.name))
         else:
             expr.accept(local, resolveDeclare)
         # params: replace Declare Expr with slot
