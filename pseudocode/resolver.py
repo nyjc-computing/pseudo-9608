@@ -211,7 +211,12 @@ def resolve(frame, expr):
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
-        stmt.accept(frame, verify)
+        stmtType = stmt.accept(frame, verify)
+        # For Return statements
+        if stmtType:
+            expectTypeElseError(
+                stmtType, stmt.returnType, token=stmt.name.token()
+            )
 
 def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt.exprs)
