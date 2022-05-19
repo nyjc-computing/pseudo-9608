@@ -131,7 +131,8 @@ def resolveGet(frame, expr):
     # If frame is a Get Expr, resolve it recursively
     if isinstance(expr.frame, Get):
         # Pass original frame for recursive resolving
-        expr.frame.accept(frame, resolveGet)
+        innerType = expr.frame.accept(frame, resolveGet)
+        return frame.getType(innerType)
     if expr.frame is NULL:
         while not frame.has(expr.name):
             frame = frame.lookup(expr.name)
