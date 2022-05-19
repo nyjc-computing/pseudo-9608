@@ -2,7 +2,7 @@ from .builtin import AND, OR, NOT
 from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
-from .builtin import NUMERIC, EQUATABLE
+from .builtin import NULL, NUMERIC, EQUATABLE
 from .lang import Object, Frame, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
@@ -125,13 +125,19 @@ def resolveAssign(frame, expr):
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
+    # frame can be a Frame, or a Get Expr (for an Object)
+    # If frame is a Get Expr, resolve it recursively
     assert isinstance(expr, Get), "Not a Get Expr"
-    if not frame.has(expr.name):
-        frame = frame.lookup(expr.name)
-    if not frame:
-        raise LogicError("Undeclared", expr.token())
-    expr.frame = frame
-    return frame.getType(expr.name)
+    if isinstance(expr.frame, Get):
+        # Pass original frame for recursive resolving
+        expr.frame.accept(frame, resolveGet)
+    if expr.frame is NULL:
+        while not frame.has(expr.name):
+            frame = frame.lookup(expr.name)
+            if not frame:
+                raise LogicError("Undeclared", expr.token())
+        expr.frame = frame
+        return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
