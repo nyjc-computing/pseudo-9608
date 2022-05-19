@@ -101,37 +101,34 @@ def unary(tokens):
         token=oper,
     )
 
-def nameExpr(tokens):
+def name(tokens):
     name = identifier(tokens)
-    expr = makeExpr(
+    return makeExpr(
         frame=NULL,
         name=name.name,
         token=name.token(),
     )
-    # Function call
-    if match(tokens, '('):
-        args = []
-        while not check(tokens).word in (')',):
-            match(tokens, ',')  # ,
-            arg = expression(tokens)
-            args += [arg]
-        expectElseError(tokens, ')', "after '('")
-        expr = makeExpr(
-            callable=expr,
-            args=args,
-            token=name.token(),
-        )
-    # Attribute get
-    while match(tokens, '.'):
-        # Insert Get Expr for Object
-        # in place of frame
-        name = identifier(tokens)
-        expr = makeExpr(
-            frame=expr,
-            name=name.name,
-            token=name.token(),
-        )
-    return expr
+
+def callExpr(tokens, expr):
+    args = []
+    while not check(tokens).word in (')',):
+        match(tokens, ',')  # ,
+        arg = expression(tokens)
+        args += [arg]
+    expectElseError(tokens, ')', "after '('")
+    return makeExpr(
+        callable=expr,
+        args=args,
+        token=name.token(),
+    )
+
+def attrExpr(tokens, expr):
+    name = identifier(tokens)
+    return makeExpr(
+        frame=expr,
+        name=name.name,
+        token=name.token(),
+    )
 
 def value(tokens):
     token = check(tokens)
