@@ -112,7 +112,7 @@ def name(tokens):
 
 def callExpr(tokens, expr):
     args = []
-    while not check(tokens).word in (')',):
+    while not atEnd(tokens) and match(tokens, ')', advance=False):
         match(tokens, ',')  # ,
         arg = expression(tokens)
         args += [arg]
@@ -134,7 +134,7 @@ def attrExpr(tokens, expr):
 def value(tokens):
     token = check(tokens)
     # Unary expressions
-    if token.word in ('-', 'NOT'):
+    if match(tokens, '-', 'NOT', advance=False):
         return unary(tokens)
     # A single value
     if check(tokens).type in TYPES:
@@ -147,7 +147,7 @@ def value(tokens):
     # A name or call or attribute
     elif token.type == 'name':
         expr = name(tokens)
-        while not atEnd(tokens) and check(tokens).word in ('(', '.'):
+        while not atEnd(tokens) and match(tokens, '(', '.', advance=False):
             # Function call
             if match(tokens, '('):
                 expr = callExpr(tokens, expr)
@@ -161,7 +161,7 @@ def value(tokens):
 def muldiv(tokens):
     # *, /
     expr = value(tokens)
-    while not atEnd(tokens) and check(tokens).word in ('*', '/'):
+    while not atEnd(tokens) and match(tokens, '*', '/', advance=False):
         oper = consume(tokens)
         right = value(tokens)
         expr = makeExpr(
@@ -174,7 +174,7 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    while not atEnd(tokens) and check(tokens).word in ('+', '-'):
+    while not atEnd(tokens) and match(tokens, '+', '-', advance=False):
         oper = consume(tokens)
         right = muldiv(tokens)
         expr = makeExpr(
@@ -188,7 +188,7 @@ def addsub(tokens):
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    while not atEnd(tokens) and check(tokens).word in ('<', '<=', '>', '>='):
+    while not atEnd(tokens) and match(tokens, '<', '<=', '>', '>=', advance=False):
         oper = consume(tokens)
         right = addsub(tokens)
         expr = makeExpr(
@@ -202,7 +202,7 @@ def comparison(tokens):
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    while not atEnd(tokens) and check(tokens).word in ('<>', '='):
+    while not atEnd(tokens) and match(tokens, '<>', '=', advance=False):
         oper = consume(tokens)
         right = comparison(tokens)
         expr = makeExpr(
@@ -216,7 +216,7 @@ def equality(tokens):
 def logical(tokens):
     # AND, OR
     expr = equality(tokens)
-    while not atEnd(tokens) and check(tokens).word in ('AND', 'OR'):
+    while not atEnd(tokens) and match(tokens, 'AND', 'OR', advance=False):
         oper = consume(tokens)
         right = equality(tokens)
         expr = makeExpr(
@@ -280,7 +280,7 @@ def typeStmt(tokens):
     name = identifier(tokens).name
     expectElseError(tokens, '\n')
     exprs = []
-    while not atEnd(tokens) and not check(tokens).word in ('ENDTYPE',):
+    while not atEnd(tokens) and not match(tokens, 'ENDTYPE', advance=False):
         expectElseError(tokens, 'DECLARE')
         exprs += [declare(tokens)]
         expectElseError(tokens, '\n')
@@ -300,7 +300,7 @@ def caseStmt(tokens):
     stmts = {}
     while not (
         atEnd(tokens)
-        or check(tokens).word in ('OTHERWISE', 'ENDCASE')
+        or match(tokens, 'OTHERWISE', 'ENDCASE', advance=False)
     ):
         val = value(tokens).evaluate()
         expectElseError(tokens, ':', "after CASE value")
@@ -330,7 +330,7 @@ def ifStmt(tokens):
     if match(tokens, 'ELSE'):
         expectElseError(tokens, '\n', "after ELSE")
         false = []
-        while not atEnd(tokens) and not check(tokens).word in ('ENDIF',):
+        while not atEnd(tokens) and not match(tokens, 'ENDIF', advance=False):
             false += [statement5(tokens)]
         fallback = false
     expectElseError(tokens, 'ENDIF', "at end of IF")
@@ -456,7 +456,7 @@ def returnStmt(tokens):
 def openfileStmt(tokens):
     name = value(tokens)
     expectElseError(tokens, 'FOR', "after file identifier")
-    if check(tokens).word not in ('READ', 'WRITE', 'APPEND'):
+    if match(tokens, 'READ', 'WRITE', 'APPEND', advance=False):
         raise ParseError("Invalid file mode", check(tokens))
     mode = consume(tokens).word
     expectElseError(tokens, '\n')
