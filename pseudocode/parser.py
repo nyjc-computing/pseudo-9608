@@ -2,8 +2,8 @@ from .builtin import TYPES, NULL
 from .builtin import ParseError
 from .builtin import lte, add
 from .lang import Token
-from .lang import Literal, Name, Unary, Binary, Get, Call
-from .lang import ExprStmt, Output, Input, Declare, Assign
+from .lang import Literal, Name, Unary, Binary, Get, Call, Assign
+from .lang import ExprStmt, Output, Input, Declare
 from .lang import Conditional, Loop, ProcFunc, TypeStmt, FileAction
 
 
@@ -363,11 +363,21 @@ def forStmt(tokens):
         name=init.name,
         token=init.token(),
     )
-    cond = Binary(getCounter, lte, end, token=init.token())
+    cond = makeExpr(
+        left=getCounter,
+        oper=lte,
+        right=end,
+        token=init.token(),
+    )
     # Add increment statement
-    incr = Assign(
+    incr = makeExpr(
         name=init.name,
-        expr=Binary(getCounter, add, step, token=step.token()),
+        expr=makeExpr(
+            left=getCounter,
+            oper=add,
+            right=step,
+            token=step.token(),
+        ),
         token=init.token(),
     )
     initStmt = ExprStmt('assign', init)
