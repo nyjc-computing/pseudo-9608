@@ -148,7 +148,15 @@ def value(tokens):
         return expr
     # A name or call or attribute
     elif token.type == 'name':
-        return nameExpr(tokens)
+        expr = name(tokens)
+        while not atEnd(tokens) and check(tokens).word in ('(', '.'):
+            # Function call
+            if match(tokens, '('):
+                expr = callExpr(tokens, expr)
+            # Attribute get
+            while match(tokens, '.'):
+                expr = attrExpr(tokens, expr)
+        return expr
     else:
         raise ParseError("Unexpected token", token)
 
