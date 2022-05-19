@@ -131,15 +131,22 @@ def resolveGet(frame, expr):
     # If frame is a Get Expr, resolve it recursively
     if isinstance(expr.frame, Get):
         # Pass original frame for recursive resolving
-        innerType = expr.frame.accept(frame, resolveGet)
-        return frame.getType(innerType)
+        objType = expr.frame.accept(frame, resolveGet)
+        # Resolve object type in typesystem
+        if not frame.types.has(objType):
+            raise LogicError("Undeclared type", expr.token())
+        objTemplate = frame.types.getTemplate(objType).value
+        # Attribute type is different from object type
+        if not objTemplate.has(expr.name):
+            raise LogicError("Undeclared attribute", expr.token())
+        return objTemplate.getType(expr.name)
     if expr.frame is NULL:
         while not frame.has(expr.name):
             frame = frame.lookup(expr.name)
             if not frame:
                 raise LogicError("Undeclared", expr.token())
         expr.frame = frame
-    return expr.frame.getType(expr.name)
+        return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
