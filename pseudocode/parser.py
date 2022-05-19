@@ -102,11 +102,11 @@ def unary(tokens):
     )
 
 def name(tokens):
-    name = identifier(tokens)
+    iden = identifier(tokens)
     return makeExpr(
         frame=NULL,
-        name=name.name,
-        token=name.token(),
+        name=iden.name,
+        token=iden.token(),
     )
 
 def callExpr(tokens, expr):
