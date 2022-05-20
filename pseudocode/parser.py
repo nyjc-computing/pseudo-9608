@@ -159,7 +159,7 @@ def value(tokens):
             if match(tokens, '('):
                 expr = callExpr(tokens, expr)
             # Attribute get
-            while match(tokens, '.'):
+            if match(tokens, '.'):
                 expr = attrExpr(tokens, expr)
         return expr
     else:
