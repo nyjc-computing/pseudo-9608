@@ -1,5 +1,5 @@
 from .builtin import RuntimeError
-from .lang import Frame, File, Callable, Builtin
+from .lang import Object, File, Callable, Builtin
 from .lang import Literal, Unary, Binary, Get, Call, Assign
 from .system import EOF
 
@@ -77,7 +77,13 @@ def evalBinary(frame, expr):
 def evalGet(frame, expr):
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
-    return expr.frame.getValue(expr.name)
+    obj = expr.frame
+    # evaluate obj until object is retrieved
+    if type(obj) in (Get, Call):
+        obj = evaluate(frame, obj)
+    if not isinstance(obj, Object):
+        raise RuntimeError("Invalid object", expr.frame.token())
+    return obj.getValue(expr.name)
 
 def evalCall(frame, expr, **kwargs):
     callable = expr.callable.accept(frame, evalGet)
@@ -100,9 +106,12 @@ def evalCall(frame, expr, **kwargs):
 
 def evalAssign(frame, expr):
     value = expr.expr.accept(frame, evaluate)
-    frame.setValue(expr.name, value)
+    obj = expr.assignee.frame
+    if type(obj) in (Get, Call):
+        obj = evaluate(frame, obj)
+    obj.setValue(expr.name, value)
 
-def evaluate(frame, expr):
+def evaluate(frame, expr, **kwargs):
     if isinstance(expr, Literal):
         return expr.accept(frame, evalLiteral)
     if isinstance(expr, Unary):

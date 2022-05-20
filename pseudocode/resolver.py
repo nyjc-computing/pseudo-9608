@@ -2,7 +2,7 @@ from .builtin import AND, OR, NOT
 from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
-from .builtin import NUMERIC, EQUATABLE
+from .builtin import NULL, NUMERIC, EQUATABLE
 from .lang import Object, Frame, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
@@ -69,10 +69,18 @@ def resolveExprs(frame, exprs):
 def resolveLiteral(frame, literal):
     return literal.type
 
-def resolveDeclare(frame, expr):
+def resolveDeclare(frame, expr, passby='BYVALUE'):
     """Declare variable in frame"""
-    frame.declare(expr.name, expr.type)
-    return expr.type
+    if passby == 'BYVALUE':
+        frame.declare(expr.name, expr.type)
+        return expr.type
+    assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
+    # BYREF
+    expectTypeElseError(
+        expr.type, frame.outer.getType(expr.name), token=expr.token()
+    )
+    # Reference frame vars in local
+    frame.set(expr.name, frame.outer.get(expr.name))
 
 def resolveUnary(frame, expr):
     rType = expr.right.accept(frame, resolve)
@@ -117,21 +125,40 @@ def resolveBinary(frame, expr):
         return 'REAL'
 
 def resolveAssign(frame, expr):
-    declaredElseError(frame, expr.name)
+    # assignee frame might be a Frame or Get(Object)
+    assnType = expr.assignee.accept(frame, resolveGet)
     exprType = expr.expr.accept(frame, resolve)
     expectTypeElseError(
-        exprType, frame.getType(expr.name), token=expr.token()
+        exprType, assnType, token=expr.token()
     )
 
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
-    if not frame.has(expr.name):
-        frame = frame.lookup(expr.name)
-    if not frame:
-        raise LogicError("Undeclared", expr.token())
-    expr.frame = frame
-    return frame.getType(expr.name)
+    # frame can be a Frame, or a Get Expr (for an Object)
+    # If frame is a Get Expr, resolve it recursively
+    if isinstance(expr.frame, Get):
+        # Pass original frame for recursive resolving
+        objType = expr.frame.accept(frame, resolveGet)
+        # Resolve object type in typesystem
+        declaredElseError(
+            frame.types, objType,
+            errmsg="Undeclared type", token=expr.token()
+        )
+        objTemplate = frame.types.getTemplate(objType).value
+        # Attribute type is different from object type
+        declaredElseError(
+            objTemplate, expr.name,
+            errmsg="Undeclared attribute", token=expr.token()
+        )
+        return objTemplate.getType(expr.name)
+    if expr.frame is NULL:
+        while not frame.has(expr.name):
+            frame = frame.lookup(expr.name)
+            if not frame:
+                raise LogicError("Undeclared", expr.token())
+        expr.frame = frame
+        return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
@@ -192,7 +219,12 @@ def resolve(frame, expr):
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
-        stmt.accept(frame, verify)
+        stmtType = stmt.accept(frame, verify)
+        # For Return statements
+        if stmt.rule == 'return':
+            expectTypeElseError(
+                stmtType, stmt.returnType, token=stmt.name.token()
+            )
 
 def verifyOutput(frame, stmt):
     resolveExprs(frame, stmt.exprs)
@@ -220,6 +252,12 @@ def verifyLoop(frame, stmt):
     expectTypeElseError(condtype, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
+def verifyParams(frame, params, passby):
+    for i, expr in enumerate(params):
+        resolveDeclare(frame, expr, passby=passby)
+        # params: replace Declare Expr with slot
+        params[i] = frame.get(expr.name)
+
 def verifyProcedure(frame, stmt):
     # Set up local frame
     local = Frame(outer=frame)
@@ -228,18 +266,7 @@ def verifyProcedure(frame, stmt):
     frame.setValue(stmt.name, Procedure(
         local, stmt.params, stmt.stmts
     ))
-    for i, expr in enumerate(stmt.params):
-        if stmt.passby == 'BYREF':
-            exprtype = expr.accept(local, resolveDeclare)
-            expectTypeElseError(
-                exprtype, frame.getType(expr.name), token=expr.token()
-            )
-            # Reference frame vars in local
-            local.setValue(expr.name, frame.getValue(expr.name))
-        else:
-            expr.accept(local, resolveDeclare)
-        # params: replace Declare Expr with slot
-        stmt.params[i] = local.get(expr.name)
+    verifyParams(local, stmt.params, stmt.passby)
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
@@ -251,20 +278,12 @@ def verifyFunction(frame, stmt):
     frame.setValue(stmt.name, Function(
         local, stmt.params, stmt.stmts
     ))
-    for expr in stmt.params:
-        # Declare vars in local
-        expr.accept(local, resolveDeclare)
-    # Resolve procedure statements using local
-    hasReturn = False
-    for procstmt in stmt.stmts:
-        stmtType = procstmt.accept(local, verify)
-        if stmtType:
-            hasReturn = True
-            expectTypeElseError(
-                stmtType, stmt.returnType, token=stmt.name.token()
-            )
-    if not hasReturn:
+    verifyParams(local, stmt.params, stmt.passby)
+    # Check for return statements
+    if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise LogicError("No RETURN in function", stmt.name.token())
+    # Resolve procedure statements using local
+    verifyStmts(local, stmt.stmts)
 
 def verifyFile(frame, stmt):
     stmt.name.accept(frame, value)

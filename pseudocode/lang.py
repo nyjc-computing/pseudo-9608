@@ -131,7 +131,14 @@ class TypeSystem:
         self.data = {}
         for typeName in types:
             self.declare(typeName)
-            self.setTemplate(typeName, TypedValue(typeName, None))
+            self.setTemplate(typeName, None)
+
+    def __repr__(self):
+        nameTypePairs = [
+            f"{name}: {self.getTemplate(name)}"
+            for name in self.data
+        ]
+        return f"{{{', '.join(nameTypePairs)}}}"
 
     def has(self, name):
         return name in self.data
@@ -140,7 +147,7 @@ class TypeSystem:
         self.data[name] = None
 
     def setTemplate(self, name, template):
-        self.data[name] = template
+        self.data[name] = TypedValue(name, template)
 
     def getTemplate(self, name):
         return self.data[name]
@@ -229,7 +236,7 @@ class Object:
         Class = type(self)
         newobj = Class(typesys=self.types)
         for name in self.data:
-            newobj.declare(name, newobj.getType(name))
+            newobj.declare(name, self.getType(name))
         return newobj
 
 
@@ -242,6 +249,8 @@ class Frame(Object):
 
     Methods
     -------
+    set(name, typedValue)
+        assigns the given TypedValue to the name
     delete(name)
         deletes the slot associated with the name
     lookup(name)
@@ -250,6 +259,9 @@ class Frame(Object):
     def __init__(self, typesys, outer=None):
         super().__init__(typesys=typesys)
         self.outer = outer
+
+    def set(self, typedValue):
+        self.data[name] = typedValue
 
     def delete(self, name):
         del self.data[name]
@@ -326,10 +338,11 @@ class Declare(Expr):
 
 
 class Assign(Expr):
-    __slots__ = ('name', 'expr')
-    def __init__(self, name, expr, token=None):
+    __slots__ = ('name', 'assignee', 'expr')
+    def __init__(self, name, assignee, expr, token=None):
         super().__init__(token=token)
         self.name = name
+        self.assignee = assignee
         self.expr = expr
 
 

@@ -4,6 +4,12 @@ TYPE Student
     DECLARE YearGroup : INTEGER
 ENDTYPE
 DECLARE Pupil1 : Student
+DECLARE Var : INTEGER
 Pupil1.Surname <- "Johnson"
-Pupil1.Firstname <- "Leroy"
+Pupil1.FirstName <- "Leroy"
 Pupil1.YearGroup <- 6
+Var <- 9
+OUTPUT Pupil1.Surname
+OUTPUT Pupil1.FirstName
+OUTPUT Pupil1.YearGroup
+OUTPUT Var
