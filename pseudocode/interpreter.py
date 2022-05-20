@@ -91,7 +91,7 @@ def evalGet(frame, expr):
         raise RuntimeError("Invalid object", expr.frame.token())
     name = expr.name
     if type(obj) in (Array,):
-        name = evalIndex(expr.name)
+        name = evalIndex(frame, expr.name)
     return obj.getValue(name)
 
 def evalCall(frame, expr, **kwargs):
@@ -120,7 +120,7 @@ def evalAssign(frame, expr):
         obj = evaluate(frame, obj)
     name = expr.name
     if type(obj) in (Array,):
-        name = evalIndex(expr.name)
+        name = evalIndex(frame, expr.name)
     obj.setValue(name, value)
 
 def evaluate(frame, expr, **kwargs):
