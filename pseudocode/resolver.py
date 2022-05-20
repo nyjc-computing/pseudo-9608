@@ -221,7 +221,7 @@ def verifyStmts(frame, stmts):
     for stmt in stmts:
         stmtType = stmt.accept(frame, verify)
         # For Return statements
-        if stmtType:
+        if stmt.rule == 'return':
             expectTypeElseError(
                 stmtType, stmt.returnType, token=stmt.name.token()
             )
