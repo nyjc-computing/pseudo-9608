@@ -68,16 +68,19 @@ def matchElseError(tokens, word, addmsg=None):
 def matchWord(tokens, *words):
     if check(tokens).word in words:
         return consume(tokens)
+    atEndThenError(tokens)
     return False
 
 def expectWord(tokens, *words):
     if check(tokens).word in words:
         return True
+    atEndThenError(tokens)
     return False
 
 def expectType(tokens, *types):
     if check(tokens).type in types:
         return True
+    atEndThenError(tokens)
     return False
 
 # Precedence parsers
