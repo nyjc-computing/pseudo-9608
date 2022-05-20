@@ -17,4 +17,6 @@ Var <- 9
 OUTPUT Pupil1.Surname
 OUTPUT Pupil1.FirstName
 OUTPUT Pupil1.YearGroup
-OUTPUT Var
+FOR Var <- 1 TO 10
+    OUTPUT AnArray[Var]
+ENDFOR
