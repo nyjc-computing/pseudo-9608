@@ -256,7 +256,7 @@ def assignment(tokens):
 
 def outputStmt(tokens):
     exprs = [expression(tokens)]
-    while match(tokens, ','):
+    while not atEnd(tokens) and match(tokens, ','):
         exprs += [expression(tokens)]
     expectElseError(tokens, '\n', "after statement")
     return Output('output', exprs)
@@ -415,7 +415,7 @@ def procedureStmt(tokens):
             passby = consume(tokens).word
         expr = declare(tokens)
         params += [expr]
-        while match(tokens, ','):
+        while not atEnd(tokens) and match(tokens, ','):
             expr = declare(tokens)
             params += [expr]
         expectElseError(tokens, ')', "at end of parameters")
@@ -438,7 +438,7 @@ def functionStmt(tokens):
         passby = 'BYVALUE'
         var = declare(tokens)
         params += [var]
-        while match(tokens, ','):
+        while not atEnd(tokens) and match(tokens, ','):
             var = declare(tokens)
             params += [var]
         expectElseError(tokens, ')', "at end of parameters")
@@ -565,9 +565,9 @@ def parse(tokens):
     tokens += [Token(lastline, 0, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
-        while match(tokens, '\n'):
+        while not atEnd(tokens) and match(tokens, '\n'):
             pass
         statements += [statement2(tokens)]
-        while match(tokens, '\n'):
+        while not atEnd(tokens) and match(tokens, '\n'):
             pass
     return statements
