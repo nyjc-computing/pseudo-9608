@@ -279,9 +279,11 @@ def declare(tokens):
     if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
         raise ParseError("Invalid type", check(tokens))
     typetoken = consume(tokens)
+    metadata = None
     return makeExpr(
         name=name.name,
         type=typetoken.word,
+        metadata=metadata,
         token=name.token(),
     )
     
