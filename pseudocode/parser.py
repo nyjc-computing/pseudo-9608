@@ -11,9 +11,7 @@ from .lang import Conditional, Loop, ProcFunc, TypeStmt, FileAction
 # Helper functions
 
 def atEnd(tokens):
-    if expectType(tokens, 'EOF'):
-        return True
-    return False
+    return check(tokens).type == 'EOF'
 
 def atEndThenError(tokens):
     if atEnd(tokens):
