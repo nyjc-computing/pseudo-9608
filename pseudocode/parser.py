@@ -30,7 +30,7 @@ def makeExpr(
     frame=None, name=None, assignee=None, expr=None,
     left=None, oper=None, right=None,
     callable=None, args=None,
-    token=None,
+    token=None, metadata=None,
 ):
     if name is not None:
         if frame is not None:
@@ -40,7 +40,7 @@ def makeExpr(
                 assignee = name
             return Assign(name, assignee, expr, token=token)
         elif type is not None:
-            return Declare(name, type, token=token)
+            return Declare(name, type, metadata, token=token)
         else:
             return Name(name, token=token)
     if type is not None and value is not None:
