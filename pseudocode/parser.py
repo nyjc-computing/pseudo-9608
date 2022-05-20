@@ -56,6 +56,18 @@ def makeExpr(
         "Could not find valid keyword argument combination"
     )
 
+def expectWord(tokens, *words):
+    if check(tokens).word in words:
+        return check(tokens)
+    atEndThenError(tokens)
+    return None
+
+def expectType(tokens, *types):
+    if check(tokens).type in types:
+        return check(tokens)
+    atEndThenError(tokens)
+    return None
+
 def matchWord(tokens, *words):
     if check(tokens).word in words:
         return consume(tokens)
@@ -68,18 +80,6 @@ def matchWordElseError(tokens, *words, msg=''):
         return token
     msg = f"Expected {words}" + (f' {msg}' if msg else '')
     raise ParseError(msg, check(tokens))
-
-def expectWord(tokens, *words):
-    if check(tokens).word in words:
-        return check(tokens)
-    atEndThenError(tokens)
-    return None
-
-def expectType(tokens, *types):
-    if check(tokens).type in types:
-        return check(tokens)
-    atEndThenError(tokens)
-    return None
 
 # Precedence parsers
 # Expressions are parsed with this precedence (highest to lowest):
@@ -278,8 +278,13 @@ def declare(tokens):
     matchWordElseError(tokens, ':', msg="after name")
     if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
         raise ParseError("Invalid type", check(tokens))
-    typetoken = consume(tokens)
     metadata = None
+    typetoken = consume(tokens)
+    if typetoken.word == 'ARRAY':
+        matchWordElseError(tokens, '[')
+        if not expectType(tokens, 'INTEGER'):
+            raise ParseError("Expected")
+        literal(tokens)
     return makeExpr(
         name=name.name,
         type=typetoken.word,
