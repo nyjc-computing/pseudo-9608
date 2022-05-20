@@ -260,7 +260,7 @@ class Frame(Object):
         super().__init__(typesys=typesys)
         self.outer = outer
 
-    def set(self, typedValue):
+    def set(self, name, typedValue):
         self.data[name] = typedValue
 
     def delete(self, name):
@@ -271,6 +271,24 @@ class Frame(Object):
             return self
         if self.outer:
             return self.outer.lookup(name)
+
+
+
+class Array(Object):
+    """
+    Represents a space containing elements of identical type in 9608
+    pseudocode.
+    Each element is indexed by N integers.
+
+    Attributes
+    ----------
+    elementType: str
+       The common type of each element
+    """
+    @property
+    def elementType(self):
+        for elem in self.data.values():
+            return elem.type
 
 
 
@@ -329,11 +347,12 @@ class Name(Expr):
 
 
 class Declare(Expr):
-    __slots__ = ('name', 'type')
-    def __init__(self, name, type, token=None):
+    __slots__ = ('name', 'type', 'metadata')
+    def __init__(self, name, type, metadata=None, token=None):
         super().__init__(token=token)
         self.name = name
         self.type = type
+        self.metadata = metadata
 
 
 

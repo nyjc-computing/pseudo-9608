@@ -1,9 +1,11 @@
+from itertools import product
+
 from .builtin import AND, OR, NOT
 from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
-from .builtin import NULL, NUMERIC, EQUATABLE
-from .lang import Object, Frame, Builtin, Function, Procedure
+from .builtin import NULL, NUMERIC, EQUATABLE, TYPES
+from .lang import Object, Frame, Array, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
@@ -41,10 +43,6 @@ def declaredElseError(
             frame.getType(name), declaredType, token=token
         )
 
-def value(frame, expr):
-    """Return the value of a Literal"""
-    return expr.value
-
 
 
 class Resolver:
@@ -73,6 +71,19 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
     """Declare variable in frame"""
     if passby == 'BYVALUE':
         frame.declare(expr.name, expr.type)
+        if expr.type == 'ARRAY':
+            array = Array(typesys=frame.types)
+            # Use n-element tuples to address arrays
+            # itertools.product takes n iterables and returns
+            # cartesian product of its combinations
+            elemType = expr.metadata['type']
+            ranges = [
+                range(start, end + 1)
+                for (start, end) in expr.metadata['size']
+            ]
+            for index in product(*ranges):
+                array.declare(index, elemType)
+            frame.setValue(expr.name, array)
         return expr.type
     assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
     # BYREF
@@ -132,33 +143,63 @@ def resolveAssign(frame, expr):
         exprType, assnType, token=expr.token()
     )
 
+# Helper for resolving object+attribute types
+def resolveObj(typesystem, objType, name, *, token):
+    # Check objType existence in typesystem
+    declaredElseError(
+        typesystem, objType,
+        errmsg="Undeclared type", token=token
+    )
+    # Check attribute existence in object template
+    objTemplate = typesystem.getTemplate(objType).value
+    declaredElseError(
+        objTemplate, name,
+        errmsg="Undeclared attribute", token=token
+    )
+    return objTemplate.getType(name)
+
+def resolveArray(frame, expr):
+    def intsElseError(frame, *indexes):
+        for indexExpr in indexes:
+            nameType = resolve(frame, indexExpr)
+            expectTypeElseError(
+                nameType, 'INTEGER', token=indexExpr.token()
+            )
+    # Array indexes must be integer
+    intsElseError(frame, *expr.name)
+    array = frame.getValue(expr.frame.name)
+    return array.elementType
+    
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
-    # frame can be a Frame, or a Get Expr (for an Object)
-    # If frame is a Get Expr, resolve it recursively
-    if isinstance(expr.frame, Get):
-        # Pass original frame for recursive resolving
-        objType = expr.frame.accept(frame, resolveGet)
-        # Resolve object type in typesystem
-        declaredElseError(
-            frame.types, objType,
-            errmsg="Undeclared type", token=expr.token()
-        )
-        objTemplate = frame.types.getTemplate(objType).value
-        # Attribute type is different from object type
-        declaredElseError(
-            objTemplate, expr.name,
-            errmsg="Undeclared attribute", token=expr.token()
-        )
-        return objTemplate.getType(expr.name)
+    # frame can be:
+    # 1. NULL
+    #    - insert frame
+    # 2. A Get Expr (for an Object)
+    #    - check type existence
+    #    - custom types: check attribute existence in template
+    #    - arrays: check element type in frame
     if expr.frame is NULL:
         while not frame.has(expr.name):
             frame = frame.lookup(expr.name)
             if not frame:
                 raise LogicError("Undeclared", expr.token())
         expr.frame = frame
-        return frame.getType(expr.name)
+    # If frame is a Get Expr, resolve it recursively
+    if isinstance(expr.frame, Get):
+        # Resolve Get frame
+        objType = expr.frame.accept(frame, resolveGet)
+        if objType not in TYPES:
+            # Check objType and attribute existence in types
+            return resolveObj(
+                frame.types, objType, expr.name, token=expr.token()
+            )
+        elif objType == 'ARRAY':
+            return resolveArray(frame, expr)
+        else:  # built-in, non-array
+            pass
+    return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
@@ -248,8 +289,8 @@ def verifyIf(frame, stmt):
 def verifyLoop(frame, stmt):
     if stmt.init:
         stmt.init.accept(frame, verify)
-    condtype = stmt.cond.accept(frame, resolve)
-    expectTypeElseError(condtype, 'BOOLEAN', token=stmt.cond.token())
+    condType = stmt.cond.accept(frame, resolve)
+    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
 def verifyParams(frame, params, passby):

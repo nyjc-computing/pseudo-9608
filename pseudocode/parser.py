@@ -30,7 +30,7 @@ def makeExpr(
     frame=None, name=None, assignee=None, expr=None,
     left=None, oper=None, right=None,
     callable=None, args=None,
-    token=None,
+    token=None, metadata=None,
 ):
     if name is not None:
         if frame is not None:
@@ -40,7 +40,7 @@ def makeExpr(
                 assignee = name
             return Assign(name, assignee, expr, token=token)
         elif type is not None:
-            return Declare(name, type, token=token)
+            return Declare(name, type, metadata, token=token)
         else:
             return Name(name, token=token)
     if type is not None and value is not None:
@@ -56,19 +56,6 @@ def makeExpr(
         "Could not find valid keyword argument combination"
     )
 
-def matchWord(tokens, *words):
-    if check(tokens).word in words:
-        return consume(tokens)
-    atEndThenError(tokens)
-    return None
-
-def matchWordElseError(tokens, *words, msg=''):
-    token = matchWord(tokens, *words)
-    if token:
-        return token
-    msg = f"Expected {words}" + (f' {msg}' if msg else '')
-    raise ParseError(msg, check(tokens))
-
 def expectWord(tokens, *words):
     if check(tokens).word in words:
         return check(tokens)
@@ -80,6 +67,32 @@ def expectType(tokens, *types):
         return check(tokens)
     atEndThenError(tokens)
     return None
+
+def matchWord(tokens, *words):
+    if check(tokens).word in words:
+        return consume(tokens)
+    atEndThenError(tokens)
+    return None
+
+def matchType(tokens, *types):
+    if check(tokens).type in types:
+        return consume(tokens)
+    atEndThenError(tokens)
+    return None
+
+def matchWordElseError(tokens, *words, msg=''):
+    token = matchWord(tokens, *words)
+    if token:
+        return token
+    msg = f"Expected {words}" + (f' {msg}' if msg else '')
+    raise ParseError(msg, check(tokens))
+
+def matchTypeElseError(tokens, *types, msg=''):
+    token = matchType(tokens, *types)
+    if token:
+        return token
+    msg = f"Expected {types}" + (f' {msg}' if msg else '')
+    raise ParseError(msg, check(tokens))
 
 # Precedence parsers
 # Expressions are parsed with this precedence (highest to lowest):
@@ -145,6 +158,17 @@ def attrExpr(tokens, expr):
         token=name.token(),
     )
 
+def arrayExpr(tokens, expr):
+    index = (expression(tokens),)
+    while matchWord(tokens, ','):
+        index += (expression(tokens),)
+    matchWordElseError(tokens, ']')
+    return makeExpr(
+        frame=expr,
+        name=index,
+        token=expr.token(),
+    )
+
 def value(tokens):
     token = check(tokens)
     # Unary expressions
@@ -161,12 +185,15 @@ def value(tokens):
     # A name or call or attribute
     if expectType(tokens, 'name'):
         expr = name(tokens)
-        while expectWord(tokens, '(', '.'):
+        while expectWord(tokens, '[', '(', '.'):
+            # Array get
+            if matchWord(tokens, '['):
+                expr = arrayExpr(tokens, expr)
             # Function call
-            if matchWord(tokens, '('):
+            elif matchWord(tokens, '('):
                 expr = callExpr(tokens, expr)
             # Attribute get
-            if matchWord(tokens, '.'):
+            elif matchWord(tokens, '.'):
                 expr = attrExpr(tokens, expr)
         return expr
     else:
@@ -247,9 +274,13 @@ def expression(tokens):
 
 def assignment(tokens):
     assignee = name(tokens)  # Get Expr
-    while matchWord(tokens, '.'):
+    while expectWord(tokens, '[', '.'):
+        # Array get
+        if matchWord(tokens, '['):
+            assignee = arrayExpr(tokens, assignee)
         # Attribute get
-        assignee = attrExpr(tokens, assignee)
+        elif matchWord(tokens, '.'):
+            assignee = attrExpr(tokens, assignee)
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
     return makeExpr(
@@ -273,15 +304,36 @@ def inputStmt(tokens):
     matchWordElseError(tokens, '\n', msg="after statement")
     return Input('input', name)
 
+def colonRange(tokens):
+    """Parse and return a start:end range as a tuple"""
+    range_start = matchTypeElseError(tokens, 'INTEGER')
+    matchWordElseError(tokens, ':', msg="in range")
+    range_end = matchTypeElseError(tokens, 'INTEGER')
+    return (range_start.value, range_end.value)
+
 def declare(tokens):
+    def expectTypeToken(tokens):
+        if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
+            raise ParseError("Invalid type", check(tokens))
+        
     name = identifier(tokens)
     matchWordElseError(tokens, ':', msg="after name")
-    if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
-        raise ParseError("Invalid type", check(tokens))
+    expectTypeToken(tokens)
+    metadata = None
     typetoken = consume(tokens)
+    if typetoken.word == 'ARRAY':
+        matchWordElseError(tokens, '[')
+        metadata = {'size': [colonRange(tokens)], 'type': None}
+        while matchWord(tokens, ','):
+            metadata['size'] += [colonRange(tokens)]
+        matchWordElseError(tokens, ']')
+        matchWordElseError(tokens, 'OF')
+        expectTypeToken(tokens)
+        metadata['type'] = consume(tokens).word
     return makeExpr(
         name=name.name,
         type=typetoken.word,
+        metadata=metadata,
         token=name.token(),
     )
     
