@@ -158,6 +158,17 @@ def attrExpr(tokens, expr):
         token=name.token(),
     )
 
+def arrayExpr(tokens, expr):
+    index = (matchTypeElseError(tokens, 'INTEGER'),)
+    while matchWord(tokens, ','):
+        index += (matchTypeElseError(tokens, 'INTEGER'),)
+    matchWordElseError(tokens, ']')
+    return makeExpr(
+        frame=expr,
+        name=index,
+        token=name.token(),
+    )
+
 def value(tokens):
     token = check(tokens)
     # Unary expressions
@@ -174,7 +185,10 @@ def value(tokens):
     # A name or call or attribute
     if expectType(tokens, 'name'):
         expr = name(tokens)
-        while expectWord(tokens, '(', '.'):
+        while expectWord(tokens, '[', '(', '.'):
+            # Array get
+            if matchWord(tokens, '['):
+                expr = arrayExpr(tokens, expr)
             # Function call
             if matchWord(tokens, '('):
                 expr = callExpr(tokens, expr)
