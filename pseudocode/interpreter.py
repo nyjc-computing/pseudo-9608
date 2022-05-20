@@ -64,8 +64,8 @@ class Interpreter:
 
 def evalIndex(frame, indexes):
     return tuple((
-        evaluate(frame, indexExpr)
-        for indexExpr in indexes
+        evaluate(frame, expr)
+        for expr in indexes
     ))
 
 def evalLiteral(frame, literal):
