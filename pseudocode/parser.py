@@ -62,7 +62,7 @@ def matchWord(tokens, *words):
     atEndThenError(tokens)
     return None
 
-def matchElseError(tokens, *words, msg=''):
+def matchWordElseError(tokens, *words, msg=''):
     token = matchWord(tokens, *words)
     if token:
         return token
@@ -98,6 +98,8 @@ def identifier(tokens):
 
 def literal(tokens):
     token = consume(tokens)
+    if token.word == 'Pupil1':
+        breakpoint()
     return makeExpr(
         type=token.type,
         value=token.value,
@@ -126,11 +128,11 @@ def callExpr(tokens, expr):
     argcount = 0
     while not expectWord(tokens, ')'):
         if argcount == 0:
-            matchElseError(tokens, ',')
+            matchWordElseError(tokens, ',')
         arg = expression(tokens)
         args += [arg]
         argcount += 1
-    matchElseError(tokens, ')', msg="after '('")
+    matchWordElseError(tokens, ')', msg="after '('")
     return makeExpr(
         callable=expr,
         args=args,
@@ -153,7 +155,7 @@ def value(tokens):
     #  A grouping
     if matchWord(tokens, '('):
         expr = expression(tokens)
-        matchElseError(tokens, ')', msg="after '('")
+        matchWordElseError(tokens, ')', msg="after '('")
         return expr
     # A single value
     if expectType(tokens, *TYPES):
@@ -250,7 +252,7 @@ def assignment(tokens):
     while matchWord(tokens, '.'):
         # Attribute get
         assignee = attrExpr(tokens, assignee)
-    matchElseError(tokens, '<-', msg="after name")
+    matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
     return makeExpr(
         name=assignee.name,
@@ -265,17 +267,17 @@ def outputStmt(tokens):
     exprs = [expression(tokens)]
     while matchWord(tokens, ','):
         exprs += [expression(tokens)]
-    matchElseError(tokens, '\n', msg="after statement")
+    matchWordElseError(tokens, '\n', msg="after statement")
     return Output('output', exprs)
 
 def inputStmt(tokens):
     name = identifier(tokens)
-    matchElseError(tokens, '\n', msg="after statement")
+    matchWordElseError(tokens, '\n', msg="after statement")
     return Input('input', name)
 
 def declare(tokens):
     name = identifier(tokens)
-    matchElseError(tokens, ':', msg="after name")
+    matchWordElseError(tokens, ':', msg="after name")
     if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
         raise ParseError("Invalid type", check(tokens))
     typetoken = consume(tokens)
@@ -287,93 +289,93 @@ def declare(tokens):
     
 def declareStmt(tokens):
     expr = declare(tokens)
-    matchElseError(tokens, '\n', msg="after statement")
+    matchWordElseError(tokens, '\n', msg="after statement")
     return ExprStmt('declare', expr)
 
 def typeStmt(tokens):
     name = identifier(tokens)
-    matchElseError(tokens, '\n')
+    matchWordElseError(tokens, '\n')
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):
-        matchElseError(tokens, 'DECLARE')
+        matchWordElseError(tokens, 'DECLARE')
         exprs += [declare(tokens)]
-        matchElseError(tokens, '\n')
-    matchElseError(tokens, 'ENDTYPE')
-    matchElseError(tokens, '\n')
+        matchWordElseError(tokens, '\n')
+    matchWordElseError(tokens, 'ENDTYPE')
+    matchWordElseError(tokens, '\n')
     return TypeStmt('declaretype', name.name, exprs)
 
 def assignStmt(tokens):
     expr = assignment(tokens)
-    matchElseError(tokens, '\n', msg="after statement")
+    matchWordElseError(tokens, '\n', msg="after statement")
     return ExprStmt('assign', expr)
 
 def caseStmt(tokens):
-    matchElseError(tokens, 'OF', msg="after CASE")
+    matchWordElseError(tokens, 'OF', msg="after CASE")
     cond = value(tokens)
-    matchElseError(tokens, '\n', msg="after CASE OF")
+    matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts = {}
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
         val = value(tokens).evaluate()
-        matchElseError(tokens, ':', msg="after CASE value")
+        matchWordElseError(tokens, ':', msg="after CASE value")
         stmt = statement1(tokens)
         stmts[val] = stmt
     fallback = None
     if matchWord(tokens, 'OTHERWISE'):
         fallback = statement6(tokens)
-    matchElseError(tokens, 'ENDCASE', msg="at end of CASE")
-    matchElseError(tokens, '\n', msg="after ENDCASE")
+    matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
+    matchWordElseError(tokens, '\n', msg="after ENDCASE")
     return Conditional('case', cond, stmts, fallback)
 
 def ifStmt(tokens):
     cond = expression(tokens)
     matchWord(tokens, '\n')  # optional line break
-    matchElseError(tokens, 'THEN')
-    matchElseError(tokens, '\n', msg="after THEN")
+    matchWordElseError(tokens, 'THEN')
+    matchWordElseError(tokens, '\n', msg="after THEN")
     stmts = {True: []}
     while not expectWord(tokens, 'ELSE', 'ENDIF'):
         stmts[True] += [statement1(tokens)]
     fallback = None
     if matchWord(tokens, 'ELSE'):
-        matchElseError(tokens, '\n', msg="after ELSE")
+        matchWordElseError(tokens, '\n', msg="after ELSE")
         false = []
         while not expectWord(tokens, 'ENDIF'):
             false += [statement5(tokens)]
         fallback = false
-    matchElseError(tokens, 'ENDIF', msg="at end of IF")
-    matchElseError(tokens, '\n', msg="after statement")
+    matchWordElseError(tokens, 'ENDIF', msg="at end of IF")
+    matchWordElseError(tokens, '\n', msg="after statement")
     return Conditional('if', cond, stmts, fallback)
 
 def whileStmt(tokens):
     cond = expression(tokens)
-    matchElseError(tokens, 'DO', msg="after WHILE condition")
-    matchElseError(tokens, '\n', msg="after DO")
+    matchWordElseError(tokens, 'DO', msg="after WHILE condition")
+    matchWordElseError(tokens, '\n', msg="after DO")
     stmts = []
     while not matchWord(tokens, 'ENDWHILE'):
         stmts += [statement5(tokens)]
-    matchElseError(tokens, '\n', msg="after ENDWHILE")
+    matchWordElseError(tokens, '\n', msg="after ENDWHILE")
     return Loop('while', None, cond, stmts)
 
 def repeatStmt(tokens):
-    matchElseError(tokens, '\n', msg="after REPEAT")
+    matchWordElseError(tokens, '\n', msg="after REPEAT")
     stmts = []
     while not matchWord(tokens, 'UNTIL'):
         stmts += [statement5(tokens)]
     cond = expression(tokens)
-    matchElseError(tokens, '\n', msg="at end of UNTIL")
+    matchWordElseError(tokens, '\n', msg="at end of UNTIL")
     return Loop('repeat', None, cond, stmts)
 
 def forStmt(tokens):
     init = assignment(tokens)
-    matchElseError(tokens, 'TO')
+    matchWordElseError(tokens, 'TO')
     end = value(tokens)
     step = makeExpr(type='INTEGER', value=1, token=init.token())
     if matchWord(tokens, 'STEP'):
         step = value(tokens)
-    matchElseError(tokens, '\n', msg="at end of FOR")
+    matchWordElseError(tokens, '\n', msg="at end of FOR")
     stmts = []
     while not matchWord(tokens, 'ENDFOR'):
         stmts += [statement5(tokens)]
-    matchElseError(tokens, '\n', msg="after ENDFOR")
+    matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
     getCounter = makeExpr(
         frame=NULL,
@@ -414,17 +416,17 @@ def procedureStmt(tokens):
         while matchWord(tokens, ','):
             expr = declare(tokens)
             params += [expr]
-        matchElseError(tokens, ')')
-    matchElseError(tokens, '\n', msg="after parameters")
+        matchWordElseError(tokens, ')')
+    matchWordElseError(tokens, '\n', msg="after parameters")
     stmts = []
     while not matchWord(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
-    matchElseError(tokens, '\n', msg="after ENDPROCEDURE")
+    matchWordElseError(tokens, '\n', msg="after ENDPROCEDURE")
     return ProcFunc('procedure', name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens):
     callable = value(tokens)
-    matchElseError(tokens, '\n', msg="at end of CALL")
+    matchWordElseError(tokens, '\n', msg="at end of CALL")
     return ExprStmt('call', callable)
 
 def functionStmt(tokens):
@@ -437,49 +439,49 @@ def functionStmt(tokens):
         while matchWord(tokens, ','):
             var = declare(tokens)
             params += [var]
-        matchElseError(tokens, ')', msg="at end of parameters")
-    matchElseError(tokens, 'RETURNS', msg="after parameters")
-    typetoken = matchElseError(tokens, *TYPES, msg="Invalid type")
-    matchElseError(tokens, '\n', msg="at end of FUNCTION")
+        matchWordElseError(tokens, ')', msg="at end of parameters")
+    matchWordElseError(tokens, 'RETURNS', msg="after parameters")
+    typetoken = matchWordElseError(tokens, *TYPES, msg="Invalid type")
+    matchWordElseError(tokens, '\n', msg="at end of FUNCTION")
     stmts = []
     while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
-    matchElseError(tokens, '\n', msg="after ENDFUNCTION")
+    matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
     return ProcFunc(
         'function', name, passby, params, stmts, typetoken.word
     )
 
 def returnStmt(tokens):
     expr = expression(tokens)
-    matchElseError(tokens, '\n', msg="at end of RETURN")
+    matchWordElseError(tokens, '\n', msg="at end of RETURN")
     return ExprStmt('return', expr)
 
 def openfileStmt(tokens):
     name = value(tokens)
-    matchElseError(tokens, 'FOR', msg="after file identifier")
-    mode = matchElseError(
+    matchWordElseError(tokens, 'FOR', msg="after file identifier")
+    mode = matchWordElseError(
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
     )
-    matchElseError(tokens, '\n')
+    matchWordElseError(tokens, '\n')
     return FileAction('file', 'open', name, mode, None)
 
 def readfileStmt(tokens):
     name = value(tokens)
-    matchElseError(tokens, ',', msg="after file identifier")
+    matchWordElseError(tokens, ',', msg="after file identifier")
     data = identifier(tokens)
-    matchElseError(tokens, '\n')
+    matchWordElseError(tokens, '\n')
     return FileAction('file', 'read', name, None, data.name)
 
 def writefileStmt(tokens):
     name = value(tokens)
-    matchElseError(tokens, ',', msg="after file identifier")
+    matchWordElseError(tokens, ',', msg="after file identifier")
     data = expression(tokens)
-    matchElseError(tokens, '\n')
+    matchWordElseError(tokens, '\n')
     return FileAction('file', 'write', name, None, data)
 
 def closefileStmt(tokens):
     name = value(tokens)
-    matchElseError(tokens, '\n')
+    matchWordElseError(tokens, '\n')
     return FileAction('file', 'close', name, None, None)
 
 # Statement hierarchy
