@@ -274,9 +274,13 @@ def expression(tokens):
 
 def assignment(tokens):
     assignee = name(tokens)  # Get Expr
-    while matchWord(tokens, '.'):
+    while expectWord(tokens, '[', '.'):
+        # Array get
+        if matchWord(tokens, '['):
+            assignee = arrayExpr(tokens, assignee)
         # Attribute get
-        assignee = attrExpr(tokens, assignee)
+        elif matchWord(tokens, '.'):
+            assignee = attrExpr(tokens, assignee)
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
     return makeExpr(
