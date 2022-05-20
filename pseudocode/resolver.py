@@ -1,3 +1,5 @@
+from itertools import product
+
 from .builtin import AND, OR, NOT
 from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
@@ -75,7 +77,12 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
         frame.declare(expr.name, expr.type)
         if expr.type == 'ARRAY':
             array = Object(typesys=frame.types)
-            # Instantiate array slots
+            # Use n-element tuples to address arrays
+            # itertools.product takes n iterables and returns
+            # cartesian product of its combinations
+            elemType = expr.metadata['type']
+            for index in product(*expr.metadata['size']):
+                array.declare(index, elemType)
             frame.setValue(expr.name, array)
         return expr.type
     assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
