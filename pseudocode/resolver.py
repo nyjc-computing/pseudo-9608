@@ -4,7 +4,7 @@ from .builtin import AND, OR, NOT
 from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
-from .builtin import NULL, NUMERIC, EQUATABLE
+from .builtin import NULL, NUMERIC, EQUATABLE, TYPES
 from .lang import Object, Frame, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
@@ -150,30 +150,44 @@ def resolveAssign(frame, expr):
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
-    # frame can be a Frame, or a Get Expr (for an Object)
-    # If frame is a Get Expr, resolve it recursively
-    if isinstance(expr.frame, Get):
-        # Pass original frame for recursive resolving
-        objType = expr.frame.accept(frame, resolveGet)
-        # Resolve object type in typesystem
-        declaredElseError(
-            frame.types, objType,
-            errmsg="Undeclared type", token=expr.token()
-        )
-        objTemplate = frame.types.getTemplate(objType).value
-        # Attribute type is different from object type
-        declaredElseError(
-            objTemplate, expr.name,
-            errmsg="Undeclared attribute", token=expr.token()
-        )
-        return objTemplate.getType(expr.name)
+    # frame can be:
+    # 1. NULL
+    #    - insert frame
+    # 2. A Get Expr (for an Object)
+    #    - check type existence
+    #    - custom types: check attribute existence in template
+    #    - arrays: check element type in frame
     if expr.frame is NULL:
         while not frame.has(expr.name):
             frame = frame.lookup(expr.name)
             if not frame:
                 raise LogicError("Undeclared", expr.token())
         expr.frame = frame
-        return frame.getType(expr.name)
+    # If frame is a Get Expr, resolve it recursively
+    if isinstance(expr.frame, Get):
+        # Resolve Get frame
+        objType = expr.frame.accept(frame, resolveGet)
+        if objType not in TYPES:
+            # Check objType existence in typesystem
+            declaredElseError(
+                frame.types, objType,
+                errmsg="Undeclared type", token=expr.token()
+            )
+            objTemplate = frame.types.getTemplate(objType).value
+            # Attribute type is different from object type
+            declaredElseError(
+                objTemplate, expr.name,
+                errmsg="Undeclared attribute", token=expr.token()
+            )
+            return objTemplate.getType(expr.name)
+        elif objType == 'ARRAY':
+            # frame should have been resolved to the frame
+            # that contains expr.frame.name
+            array = frame.getValue(expr.frame.name)
+            return array.getType(expr.name)
+        else:  # built-in, non-array
+            pass
+    return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
     expr.callable.accept(frame, resolveGet)
