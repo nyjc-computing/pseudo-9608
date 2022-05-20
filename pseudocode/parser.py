@@ -294,10 +294,22 @@ def declare(tokens):
     metadata = None
     typetoken = consume(tokens)
     if typetoken.word == 'ARRAY':
+        metadata = {'size': [], 'type': None}
         matchWordElseError(tokens, '[')
-        if not expectType(tokens, 'INTEGER'):
-            raise ParseError("Expected")
-        literal(tokens)
+        range_start = matchTypeElseError(tokens, 'INTEGER')
+        matchWordElseError(tokens, ':', msg="in range")
+        range_end = matchTypeElseError(tokens, 'INTEGER')
+        metadata['size'] += [(range_start, range_end)]
+        while matchWord(tokens, ','):
+            range_start = matchTypeElseError(tokens, 'INTEGER')
+            matchWordElseError(tokens, ':', msg="in range")
+            range_end = matchTypeElseError(tokens, 'INTEGER')
+            metadata['size'] += [(range_start, range_end)]
+        matchWordElseError(tokens, ']')
+        matchWordElseError(tokens, 'OF')
+        if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
+            raise ParseError("Invalid type", check(tokens))
+        metadata['type'] = consume(tokens)
     return makeExpr(
         name=name.name,
         type=typetoken.word,
