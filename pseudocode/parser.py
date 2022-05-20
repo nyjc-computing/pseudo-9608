@@ -166,7 +166,7 @@ def arrayExpr(tokens, expr):
     return makeExpr(
         frame=expr,
         name=index,
-        token=name.token(),
+        token=expr.token(),
     )
 
 def value(tokens):
