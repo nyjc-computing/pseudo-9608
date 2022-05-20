@@ -5,7 +5,7 @@ from .builtin import lt, lte, gt, gte, ne, eq
 from .builtin import add, sub, mul, div
 from .builtin import LogicError
 from .builtin import NULL, NUMERIC, EQUATABLE, TYPES
-from .lang import Object, Frame, Builtin, Function, Procedure
+from .lang import Object, Frame, Array, Builtin, Function, Procedure
 from .lang import Literal, Declare, Unary, Binary, Get, Call, Assign
 
 
@@ -76,7 +76,7 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
     if passby == 'BYVALUE':
         frame.declare(expr.name, expr.type)
         if expr.type == 'ARRAY':
-            array = Object(typesys=frame.types)
+            array = Array(typesys=frame.types)
             # Use n-element tuples to address arrays
             # itertools.product takes n iterables and returns
             # cartesian product of its combinations
@@ -181,10 +181,17 @@ def resolveGet(frame, expr):
             )
             return objTemplate.getType(expr.name)
         elif objType == 'ARRAY':
+            # Index may be a tuple of expressions that needs resolving
+            # Index elements must be integer
+            for indexExpr in expr.name:
+                nameType = resolve(frame, indexExpr)
+                expectTypeElseError(
+                    nameType, 'INTEGER', token=indexExpr.token()
+                )
             # frame should have been resolved to the frame
             # that contains expr.frame.name
             array = frame.getValue(expr.frame.name)
-            return array.getType(expr.name)
+            return array.elementType
         else:  # built-in, non-array
             pass
     return frame.getType(expr.name)
