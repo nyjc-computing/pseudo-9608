@@ -1,5 +1,5 @@
 from .builtin import ParseError
-from .builtin import KEYWORDS, VALUES, OPERATORS
+from .builtin import KEYWORDS, VALUES, OPERATORS, SYMBOLS
 from .builtin import NULL
 from .lang import Token
 
@@ -115,7 +115,7 @@ def scan(src):
         elif char == '"':
             text = string(code)
             token = makeToken(code, 'STRING', text, text[1:-1])
-        elif char in '()[]:,.+-/*=<>':
+        elif char in SYMBOLS:
             text = symbol(code)
             oper = OPERATORS.get(text, None)
             token = makeToken(code, 'symbol', text, oper)
