@@ -1,5 +1,5 @@
 from .builtin import ParseError
-from .builtin import KEYWORDS, VALUES, OPERATORS, SYMBOLS
+from .builtin import KEYWORDS, VALUES, OPERATORS, SYM_SINGLE, SYM_MULTI, SYMBOLS
 from .builtin import NULL
 from .lang import Token
 
@@ -54,9 +54,9 @@ def string(code):
 
 def symbol(code):
     token = consume(code)
-    if token in '()[]':
+    if token in SYM_SINGLE:
         return token
-    while not atEnd(code) and (check(code) in ':.+-/*=<>'):
+    while not atEnd(code) and (check(code) in SYM_MULTI):
         token += consume(code)
     return token
 
