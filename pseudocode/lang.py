@@ -260,7 +260,7 @@ class Frame(Object):
         super().__init__(typesys=typesys)
         self.outer = outer
 
-    def set(self, typedValue):
+    def set(self, name, typedValue):
         self.data[name] = typedValue
 
     def delete(self, name):
