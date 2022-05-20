@@ -329,11 +329,12 @@ class Name(Expr):
 
 
 class Declare(Expr):
-    __slots__ = ('name', 'type')
-    def __init__(self, name, type, token=None):
+    __slots__ = ('name', 'type', 'metadata')
+    def __init__(self, name, type, metadata=None, token=None):
         super().__init__(token=token)
         self.name = name
         self.type = type
+        self.metadata = metadata
 
 
 
