@@ -562,6 +562,4 @@ def parse(tokens):
         while matchWord(tokens, '\n'):
             pass
         statements += [statement2(tokens)]
-        while matchWord(tokens, '\n'):
-            pass
     return statements
