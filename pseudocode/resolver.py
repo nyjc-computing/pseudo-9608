@@ -81,7 +81,11 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
             # itertools.product takes n iterables and returns
             # cartesian product of its combinations
             elemType = expr.metadata['type']
-            for index in product(*expr.metadata['size']):
+            ranges = [
+                range(start, end + 1)
+                for (start, end) in expr.metadata['size']
+            ]
+            for index in product(*ranges):
                 array.declare(index, elemType)
             frame.setValue(expr.name, array)
         return expr.type
