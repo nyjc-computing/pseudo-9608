@@ -73,6 +73,10 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
     """Declare variable in frame"""
     if passby == 'BYVALUE':
         frame.declare(expr.name, expr.type)
+        if expr.type == 'ARRAY':
+            array = Object(typesys=frame.types)
+            # Instantiate array slots
+            frame.setValue(expr.name, array)
         return expr.type
     assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
     # BYREF
