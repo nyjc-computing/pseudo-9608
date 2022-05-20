@@ -60,7 +60,7 @@ class Pseudo:
         except ParseError as err:
             result['error'] = err
             return result
-        except:
+        except Exception as err:
             breakpoint()
 
         # Resolving
@@ -70,7 +70,7 @@ class Pseudo:
         except LogicError as err:
             result['error'] = err
             return result
-        except:
+        except Exception as err:
             breakpoint()
 
         # Interpreting
@@ -80,7 +80,7 @@ class Pseudo:
             interpreter.interpret()
         except RuntimeError as err:
             result['error'] = err
-        except:
+        except Exception as err:
             breakpoint()
         finally:
             return result
