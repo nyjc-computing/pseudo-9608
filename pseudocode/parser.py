@@ -301,17 +301,10 @@ def declare(tokens):
     metadata = None
     typetoken = consume(tokens)
     if typetoken.word == 'ARRAY':
-        metadata = {'size': [], 'type': None}
         matchWordElseError(tokens, '[')
-        range_start = matchTypeElseError(tokens, 'INTEGER')
-        matchWordElseError(tokens, ':', msg="in range")
-        range_end = matchTypeElseError(tokens, 'INTEGER')
-        metadata['size'] += [(range_start.value, range_end.value)]
+        metadata = {'size': [colonRange(tokens)], 'type': None}
         while matchWord(tokens, ','):
-            range_start = matchTypeElseError(tokens, 'INTEGER')
-            matchWordElseError(tokens, ':', msg="in range")
-            range_end = matchTypeElseError(tokens, 'INTEGER')
-            metadata['size'] += [(range_start.value, range_end.value)]
+            metadata['size'] += [colonRange(tokens)]
         matchWordElseError(tokens, ']')
         matchWordElseError(tokens, 'OF')
         if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
