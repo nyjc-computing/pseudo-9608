@@ -263,8 +263,8 @@ def verifyIf(frame, stmt):
 def verifyLoop(frame, stmt):
     if stmt.init:
         stmt.init.accept(frame, verify)
-    condtype = stmt.cond.accept(frame, resolve)
-    expectTypeElseError(condtype, 'BOOLEAN', token=stmt.cond.token())
+    condType = stmt.cond.accept(frame, resolve)
+    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
 def verifyParams(frame, params, passby):
