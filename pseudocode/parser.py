@@ -56,30 +56,30 @@ def makeExpr(
         "Could not find valid keyword argument combination"
     )
 
-def matchElseError(tokens, word, addmsg=None):
-    if matchWord(tokens, word):
-        return True
-    msg = f"Expected {word}"
-    if addmsg: msg += f" {addmsg}"
-    raise ParseError(msg, check(tokens))
-
 def matchWord(tokens, *words):
     if check(tokens).word in words:
         return consume(tokens)
     atEndThenError(tokens)
-    return False
+    return None
+
+def matchElseError(tokens, *words, msg=''):
+    token = matchWord(tokens, *words)
+    if token:
+        return token
+    msg = f"Expected {words}" + (f' {msg}' if msg else '')
+    raise ParseError(msg, check(tokens))
 
 def expectWord(tokens, *words):
     if check(tokens).word in words:
-        return True
+        return check(tokens)
     atEndThenError(tokens)
-    return False
+    return None
 
 def expectType(tokens, *types):
     if check(tokens).type in types:
-        return True
+        return check(tokens)
     atEndThenError(tokens)
-    return False
+    return check(tokens)
 
 # Precedence parsers
 # Expressions are parsed with this precedence (highest to lowest):
