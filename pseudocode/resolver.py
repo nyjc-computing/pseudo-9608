@@ -62,7 +62,7 @@ class Resolver:
 
 def resolveExprs(frame, exprs):
     for expr in exprs:
-        expr.accept(frame, resolve)
+        resolve(frame, expr)
 
 def resolveLiteral(frame, literal):
     return literal.type
@@ -106,8 +106,8 @@ def resolveUnary(frame, expr):
     raise ValueError(f"Unexpected oper {expr.oper}")
 
 def resolveBinary(frame, expr):
-    lType = expr.left.accept(frame, resolve)
-    rType = expr.right.accept(frame, resolve)
+    lType = resolve(frame, expr.left)
+    rType = resolve(frame, expr.right)
     if expr.oper in (AND, OR):
         expectTypeElseError(lType, 'BOOLEAN', token=expr.left.token())
         expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token())
@@ -137,8 +137,8 @@ def resolveBinary(frame, expr):
 
 def resolveAssign(frame, expr):
     # assignee frame might be a Frame or Get(Object)
-    assnType = expr.assignee.accept(frame, resolveGet)
-    exprType = expr.expr.accept(frame, resolve)
+    assnType = resolveGet(frame, expr.assignee)
+    exprType = resolve(frame, expr.expr)
     expectTypeElseError(
         exprType, assnType, token=expr.token()
     )
@@ -189,7 +189,7 @@ def resolveGet(frame, expr):
     # If frame is a Get Expr, resolve it recursively
     if isinstance(expr.frame, Get):
         # Resolve Get frame
-        objType = expr.frame.accept(frame, resolveGet)
+        objType = resolveGet(frame, expr.frame)
         if objType not in TYPES:
             # Check objType and attribute existence in types
             return resolveObj(
@@ -211,7 +211,7 @@ def resolveProcCall(frame, expr):
     resolveCall(frame, expr)
 
 def resolveFuncCall(frame, expr):
-    expr.callable.accept(frame, resolveGet)
+    resolveGet(frame, expr.callable)
     # Resolve global frame where function is declared
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
@@ -235,24 +235,24 @@ def resolveCall(frame, expr):
     # Type-check arguments
     for arg, param in zip(expr.args, callable.params):
         # param is a slot from either local or frame
-        argtype = arg.accept(frame, resolve)
+        argtype = resolve(frame, arg)
         expectTypeElseError(argtype, param.type, token=arg.token())
 
 def resolve(frame, expr):
     if isinstance(expr, Literal):
-        return expr.accept(frame, resolveLiteral)
+        return resolveLiteral(frame, expr)
     if isinstance(expr, Declare):
-        return expr.accept(frame, resolveDeclare)
+        return resolveDeclare(frame, expr)
     elif isinstance(expr, Unary):
-        return expr.accept(frame, resolveUnary)
+        return resolveUnary(frame, expr)
     elif isinstance(expr, Binary):
-        return expr.accept(frame, resolveBinary)
+        return resolveBinary(frame, expr)
     elif isinstance(expr, Assign):
-        return expr.accept(frame, resolveAssign)
+        return resolveAssign(frame, expr)
     elif isinstance(expr, Get):
-        return expr.accept(frame, resolveGet)
+        return resolveGet(frame, expr)
     elif isinstance(expr, Call):
-        return expr.accept(frame, resolveFuncCall)
+        return resolveFuncCall(frame, expr)
 
 
         
@@ -260,7 +260,7 @@ def resolve(frame, expr):
 
 def verifyStmts(frame, stmts):
     for stmt in stmts:
-        stmtType = stmt.accept(frame, verify)
+        stmtType = verify(frame, stmt)
         # For Return statements
         if stmt.rule == 'return':
             expectTypeElseError(
@@ -274,13 +274,13 @@ def verifyInput(frame, stmt):
     declaredElseError(frame, stmt.name)
 
 def verifyCase(frame, stmt):
-    stmt.cond.accept(frame, resolve)
+    resolve(frame, stmt.cond)
     verifyStmts(frame, stmt.stmtMap.values())
     if stmt.fallback:
-        stmt.fallback.accept(frame, verify)
+        verify(frame, stmt.fallback)
 
 def verifyIf(frame, stmt):
-    condType = stmt.cond.accept(frame, resolve)
+    condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmtMap[True])
     if stmt.fallback:
@@ -288,8 +288,8 @@ def verifyIf(frame, stmt):
 
 def verifyLoop(frame, stmt):
     if stmt.init:
-        stmt.init.accept(frame, verify)
-    condType = stmt.cond.accept(frame, resolve)
+        verifyAssign(frame, stmt.init)
+    condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
@@ -327,13 +327,11 @@ def verifyFunction(frame, stmt):
     verifyStmts(local, stmt.stmts)
 
 def verifyFile(frame, stmt):
-    stmt.name.accept(frame, value)
+    value(frame, stmt.name)
     if stmt.action == 'open':
         pass
-    elif stmt.action == 'read':
-        stmt.data.accept(frame, resolve)
-    elif stmt.action == 'write':
-        stmt.data.accept(frame, resolve)
+    elif stmt.action in ('read', 'write'):
+        resolve(frame, stmt.data)
     elif stmt.action == 'close':
         pass
 
@@ -348,24 +346,24 @@ def verifyDeclareType(frame, stmt):
 
 def verify(frame, stmt):
     if stmt.rule == 'output':
-        stmt.accept(frame, verifyOutput)
+        verifyOutput(frame, stmt)
     if stmt.rule == 'input':
-        stmt.accept(frame, verifyInput)
+        verifyInput(frame, stmt)
     elif stmt.rule == 'case':
-        stmt.accept(frame, verifyCase)
+        verifyCase(frame, stmt)
     elif stmt.rule == 'if':
-        stmt.accept(frame, verifyIf)
+        verifyIf(frame, stmt)
     elif stmt.rule in ('while', 'repeat', 'for'):
-        stmt.accept(frame, verifyLoop)
+        verifyLoop(frame, stmt)
     elif stmt.rule == 'procedure':
-        stmt.accept(frame, verifyProcedure)
+        verifyProcedure(frame, stmt)
     elif stmt.rule == 'function':
-        stmt.accept(frame, verifyFunction)
+        verifyFunction(frame, stmt)
     elif stmt.rule == 'file':
-        stmt.accept(frame, verifyFile)
+        verifyFile(frame, stmt)
     elif stmt.rule == 'declaretype':
-        stmt.accept(frame, verifyDeclareType)
+        verifyDeclareType(frame, stmt)
     elif stmt.rule in ('assign', 'declare', 'return'):
-        return stmt.expr.accept(frame, resolve)
+        return resolve(frame, stmt.expr)
     elif stmt.rule == 'call':
-        stmt.expr.accept(frame, resolveProcCall)
+        resolveProcCall(frame, stmt.expr)
