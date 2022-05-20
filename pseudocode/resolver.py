@@ -43,6 +43,13 @@ def declaredElseError(
             frame.getType(name), declaredType, token=token
         )
 
+def rangeProduct(indexes):
+    ranges = [
+        range(start, end + 1)
+        for (start, end) in indexes
+    ]
+    return product(*ranges)
+
 
 
 class Resolver:
@@ -77,11 +84,7 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
             # itertools.product takes n iterables and returns
             # cartesian product of its combinations
             elemType = expr.metadata['type']
-            ranges = [
-                range(start, end + 1)
-                for (start, end) in expr.metadata['size']
-            ]
-            for index in product(*ranges):
+            for index in rangeProduct(expr.metadata['size']):
                 array.declare(index, elemType)
             frame.setValue(expr.name, array)
         return expr.type
