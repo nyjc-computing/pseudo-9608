@@ -60,6 +60,8 @@ class Pseudo:
         except ParseError as err:
             result['error'] = err
             return result
+        except:
+            breakpoint()
 
         # Resolving
         resolver = Resolver(globalFrame, statements)
@@ -68,6 +70,8 @@ class Pseudo:
         except LogicError as err:
             result['error'] = err
             return result
+        except:
+            breakpoint()
 
         # Interpreting
         interpreter = Interpreter(globalFrame, statements)
@@ -76,5 +80,7 @@ class Pseudo:
             interpreter.interpret()
         except RuntimeError as err:
             result['error'] = err
+        except:
+            breakpoint()
         finally:
             return result
