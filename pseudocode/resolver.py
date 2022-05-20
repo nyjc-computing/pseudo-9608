@@ -43,10 +43,6 @@ def declaredElseError(
             frame.getType(name), declaredType, token=token
         )
 
-def value(frame, expr):
-    """Return the value of a Literal"""
-    return expr.value
-
 
 
 class Resolver:
@@ -147,6 +143,33 @@ def resolveAssign(frame, expr):
         exprType, assnType, token=expr.token()
     )
 
+# Helper for resolving object+attribute types
+def resolveObj(typesystem, objType, name, *, token):
+    # Check objType existence in typesystem
+    declaredElseError(
+        typesystem, objType,
+        errmsg="Undeclared type", token=token
+    )
+    # Check attribute existence in object template
+    objTemplate = typesystem.getTemplate(objType).value
+    declaredElseError(
+        objTemplate, name,
+        errmsg="Undeclared attribute", token=token
+    )
+    return objTemplate.getType(name)
+
+def resolveArray(frame, expr):
+    def intsElseError(frame, *indexes):
+        for indexExpr in indexes:
+            nameType = resolve(frame, indexExpr)
+            expectTypeElseError(
+                nameType, 'INTEGER', token=indexExpr.token()
+            )
+    # Array indexes must be integer
+    intsElseError(frame, *expr.name)
+    array = frame.getValue(expr.frame.name)
+    return array.elementType
+    
 def resolveGet(frame, expr):
     """Insert frame into Get expr"""
     assert isinstance(expr, Get), "Not a Get Expr"
@@ -168,30 +191,12 @@ def resolveGet(frame, expr):
         # Resolve Get frame
         objType = expr.frame.accept(frame, resolveGet)
         if objType not in TYPES:
-            # Check objType existence in typesystem
-            declaredElseError(
-                frame.types, objType,
-                errmsg="Undeclared type", token=expr.token()
+            # Check objType and attribute existence in types
+            return resolveObj(
+                frame.types, objType, expr.name, token=expr.token()
             )
-            objTemplate = frame.types.getTemplate(objType).value
-            # Attribute type is different from object type
-            declaredElseError(
-                objTemplate, expr.name,
-                errmsg="Undeclared attribute", token=expr.token()
-            )
-            return objTemplate.getType(expr.name)
         elif objType == 'ARRAY':
-            # Index may be a tuple of expressions that needs resolving
-            # Index elements must be integer
-            for indexExpr in expr.name:
-                nameType = resolve(frame, indexExpr)
-                expectTypeElseError(
-                    nameType, 'INTEGER', token=indexExpr.token()
-                )
-            # frame should have been resolved to the frame
-            # that contains expr.frame.name
-            array = frame.getValue(expr.frame.name)
-            return array.elementType
+            return resolveArray(frame, expr)
         else:  # built-in, non-array
             pass
     return frame.getType(expr.name)
