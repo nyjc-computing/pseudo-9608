@@ -11,7 +11,7 @@ from .lang import Conditional, Loop, ProcFunc, TypeStmt, FileAction
 # Helper functions
 
 def atEnd(tokens):
-    if check(tokens).type == 'EOF':
+    if matchType(tokens, 'EOF'):
         return True
     return False
 
@@ -69,6 +69,13 @@ def match(tokens, *words, advance=True):
         consume(tokens)
     return True
 
+def matchType(tokens, *types, advance=False):
+    if check(tokens).type not in types:
+        return False
+    if advance:
+        consume(tokens)
+    return True
+
 # Precedence parsers
 # Expressions are parsed with this precedence (highest to lowest):
 # 1. <name> | <literal> | <unary> | calls
@@ -79,11 +86,11 @@ def match(tokens, *words, advance=True):
 # 6. AND | OR
 
 def identifier(tokens):
-    token = consume(tokens)
-    if token.type == 'name':
+    if matchType(tokens, 'name'):
+        token = consume(tokens)
         return makeExpr(name=token.word, token=token)
     else:
-        raise ParseError(f"Expected variable name", token)
+        raise ParseError(f"Expected variable name", consume(tokens))
 
 def literal(tokens):
     token = consume(tokens)
@@ -137,7 +144,7 @@ def value(tokens):
     if match(tokens, '-', 'NOT', advance=False):
         return unary(tokens)
     # A single value
-    if check(tokens).type in TYPES:
+    if matchType(tokens, *TYPES):
         return literal(tokens)
     #  A grouping
     elif match(tokens, '('):
@@ -145,7 +152,7 @@ def value(tokens):
         expectElseError(tokens, ')', "after '('")
         return expr
     # A name or call or attribute
-    elif token.type == 'name':
+    elif matchType(tokens, 'name'):
         expr = name(tokens)
         while not atEnd(tokens) and match(tokens, '(', '.', advance=False):
             # Function call
@@ -547,7 +554,7 @@ def statement6(tokens):
         return writefileStmt(tokens)
     if match(tokens, 'CLOSEFILE'):
         return closefileStmt(tokens)
-    if check(tokens).type == 'name':
+    if matchType(tokens, 'name'):
         return assignStmt(tokens)
     raise ParseError("Unrecognised token", check(tokens))
 
