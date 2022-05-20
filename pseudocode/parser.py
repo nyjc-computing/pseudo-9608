@@ -15,6 +15,10 @@ def atEnd(tokens):
         return True
     return False
 
+def atEndThenError(tokens):
+    if atEnd(tokens):
+        raise ParseError("Unexpected EOF", check(tokens))
+
 def check(tokens):
     return tokens[0]
 
