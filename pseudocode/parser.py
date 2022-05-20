@@ -79,7 +79,7 @@ def expectType(tokens, *types):
     if check(tokens).type in types:
         return check(tokens)
     atEndThenError(tokens)
-    return check(tokens)
+    return None
 
 # Precedence parsers
 # Expressions are parsed with this precedence (highest to lowest):
@@ -98,8 +98,6 @@ def identifier(tokens):
 
 def literal(tokens):
     token = consume(tokens)
-    if token.word == 'Pupil1':
-        breakpoint()
     return makeExpr(
         type=token.type,
         value=token.value,
