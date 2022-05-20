@@ -64,3 +64,4 @@ This project is also an attempt to write a programming book in a new style. Each
 - [22a Scoping: Recursion](https://github.com/nyjc-computing/pseudo-9608/pull/56)
 - [22b Scoping: System](https://github.com/nyjc-computing/pseudo-9608/pull/57)
 - [23a Object: Scopes](https://github.com/nyjc-computing/pseudo-9608/pull/58)
+- [23b Object: Attributes](https://github.com/nyjc-computing/pseudo-9608/pull/59)
