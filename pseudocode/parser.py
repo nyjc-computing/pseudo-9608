@@ -159,9 +159,9 @@ def attrExpr(tokens, expr):
     )
 
 def arrayExpr(tokens, expr):
-    index = (matchTypeElseError(tokens, 'INTEGER'),)
+    index = (matchTypeElseError(tokens, 'INTEGER').value,)
     while matchWord(tokens, ','):
-        index += (matchTypeElseError(tokens, 'INTEGER'),)
+        index += (matchTypeElseError(tokens, 'INTEGER').value,)
     matchWordElseError(tokens, ']')
     return makeExpr(
         frame=expr,
