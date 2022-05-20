@@ -190,10 +190,10 @@ def value(tokens):
             if matchWord(tokens, '['):
                 expr = arrayExpr(tokens, expr)
             # Function call
-            if matchWord(tokens, '('):
+            elif matchWord(tokens, '('):
                 expr = callExpr(tokens, expr)
             # Attribute get
-            if matchWord(tokens, '.'):
+            elif matchWord(tokens, '.'):
                 expr = attrExpr(tokens, expr)
         return expr
     else:
