@@ -1,3 +1,5 @@
+DECLARE AnArray : ARRAY[1:10] OF INTEGER
+
 TYPE Student
     DECLARE Surname : STRING
     DECLARE FirstName : STRING
