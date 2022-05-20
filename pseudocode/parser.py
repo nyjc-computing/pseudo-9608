@@ -294,10 +294,13 @@ def colonRange(tokens):
     return (range_start.value, range_end.value)
 
 def declare(tokens):
+    def expectTypeToken(tokens):
+        if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
+            raise ParseError("Invalid type", check(tokens))
+        
     name = identifier(tokens)
     matchWordElseError(tokens, ':', msg="after name")
-    if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
-        raise ParseError("Invalid type", check(tokens))
+    expectTypeToken(tokens)
     metadata = None
     typetoken = consume(tokens)
     if typetoken.word == 'ARRAY':
@@ -307,8 +310,7 @@ def declare(tokens):
             metadata['size'] += [colonRange(tokens)]
         matchWordElseError(tokens, ']')
         matchWordElseError(tokens, 'OF')
-        if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
-            raise ParseError("Invalid type", check(tokens))
+        expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
     return makeExpr(
         name=name.name,
