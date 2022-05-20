@@ -105,7 +105,7 @@ NUMERIC = ('INTEGER', 'REAL')
 
 EQUATABLE = ('BOOLEAN',) + NUMERIC
 
-TYPES = EQUATABLE + ('STRING', 'FILE')
+TYPES = EQUATABLE + ('STRING', 'FILE', 'ARRAY')
 
 NULL = object()
 
@@ -125,4 +125,4 @@ OPERATORS = {
     'NOT': NOT,
 }
 
-SYMBOLS = [',', ':']
+SYMBOLS = [',', ':', '(', ')', '[', ']']
