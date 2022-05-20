@@ -286,6 +286,13 @@ def inputStmt(tokens):
     matchWordElseError(tokens, '\n', msg="after statement")
     return Input('input', name)
 
+def colonRange(tokens):
+    """Parse and return a start:end range as a tuple"""
+    range_start = matchTypeElseError(tokens, 'INTEGER')
+    matchWordElseError(tokens, ':', msg="in range")
+    range_end = matchTypeElseError(tokens, 'INTEGER')
+    return (range_start.value, range_end.value)
+
 def declare(tokens):
     name = identifier(tokens)
     matchWordElseError(tokens, ':', msg="after name")
@@ -299,17 +306,18 @@ def declare(tokens):
         range_start = matchTypeElseError(tokens, 'INTEGER')
         matchWordElseError(tokens, ':', msg="in range")
         range_end = matchTypeElseError(tokens, 'INTEGER')
-        metadata['size'] += [(range_start, range_end)]
+        metadata['size'] += [(range_start.value, range_end.value)]
         while matchWord(tokens, ','):
             range_start = matchTypeElseError(tokens, 'INTEGER')
             matchWordElseError(tokens, ':', msg="in range")
             range_end = matchTypeElseError(tokens, 'INTEGER')
-            metadata['size'] += [(range_start, range_end)]
+            metadata['size'] += [(range_start.value, range_end.value)]
         matchWordElseError(tokens, ']')
         matchWordElseError(tokens, 'OF')
         if not (expectWord(tokens, *TYPES) or expectType(tokens, 'name')):
             raise ParseError("Invalid type", check(tokens))
-        metadata['type'] = consume(tokens)
+        metadata['type'] = consume(tokens).word
+    breakpoint()
     return makeExpr(
         name=name.name,
         type=typetoken.word,
