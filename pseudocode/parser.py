@@ -126,7 +126,7 @@ def name(tokens):
 
 def callExpr(tokens, expr):
     args = []
-    while not atEnd(tokens) and not expectWord(tokens, ')'):
+    while not expectWord(tokens, ')'):
         matchWord(tokens, ',')  # ,
         arg = expression(tokens)
         args += [arg]
@@ -161,7 +161,7 @@ def value(tokens):
     # A name or call or attribute
     elif expectType(tokens, 'name'):
         expr = name(tokens)
-        while not atEnd(tokens) and expectWord(tokens, '(', '.'):
+        while expectWord(tokens, '(', '.'):
             # Function call
             if matchWord(tokens, '('):
                 expr = callExpr(tokens, expr)
@@ -175,7 +175,7 @@ def value(tokens):
 def muldiv(tokens):
     # *, /
     expr = value(tokens)
-    while not atEnd(tokens) and expectWord(tokens, '*', '/'):
+    while expectWord(tokens, '*', '/'):
         oper = consume(tokens)
         right = value(tokens)
         expr = makeExpr(
@@ -188,7 +188,7 @@ def muldiv(tokens):
 
 def addsub(tokens):
     expr = muldiv(tokens)
-    while not atEnd(tokens) and expectWord(tokens, '+', '-'):
+    while expectWord(tokens, '+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
         expr = makeExpr(
@@ -202,7 +202,7 @@ def addsub(tokens):
 def comparison(tokens):
     # <, <=, >, >=
     expr = addsub(tokens)
-    while not atEnd(tokens) and expectWord(tokens, '<', '<=', '>', '>='):
+    while expectWord(tokens, '<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
         expr = makeExpr(
@@ -216,7 +216,7 @@ def comparison(tokens):
 def equality(tokens):
     # <>, =
     expr = comparison(tokens)
-    while not atEnd(tokens) and expectWord(tokens, '<>', '='):
+    while expectWord(tokens, '<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
         expr = makeExpr(
@@ -230,7 +230,7 @@ def equality(tokens):
 def logical(tokens):
     # AND, OR
     expr = equality(tokens)
-    while not atEnd(tokens) and expectWord(tokens, 'AND', 'OR'):
+    while expectWord(tokens, 'AND', 'OR'):
         oper = consume(tokens)
         right = equality(tokens)
         expr = makeExpr(
@@ -247,7 +247,7 @@ def expression(tokens):
 
 def assignment(tokens):
     assignee = name(tokens)  # Get Expr
-    while not atEnd(tokens) and matchWord(tokens, '.'):
+    while matchWord(tokens, '.'):
         # Attribute get
         assignee = attrExpr(tokens, assignee)
     matchElseError(tokens, '<-', "after name")
@@ -263,7 +263,7 @@ def assignment(tokens):
 
 def outputStmt(tokens):
     exprs = [expression(tokens)]
-    while not atEnd(tokens) and matchWord(tokens, ','):
+    while matchWord(tokens, ','):
         exprs += [expression(tokens)]
     matchElseError(tokens, '\n', "after statement")
     return Output('output', exprs)
@@ -294,7 +294,7 @@ def typeStmt(tokens):
     name = identifier(tokens).name
     matchElseError(tokens, '\n')
     exprs = []
-    while not atEnd(tokens) and not expectWord(tokens, 'ENDTYPE'):
+    while not expectWord(tokens, 'ENDTYPE'):
         matchElseError(tokens, 'DECLARE')
         exprs += [declare(tokens)]
         matchElseError(tokens, '\n')
@@ -344,7 +344,7 @@ def ifStmt(tokens):
     if matchWord(tokens, 'ELSE'):
         matchElseError(tokens, '\n', "after ELSE")
         false = []
-        while not atEnd(tokens) and not expectWord(tokens, 'ENDIF'):
+        while not expectWord(tokens, 'ENDIF'):
             false += [statement5(tokens)]
         fallback = false
     matchElseError(tokens, 'ENDIF', "at end of IF")
@@ -356,7 +356,7 @@ def whileStmt(tokens):
     matchElseError(tokens, 'DO', "after WHILE condition")
     matchElseError(tokens, '\n', "after DO")
     stmts = []
-    while not atEnd(tokens) and not matchWord(tokens, 'ENDWHILE'):
+    while not matchWord(tokens, 'ENDWHILE'):
         stmts += [statement5(tokens)]
     matchElseError(tokens, '\n', "after ENDWHILE")
     return Loop('while', None, cond, stmts)
@@ -364,7 +364,7 @@ def whileStmt(tokens):
 def repeatStmt(tokens):
     matchElseError(tokens, '\n', "after REPEAT")
     stmts = []
-    while not atEnd(tokens) and not matchWord(tokens, 'UNTIL'):
+    while not matchWord(tokens, 'UNTIL'):
         stmts += [statement5(tokens)]
     cond = expression(tokens)
     matchElseError(tokens, '\n', "at end of UNTIL")
@@ -382,7 +382,7 @@ def forStmt(tokens):
         step = value(tokens)
     matchElseError(tokens, '\n', "at end of FOR")
     stmts = []
-    while not atEnd(tokens) and not matchWord(tokens, 'ENDFOR'):
+    while not matchWord(tokens, 'ENDFOR'):
         stmts += [statement5(tokens)]
     matchElseError(tokens, '\n', "after ENDFOR")
     # Generate loop cond
@@ -422,13 +422,13 @@ def procedureStmt(tokens):
             passby = consume(tokens).word
         expr = declare(tokens)
         params += [expr]
-        while not atEnd(tokens) and matchWord(tokens, ','):
+        while matchWord(tokens, ','):
             expr = declare(tokens)
             params += [expr]
         matchElseError(tokens, ')', "at end of parameters")
     matchElseError(tokens, '\n', "after parameters")
     stmts = []
-    while not atEnd(tokens) and not matchWord(tokens, 'ENDPROCEDURE'):
+    while not matchWord(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     matchElseError(tokens, '\n', "after ENDPROCEDURE")
     return ProcFunc('procedure', name, passby, params, stmts, 'NULL')
@@ -445,7 +445,7 @@ def functionStmt(tokens):
         passby = 'BYVALUE'
         var = declare(tokens)
         params += [var]
-        while not atEnd(tokens) and matchWord(tokens, ','):
+        while matchWord(tokens, ','):
             var = declare(tokens)
             params += [var]
         matchElseError(tokens, ')', "at end of parameters")
@@ -455,7 +455,7 @@ def functionStmt(tokens):
         raise ParseError("Invalid type", typetoken)
     matchElseError(tokens, '\n', "at end of FUNCTION")
     stmts = []
-    while not atEnd(tokens) and not matchWord(tokens, 'ENDFUNCTION'):
+    while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     matchElseError(tokens, '\n', "after ENDFUNCTION")
     return ProcFunc(
@@ -572,9 +572,9 @@ def parse(tokens):
     tokens += [Token(lastline, 0, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
-        while not atEnd(tokens) and matchWord(tokens, '\n'):
+        while matchWord(tokens, '\n'):
             pass
         statements += [statement2(tokens)]
-        while not atEnd(tokens) and matchWord(tokens, '\n'):
+        while matchWord(tokens, '\n'):
             pass
     return statements
