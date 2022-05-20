@@ -74,11 +74,24 @@ def matchWord(tokens, *words):
     atEndThenError(tokens)
     return None
 
+def matchType(tokens, *types):
+    if check(tokens).type in types:
+        return consume(tokens)
+    atEndThenError(tokens)
+    return None
+
 def matchWordElseError(tokens, *words, msg=''):
     token = matchWord(tokens, *words)
     if token:
         return token
     msg = f"Expected {words}" + (f' {msg}' if msg else '')
+    raise ParseError(msg, check(tokens))
+
+def matchTypeElseError(tokens, *types, msg=''):
+    token = matchType(tokens, *types)
+    if token:
+        return token
+    msg = f"Expected {types}" + (f' {msg}' if msg else '')
     raise ParseError(msg, check(tokens))
 
 # Precedence parsers
