@@ -8,7 +8,7 @@ DECLARE Pupil1 : Student
 DECLARE Var : INTEGER
 
 FOR Var <- 1 TO 10
-    AnArray[5] <- Var
+    AnArray[Var] <- Var
 ENDFOR
 Pupil1.Surname <- "Johnson"
 Pupil1.FirstName <- "Leroy"
