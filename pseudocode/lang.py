@@ -274,6 +274,24 @@ class Frame(Object):
 
 
 
+class Array(Object):
+    """
+    Represents a space containing elements of identical type in 9608
+    pseudocode.
+    Each element is indexed by N integers.
+
+    Attributes
+    ----------
+    elementType: str
+       The common type of each element
+    """
+    @property
+    def elementType(self):
+        for elem in self.data.values():
+            return elem.type
+
+
+
 class Expr:
     """
     Represents an expression in 9608 pseudocode.
