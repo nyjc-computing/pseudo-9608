@@ -59,14 +59,13 @@ def makeExpr(
     )
 
 def matchElseError(tokens, word, addmsg=None):
-    if check(tokens).word == word:
-        consume(tokens)
+    if matchWord(tokens, word):
         return True
     msg = f"Expected {word}"
     if addmsg: msg += f" {addmsg}"
     raise ParseError(msg, check(tokens))
 
-def matchWord(tokens, *words, advance=True):
+def matchWord(tokens, *words):
     if check(tokens).word in words:
         return consume(tokens)
     return False
