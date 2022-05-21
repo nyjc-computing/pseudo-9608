@@ -71,6 +71,10 @@ def resolveExprs(frame, exprs):
     for expr in exprs:
         resolve(frame, expr)
 
+def evalLiteral(frame, expr):
+    """Return the value of a Literal"""
+    return expr.value
+    
 def resolveLiteral(frame, literal):
     return literal.type
 
@@ -291,7 +295,7 @@ def verifyIf(frame, stmt):
 
 def verifyLoop(frame, stmt):
     if stmt.init:
-        verifyAssign(frame, stmt.init)
+        resolve(frame, stmt.init)
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
@@ -330,7 +334,7 @@ def verifyFunction(frame, stmt):
     verifyStmts(local, stmt.stmts)
 
 def verifyFile(frame, stmt):
-    value(frame, stmt.name)
+    evalLiteral(frame, stmt.name)
     if stmt.action == 'open':
         pass
     elif stmt.action in ('read', 'write'):
