@@ -401,7 +401,7 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.Stmt) -> None:
     
 
 
-def verify(frame: lang.Frame, stmt: lang.stmt) -> Optional[lang.Type]:
+def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
     if stmt.rule == 'output':
         verifyOutput(frame, stmt)
     if stmt.rule == 'input':
