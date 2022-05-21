@@ -1,38 +1,45 @@
-from .builtin import ParseError
-from .builtin import KEYWORDS, VALUES, OPERATORS, SYM_SINGLE, SYM_MULTI, SYMBOLS
-from .builtin import NULL
-from .lang import Token
+from typing import Sequence, Iterable, Mapping
+Code = Mapping
+
+import builtin
+from .lang import Token, Type, Lit
 
 
 
 # Helper functions
 
-def atEnd(code):
+def atEnd(code: Code) -> bool:
     return code['cursor'] >= code['length']
 
-def check(code):
+def check(code: Code) -> str:
     return code['src'][code['cursor']]
 
-def consume(code):
+def consume(code: Code) -> str:
     char = check(code)
     code['cursor'] += 1
     return char
 
-def makeToken(code, type, word, value):
+def makeToken(
+    code: Code,
+    type: Type,
+    word: str,
+    value: Lit,
+) -> Token:
     line = code['line']
     column = code['cursor'] - code['lineStart'] - len(word)
     return Token(line, column, type, word, value)
 
 
+    
 # Scanning functions
 
-def word(code):
+def word(code: Code) -> str:
     token = consume(code)
     while not atEnd(code) and (check(code).isalpha() or check(code).isdigit()):
         token += consume(code)
     return token
 
-def number(code):
+def number(code: Code) -> str:
     token = consume(code)
     while not atEnd(code) and check(code).isdigit():
         token += consume(code)
@@ -44,7 +51,7 @@ def number(code):
         token += consume(code)
     return token
 
-def string(code):
+def string(code: Code) -> str:
     token = consume(code)
     while not atEnd(code) and check(code) != '"':
         token += consume(code)
@@ -52,11 +59,11 @@ def string(code):
         token += consume(code)
     return token
 
-def symbol(code):
+def symbol(code: Code) -> str:
     token = consume(code)
-    if token in SYM_SINGLE:
+    if token in builtin.SYM_SINGLE:
         return token
-    while not atEnd(code) and (check(code) in SYM_MULTI):
+    while not atEnd(code) and (check(code) in builtin.SYM_MULTI):
         token += consume(code)
     return token
 
@@ -64,7 +71,7 @@ def symbol(code):
 
 # Main scanning loop
 
-def scan(src):
+def scan(src: str) -> Sequence[Iterable[Token], Iterable[str]]:
     if not src.endswith('\n'):
         src = src + '\n'
     code = {
@@ -90,19 +97,19 @@ def scan(src):
             code['lineStart'] = code['cursor']
         elif char.isalpha():
             text = word(code)
-            if text in KEYWORDS:
+            if text in builtin.KEYWORDS:
                 token = makeToken(code, 'keyword', text, None)
-            elif text in VALUES:
+            elif text in builtin.VALUES:
                 if text == 'NULL':
-                    token = makeToken(code, 'NULL', text, NULL)
+                    token = makeToken(code, 'NULL', text, builtin.NULL)
                 elif text == 'TRUE':
                     token = makeToken(code, 'BOOLEAN', text, True)
                 elif text == 'FALSE':
                     token = makeToken(code, 'BOOLEAN', text, False)
                 else:
                     raise ValueError(f"Unrecognised value {text}")
-            elif text in OPERATORS:  # AND, OR, NOT
-                oper = OPERATORS.get(text, None)
+            elif text in builtin.OPERATORS:  # AND, OR, NOT
+                oper = builtin.OPERATORS.get(text, None)
                 token = makeToken(code, 'symbol', text, oper)
             else:
                 token = makeToken(code, 'name', text, None)
@@ -115,12 +122,12 @@ def scan(src):
         elif char == '"':
             text = string(code)
             token = makeToken(code, 'STRING', text, text[1:-1])
-        elif char in SYMBOLS:
+        elif char in builtin.SYMBOLS:
             text = symbol(code)
-            oper = OPERATORS.get(text, None)
+            oper = builtin.OPERATORS.get(text, None)
             token = makeToken(code, 'symbol', text, oper)
         else:
-            raise ParseError(
+            raise builtin.ParseError(
                 f"Unrecognised character",
                 token=char,
                 line=code['line'],
