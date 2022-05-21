@@ -297,30 +297,18 @@ class Expr:
     Represents an expression in 9608 pseudocode.
     An expression resolves to a type, and evaluates
     to a value.
-    An Expr object has an accept() method which implements
-    the Visitor pattern.
 
     Methods
     -------
     - token() -> dict
         Returns the token asociated with the expr, for error
         reporting purposes.
-    - accept(frame, visitor) -> Any
-        Enables a visitor to carry out operations on the
-        Expr (with a provided frame).
-        The visitor should take in two arguments: a frame,
-        and an Expr.
     """
     def __init__(self, token=None):
         self._token = token
 
     def token(self):
         return self._token
-
-    def accept(self, frame, visitor, *args, **kwargs):
-        # visitor must be a function that takes
-        # a frame and an Expr
-        return visitor(frame, self, *args, **kwargs)
 
     def __repr__(self):
         attrstr = ", ".join([
@@ -404,11 +392,6 @@ class Call(Expr):
 
 
 class Stmt:
-    def accept(self, frame, visitor, *args, **kwargs):
-        # visitor must be a function that takes
-        # a frame and a Stmt
-        return visitor(frame, self, *args, **kwargs)
-
     def __repr__(self):
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
