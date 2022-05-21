@@ -242,9 +242,7 @@ def execute(frame, stmt, *args, **kwargs):
     if stmt.rule == 'output':
         execOutput(frame, stmt, **kwargs)
     if stmt.rule == 'input':
-        stmt.accept(frame, execInput(frame, stmt, **kwargs)
-    if stmt.rule == 'assign':
-        evaluate(frame, stmt.expr, **kwargs)
+        execInput(frame, stmt, **kwargs)
     if stmt.rule == 'case':
         execCase(frame, stmt, **kwargs)
     if stmt.rule == 'if':
@@ -255,6 +253,8 @@ def execute(frame, stmt, *args, **kwargs):
         execRepeat(frame, stmt, **kwargs)
     if stmt.rule == 'call':
         evalCall(frame, stmt.expr, **kwargs)
+    if stmt.rule == 'assign':
+        evaluate(frame, stmt.expr, **kwargs)
     if stmt.rule == 'return':
         return evaluate(frame, stmt.expr, **kwargs)
     if stmt.rule == 'file':
