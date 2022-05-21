@@ -101,7 +101,7 @@ def resolveDeclare(frame, expr, passby='BYVALUE'):
     frame.set(expr.name, frame.outer.get(expr.name))
 
 def resolveUnary(frame, expr):
-    rType = expr.right.accept(frame, resolve)
+    rType = resolve(frame, expr.right)
     if expr.oper is sub:
         expectTypeElseError(rType, *NUMERIC, token=expr.right.token())
         return rType
@@ -209,7 +209,7 @@ def resolveGet(frame, expr):
     return frame.getType(expr.name)
 
 def resolveProcCall(frame, expr):
-    expr.callable.accept(frame, resolveGet)
+    resolveGet(frame, expr.callable)
     # Resolve global frame where procedure is declared
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
