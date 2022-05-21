@@ -183,7 +183,7 @@ def resolveObj(
         errmsg="Undeclared type", token=token
     )
     # Check attribute existence in object template
-    objTemplate = typesystem.getTemplate(objType).value
+    objTemplate = typesystem.getTemplate(objType)
     declaredElseError(
         objTemplate, name,
         errmsg="Undeclared attribute", token=token

@@ -1,4 +1,5 @@
-from typing import Any, Union, Iterable, Mapping
+from typing import Any, Optional, Union, Iterable, Mapping
+from typing import Dict
 from typing import Callable as function, TextIO
 
 # Pseudocode types
@@ -7,7 +8,7 @@ Name = str  # Variable names
 Index = tuple  # Array indexes
 Key = Union[Name, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
-Val = Union[Lit, "Value"]  # in TypedValue
+Val = Union[Lit, "Value", "Object"]  # in TypedValue
 Param = Union["Get", "TypedValue"]  # Callable params
 Arg = "Expr"  # Call args
 Rule = str  # Stmt rules
@@ -59,7 +60,7 @@ class TypeSystem:
         self,
         *types: Type,
     ) -> None:
-        self.data = {}
+        self.data: Dict[Type, "TypedValue"] = {}
         for typeName in types:
             self.declare(typeName)
             self.setTemplate(typeName, None)
@@ -75,13 +76,13 @@ class TypeSystem:
         return name in self.data
 
     def declare(self, name: str) -> None:
-        self.data[name] = None
+        self.data[name] = TypedValue(name, None)
 
-    def setTemplate(self, name: str, template: "Object") -> None:
-        self.data[name] = TypedValue(name, template)
+    def setTemplate(self, name: str, template: Optional["Object"]) -> None:
+        self.data[name].value = template
 
-    def getTemplate(self, name) -> "Object":
-        return self.data[name]
+    def getTemplate(self, name) -> Optional[Val]:
+        return self.data[name].value
 
 
 
@@ -94,7 +95,7 @@ class TypedValue:
     def __init__(
         self,
         type: Type,
-        value: Val,
+        value: Optional[Val],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -150,7 +151,7 @@ class Object(Value):
         self,
         typesys: "TypeSystem",
     ) -> None:
-        self.data = {}
+        self.data: Dict[Key, "TypedValue"] = {}
         self.types = typesys
 
     def __repr__(self) -> str:
