@@ -171,7 +171,7 @@ class Object(Value):
     def getType(self, name: Key) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: Key) -> Val:
+    def getValue(self, name: Key) -> Optional[Val]:
         return self.data[name].value
 
     def get(self, name: Key) -> "TypedValue":
@@ -357,9 +357,10 @@ class Expr:
         Returns the token asociated with the expr, for error
         reporting purposes.
     """
+    __slots__ = NotImplemented
     def __init__(
         self,
-        token: "Token"=None,
+        token: "Token",
     ) -> None:
         self._token = token
 
