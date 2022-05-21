@@ -9,17 +9,17 @@ Tokens = Iterable[lang.Token]
 
 # Helper functions
 
-def atEnd(tokens: Tokens):
+def atEnd(tokens: Tokens) -> bool:
     return check(tokens).type == 'EOF'
 
-def atEndThenError(tokens: Tokens):
+def atEndThenError(tokens: Tokens) -> None:
     if atEnd(tokens):
         raise builtin.ParseError("Unexpected EOF", check(tokens))
 
-def check(tokens: Tokens):
+def check(tokens: Tokens) -> lang.Token:
     return tokens[0]
 
-def consume(tokens: Tokens):
+def consume(tokens: Tokens) -> lang.Token:
     token = tokens.pop(0)
     return token
 
