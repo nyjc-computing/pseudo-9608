@@ -1,6 +1,5 @@
 from .builtin import ParseError, RuntimeError, LogicError
-from .builtin import TYPES
-from .lang import Frame, TypeSystem
+from .lang import Frame
 from .system import system
 
 from . import scanner, parser
