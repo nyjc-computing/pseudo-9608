@@ -28,7 +28,7 @@ def makeExpr(
     type: lang.Type=None,
     value:lang.Val=None,
     frame: lang.Object=None,
-    name: lang.Name=None,
+    name: lang.Varname=None,
     assignee: Union[lang.Object, lang.Expr]=None,
     expr: lang.Expr=None,
     left: lang.Expr=None,

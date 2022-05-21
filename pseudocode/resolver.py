@@ -26,7 +26,7 @@ def expectTypeElseError(
 
 def declaredElseError(
     frame: lang.Frame,
-    name: lang.Name,
+    name: lang.Varname,
     errmsg: str="Undeclared",
     declaredType: lang.Type=None,
     *,
@@ -173,7 +173,7 @@ def resolveAssign(
 def resolveObj(
     typesystem: lang.TypeSystem,
     objType: lang.Type,
-    name: lang.Name,
+    name: lang.Varname,
     *,
     token: lang.Token,
 ) -> lang.Type:

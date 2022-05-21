@@ -20,7 +20,7 @@ def expectTypeElseError(
 
 def declaredElseError(
     frame: lang.Frame,
-    name: lang.Name,
+    name: lang.Varname,
     errmsg: str="Undeclared",
     token: lang.Token=None,
 ) -> None:
@@ -29,7 +29,7 @@ def declaredElseError(
 
 def undeclaredElseError(
     frame: lang.Frame,
-    name: lang.Name,
+    name: lang.Varname,
     errmsg="Already declared",
     token: lang.Token=None,
 ) -> None:

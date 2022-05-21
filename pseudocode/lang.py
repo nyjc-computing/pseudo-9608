@@ -4,7 +4,7 @@ from typing import Callable as function, TextIO
 
 # Pseudocode types
 Type = str  # Built-in and declared types
-Name = str  # Variable names
+Varname = str  # Variable names
 Index = tuple  # Array indexes
 Key = Union[Name, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
