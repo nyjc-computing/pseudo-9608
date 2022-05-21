@@ -1,6 +1,6 @@
 from typing import Iterable, Mapping, Callable as function
 
-import builtin
+from . import builtin
 from .lang import Frame
 from .system import system
 

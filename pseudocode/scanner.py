@@ -1,7 +1,7 @@
-from typing import Sequence, Iterable, Mapping
+from typing import Iterable, Tuple, Mapping
 Code = Mapping
 
-import builtin
+from . import builtin
 from .lang import Token, Type, Lit
 
 
@@ -71,7 +71,7 @@ def symbol(code: Code) -> str:
 
 # Main scanning loop
 
-def scan(src: str) -> Sequence[Iterable[Token], Iterable[str]]:
+def scan(src: str) -> Tuple[Iterable]:
     if not src.endswith('\n'):
         src = src + '\n'
     code = {
