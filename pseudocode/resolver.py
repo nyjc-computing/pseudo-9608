@@ -423,4 +423,4 @@ def verify(frame: lang.Frame, stmt) -> Optional[lang.Type]:
     elif stmt.rule in ('assign', 'declare', 'return'):
         return resolve(frame, stmt.expr)
     elif stmt.rule == 'call':
-        resolveProcCall(frame, stmt.expr)
+        return resolveProcCall(frame, stmt.expr)
