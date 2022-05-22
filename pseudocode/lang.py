@@ -394,10 +394,11 @@ class Literal(Expr):
 
 
 class Name:
-    __slots__ = ('name',)
+    __slots__ = ('name', '_token')
     def __init__(
         self,
         name: Varname,
+        *,
         token: "Token",
     ) -> None:
         self.name = name
@@ -409,17 +410,19 @@ class Name:
 
 
 class Declare(Expr):
-    __slots__ = ('name', 'type', 'metadata')
+    __slots__ = ('name', 'type', 'metadata', '_token')
     def __init__(
         self,
-        name: Name,
+        name: Varname,
         type: Type,
         metadata: Mapping=None,
+        *,
+        token: "Token",
     ) -> None:
-        self.name = name.name
+        self.name = name
         self.type = type
         self.metadata = metadata
-        self._token = name
+        self._token = token
 
     def token(self):
         return self._token
@@ -430,11 +433,11 @@ class Assign(Expr):
     __slots__ = ('name', 'assignee', 'expr')
     def __init__(
         self,
-        name: Name,
+        name: Varname,
         assignee: "Get",
         expr: "Expr",
     ) -> None:
-        self.name = name.name
+        self.name = name
         self.assignee = assignee
         self.expr = expr
 
@@ -486,11 +489,13 @@ class Get(Expr):
     def __init__(
         self,
         frame: "Frame",
-        name: Name,
+        name: Varname,
+        *,
+        token: "Token",
     ) -> None:
         self.frame = frame
-        self.name = name.name
-        self._token = name.token()
+        self.name = name
+        self._token = token
 
     def token(self):
         return self._token
