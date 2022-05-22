@@ -396,7 +396,7 @@ class Name(Expr):
     __slots__ = ('name',)
     def __init__(
         self,
-        name: Name,
+        name: Varname,
         token: "Token"=None,
     ) -> None:
         super().__init__(token=token)
@@ -408,7 +408,7 @@ class Declare(Expr):
     __slots__ = ('name', 'type', 'metadata')
     def __init__(
         self,
-        name: Name,
+        name: Varname,
         type: Type,
         metadata: Mapping=None,
         token: "Token"=None,
@@ -424,7 +424,7 @@ class Assign(Expr):
     __slots__ = ('name', 'assignee', 'expr')
     def __init__(
         self,
-        name: Name,
+        name: Varname,
         assignee: "Get",
         expr: "Expr",
         token: "Token"=None) -> None:
@@ -470,7 +470,7 @@ class Get(Expr):
     def __init__(
         self,
         frame: "Frame",
-        name: Name,
+        name: Varname,
         token: "Token"=None,
     ) -> None:
         super().__init__(token=token)
@@ -531,7 +531,7 @@ class Input(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Name,
+        name: Varname,
     ) -> None:
         self.rule = rule
         self.name = name
@@ -575,7 +575,7 @@ class ProcFunc(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Name,
+        name: Varname,
         passby: str,
         params: Iterable[Param],
         stmts: Iterable["Stmt"],
@@ -595,7 +595,7 @@ class TypeStmt(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Name,
+        name: Varname,
         exprs: Iterable["Expr"],
     ) -> None:
         self.rule = rule
@@ -610,7 +610,7 @@ class FileAction(Stmt):
         self,
         rule: Rule,
         action: str,
-        name: Name,
+        name: Varname,
         mode: str,
         data: "Expr",
     ) -> None:
