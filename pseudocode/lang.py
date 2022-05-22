@@ -634,9 +634,9 @@ class FileAction(Stmt):
         self,
         rule: Rule,
         action: str,
-        name: Varname,
-        mode: str,
-        data: "Expr",
+        name: "Expr",
+        mode: Optional[str],
+        data: Optional["Expr", str],
     ) -> None:
         self.rule = rule
         self.action = action

@@ -50,7 +50,7 @@ def matchWordElseError(
     tokens: Tokens,
     *words: str,
     msg: str='',
-) -> Optional[lang.Token]:
+) -> lang.Token:
     token = matchWord(tokens, *words)
     if token:
         return token
@@ -412,7 +412,7 @@ def openfileStmt(tokens: Tokens) -> lang.FileAction:
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
     )
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'open', name, mode, None)
+    return lang.FileAction('file', 'open', name, mode.word, None)
 
 def readfileStmt(tokens: Tokens) -> lang.FileAction:
     name = value(tokens)
