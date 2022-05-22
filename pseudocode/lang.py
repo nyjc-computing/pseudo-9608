@@ -17,6 +17,7 @@ Val = Union[Lit, "PseudoValue"]  # in TypedValue
 Param = Union["Get", "TypedValue"]  # Callable params
 Cases = MutableMapping[Lit, List["Stmt"]]
 Rule = str  # Stmt rules
+FileData = Optional[Union["Expr", str]]
 
 # ----------------------------------------------------------------------
 class Token:
@@ -637,7 +638,7 @@ class FileAction(Stmt):
         action: str,
         name: "Expr",
         mode: Optional[str],
-        data: Optional["Expr", str],
+        data: FileData,
     ) -> None:
         self.rule = rule
         self.action = action
