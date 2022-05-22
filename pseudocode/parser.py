@@ -61,7 +61,7 @@ def matchTypeElseError(
     tokens: Tokens,
     *types: lang.Type,
         msg: str='',
-) -> Optional[lang.Token]:
+) -> lang.Token:
     token = matchType(tokens, *types)
     if token:
         return token
@@ -223,7 +223,7 @@ def inputStmt(tokens: Tokens) -> lang.Input:
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.Input('input', name)
 
-def colonRange(tokens: Tokens) -> Tuple[int]:
+def colonRange(tokens: Tokens) -> Tuple:
     """Parse and return a start:end range as a tuple"""
     range_start = matchTypeElseError(tokens, 'INTEGER')
     matchWordElseError(tokens, ':', msg="in range")
@@ -242,7 +242,7 @@ def declare(tokens: Tokens) -> lang.Declare:
     typetoken = consume(tokens)
     if typetoken.word == 'ARRAY':
         matchWordElseError(tokens, '[')
-        metadata = {'size': [colonRange(tokens)], 'type': None}
+        metadata = {'size': [colonRange(tokens)]}
         while matchWord(tokens, ','):
             metadata['size'] += [colonRange(tokens)]
         matchWordElseError(tokens, ']')
