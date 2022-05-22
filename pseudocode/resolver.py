@@ -183,7 +183,7 @@ def resolveObj(
         errmsg="Undeclared type", token=token
     )
     # Check attribute existence in object template
-    objTemplate = typesystem.getTemplate(objType)
+    objTemplate = typesystem.clone(objType)
     declaredElseError(
         objTemplate, name,
         errmsg="Undeclared attribute", token=token
@@ -392,11 +392,11 @@ def verifyFile(frame: lang.Frame, stmt: lang.FileAction) -> None:
     elif stmt.action == 'close':
         pass
 
-def verifyDeclareType(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.declare(stmt.name)
     obj = lang.Object(typesys=frame.types)
     for expr in stmt.exprs:
-        resolveDeclare(obj, expr)
+        resolve(obj, expr)
     frame.types.setTemplate(stmt.name, obj)
     
 

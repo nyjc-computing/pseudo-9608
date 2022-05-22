@@ -52,14 +52,14 @@ class TypeSystem:
 
     Methods
     -------
-    has(name)
+    has(type)
         returns True if the type has been declared, otherwise returns False
-    declare(name)
+    declare(type)
         declares the existence of a type
-    setTemplate(name, template)
+    setTemplate(type, template)
         set the template used to initialise a TypedValue with this type
-    getTemplate(name)
-        return the template of the type
+    cloneType(type)
+        return a copy of the template for the type
     """
     def __init__(
         self,
@@ -72,7 +72,7 @@ class TypeSystem:
 
     def __repr__(self) -> str:
         nameTypePairs = [
-            f"{name}: {self.getTemplate(name)}"
+            f"{name}: {self.data[name].value}"
             for name in self.data
         ]
         return f"{{{', '.join(nameTypePairs)}}}"
@@ -83,11 +83,14 @@ class TypeSystem:
     def declare(self, name: str) -> None:
         self.data[name] = TypedValue(name, None)
 
-    def setTemplate(self, name: str, template: Optional["Object"]) -> None:
+    def setTemplate(self, name: Type, template: Optional["Object"]) -> None:
         self.data[name].value = template
 
-    def getTemplate(self, name) -> Optional[Val]:
-        return self.data[name].value
+    def clone(self, name: Type) -> Optional["Object"]:
+        template = self.data[name].value
+        if template:
+            return template.copy()
+        return template
 
 
 
@@ -171,8 +174,8 @@ class Object(Value):
         return name in self.data
 
     def declare(self, name: Key, type: str) -> None:
-        template = self.types.getTemplate(type)
-        self.data[name] = template.copy()
+        self.data[name] = TypedValue(type, None)
+        self.data[name].value = self.types.clone(type)
 
     def getType(self, name: Key) -> Type:
         return self.data[name].type
