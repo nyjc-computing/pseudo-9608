@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Callable as function
+from typing import Optional, Iterable, Tuple, Callable as function
 
 from . import builtin, lang, system
 

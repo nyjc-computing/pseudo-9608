@@ -1,16 +1,21 @@
 from typing import Any, Optional, Union, Iterable, Mapping
-from typing import Dict
+from typing import Tuple, Dict, NewType
 from typing import Callable as function, TextIO
 
 # Pseudocode types
-Type = str  # Built-in and declared types
-Varname = str  # Variable names
-Index = tuple  # Array indexes
-Key = Union[Name, Index]  # in TypedValue
+# Type represents a pseudocode type, whether built-in or declared
+Type = str
+# Varname represents a declared name
+Varname = str
+# Index represents array indexes used in Array
+Index = Tuple[int]
+# Key represents names that can be used in an Object
+# for storing values
+Key = Union[Varname, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
-Val = Union[Lit, "Value", "Object"]  # in TypedValue
+Val = Union[Lit, "PseudoValue"]  # in TypedValue
 Param = Union["Get", "TypedValue"]  # Callable params
-Arg = "Expr"  # Call args
+Arg = NewType('Arg', "Expr")  # Call args
 Rule = str  # Stmt rules
 
 # ----------------------------------------------------------------------
