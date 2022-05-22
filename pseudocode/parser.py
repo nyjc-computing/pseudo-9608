@@ -113,11 +113,11 @@ def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.Get:
     return lang.Get(objGet, name.name, token=name.token())
 
 def arrayExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
-    index = (expression(tokens),)
+    index: List[lang.Expr] = [expression(tokens)]
     while matchWord(tokens, ','):
-        index += (expression(tokens),)
+        index += [expression(tokens)]
     matchWordElseError(tokens, ']')
-    return lang.Get(objGet, index, token=objGet.token())
+    return lang.Get(objGet, tuple(index), token=objGet.token())
 
 def value(tokens: Tokens) -> lang.Expr:
     # Unary expressions

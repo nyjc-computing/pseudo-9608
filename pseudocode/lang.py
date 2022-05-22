@@ -8,7 +8,7 @@ Type = str
 # Varname represents a declared name
 Varname = str
 # Index represents array indexes used in Array
-Index = Union[Tuple[int], Tuple["Expr"]]
+Index = Union[Tuple[int, ...], Tuple["Expr", ...]]
 # Key represents names that can be used in an Object
 # for storing values
 Key = Union[Varname, Index]  # in TypedValue
