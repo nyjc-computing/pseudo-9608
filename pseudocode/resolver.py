@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Iterator
+from typing import Optional, Union, Literal, Iterable, Iterator
 from itertools import product
 
 from . import builtin, lang
@@ -241,37 +241,35 @@ def resolveGet(
 
 def resolveProcCall(
     frame: lang.Frame,
-    expr: lang.Callable,
-) -> lang.Type:
-    resolveGet(frame, expr.callable)
+    expr: lang.Call,
+) -> Literal['NULL']:
     # Resolve global frame where procedure is declared
-    callFrame = expr.callable.frame
-    callable = callFrame.getValue(expr.callable.name)
+    callableType = resolveGet(frame, expr.callable)
+    callFrame = expr.frame
+    callable = callFrame.getValue(expr.name)
     if not isProcedure(callable):
         raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
-    resolveCall(frame, expr)
-    return 'NULL'
+    resolveCall(frame, callable, callableType, token=expr.token())
+    return callableType
 
 def resolveFuncCall(
     frame: lang.Frame,
-    expr: lang.Callable,
+    expr: lang.Call,
 ) -> lang.Type:
-    resolveGet(frame, expr.callable)
     # Resolve global frame where function is declared
+    callableType = resolveGet(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
-    callableType = callFrame.getType(expr.callable.name)
     if not isFunction(callable):
-        raise builtin.LogicError(
-            "Not FUNCTION",
-            token=expr.callable.token(),
-        )
-    resolveCall(frame, expr)
-    return callableType
+        raise builtin.LogicError("Not FUNCTION", token=expr.callable.token())
+    return resolveCall(frame, callable, callableType, token=expr.token())
     
 def resolveCall(
     frame: lang.Frame,
     expr: lang.Callable,
+    callableType: Union[Literal['NULL'], lang.Type],
+    *,
+    token: lang.Token,
 ) -> None:
     """
     resolveCall() does not carry out any frame insertion or
@@ -283,14 +281,20 @@ def resolveCall(
     if numArgs != numParams:
         raise builtin.LogicError(
             f"Expected {numParams} args, got {numArgs}",
-            token=expr.callable.token(),
+            token=token,
         )
     # Type-check arguments
     for arg, param in zip(expr.args, callable.params):
         # param is a slot from either local or frame
         argtype = resolve(frame, arg)
         expectTypeElseError(argtype, param.type, token=arg.token())
-    # TODO: Return statement type
+    for stmt in callable.stmts:
+        if isProcedure(callable) and stmt.rule == 'return':
+            raise builtin.LogicError("Unexpected RETURN", token)
+        returnType = verify(frame, stmt)
+        if isFunction(callable) and stmt.rule == 'return':
+            expectTypeElseError(returnType, callableType, token=token)
+    return callableType
 
 def resolve(
     frame: lang.Frame,
@@ -402,6 +406,8 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.setTemplate(stmt.name, obj)
 
 def verifyExprStmt(frame: lang.Frame, stmt: lang.ExprStmt) -> None:
+    if stmt.rule == 'call':
+        return resolveProcCall(frame, stmt.expr)
     return resolve(frame, stmt.expr)
 
 

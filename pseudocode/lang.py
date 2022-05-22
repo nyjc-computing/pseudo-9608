@@ -505,7 +505,7 @@ class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(
         self,
-        callable: Union["Callable", "Get"],
+        callable: "Get",
         args: Iterable["Expr"],
     ) -> None:
         self.callable = callable

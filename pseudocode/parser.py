@@ -374,8 +374,8 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     return lang.ProcFunc('procedure', name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens: Tokens) -> lang.ExprStmt:
-    callable = value(tokens)
-    matchWordElseError(tokens, '\n', msg="at end of CALL")
+    callable: lang.Call = value(tokens)
+    matchWordElseError(tokens, '\n')
     return lang.ExprStmt('call', callable)
 
 def functionStmt(tokens: Tokens) -> lang.ProcFunc:
