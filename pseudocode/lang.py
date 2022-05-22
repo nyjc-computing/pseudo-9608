@@ -431,14 +431,12 @@ class Declare(Expr):
 
 
 class Assign(Expr):
-    __slots__ = ('name', 'assignee', 'expr')
+    __slots__ = ('assignee', 'expr')
     def __init__(
         self,
-        name: Varname,
         assignee: "Get",
         expr: "Expr",
     ) -> None:
-        self.name = name
         self.assignee = assignee
         self.expr = expr
 

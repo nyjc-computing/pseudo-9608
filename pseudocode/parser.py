@@ -207,7 +207,7 @@ def assignment(tokens: Tokens) -> lang.Assign:
             assignee = attrExpr(tokens, assignee)
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
-    return lang.Assign(assignee.name, assignee, expr)
+    return lang.Assign(assignee, expr)
 
 # Statement parsers
 
