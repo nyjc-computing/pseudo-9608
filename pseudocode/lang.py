@@ -378,11 +378,18 @@ class Expr:
 
 
 
-class Literal(TypedValue, Expr):
+class Literal(Expr):
     """
     A Literal represents any value coming directly from
     the source code.
     """
+    def __init__(self, type: Type, value: Val, *, token: "Token") -> None:
+        self.type = type
+        self.value = value
+        self._token = token
+
+    def token(self) -> "Token":
+        return self._token
 
 
 
