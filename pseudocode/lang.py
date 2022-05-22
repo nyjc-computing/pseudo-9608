@@ -44,6 +44,25 @@ class Token:
 
 
 
+class Name:
+    __slots__ = ('name', '_token')
+    def __init__(
+        self,
+        name: Varname,
+        *,
+        token: "Token",
+    ) -> None:
+        self.name = name
+        self._token = token
+
+    def __str__(self) -> Varname:
+        return self.name
+
+    def token(self) -> "Token":
+        return self._token
+
+
+
 class TypeSystem:
     """
     Handles registration of types in 9608 pseudocode.
@@ -388,22 +407,6 @@ class Literal(Expr):
     def __init__(self, type: Type, value: Lit, *, token: "Token") -> None:
         self.type = type
         self.value = value
-        self._token = token
-
-    def token(self) -> "Token":
-        return self._token
-
-
-
-class Name:
-    __slots__ = ('name', '_token')
-    def __init__(
-        self,
-        name: Varname,
-        *,
-        token: "Token",
-    ) -> None:
-        self.name = name
         self._token = token
 
     def token(self) -> "Token":
