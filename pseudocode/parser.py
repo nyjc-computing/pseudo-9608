@@ -346,10 +346,9 @@ def declare(tokens: Tokens) -> lang.Declare:
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
     return makeExpr(
-        name=name.name,
+        name=name,
         type=typetoken.word,
         metadata=metadata,
-        token=name.token(),
     )
     
 def declareStmt(tokens: Tokens) -> lang.ExprStmt:

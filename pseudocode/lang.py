@@ -415,12 +415,13 @@ class Declare(Expr):
         name: Varname,
         type: Type,
         metadata: Mapping=None,
-        token: "Token"=None,
     ) -> None:
-        super().__init__(token=token)
         self.name = name
         self.type = type
         self.metadata = metadata
+
+    def token(self):
+        return self.name.token()
 
 
 
