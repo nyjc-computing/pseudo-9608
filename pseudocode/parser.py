@@ -118,7 +118,7 @@ def matchTypeElseError(
 # 5. <> | =
 # 6. AND | OR
 
-def identifier(tokens: Tokens) -> Optional[lang.Name]:
+def identifier(tokens: Tokens) -> lang.Name:
     if expectType(tokens, 'name'):
         token = consume(tokens)
         return lang.Name(name=token.word, token=token)
@@ -389,7 +389,6 @@ def forStmt(tokens: Tokens) -> lang.Loop:
         init.name,
         init.assignee,
         lang.Binary(getCounter, builtin.add, step, token=step.token()),
-        token=init.token(),
     )
     initStmt = lang.ExprStmt('assign', init)
     incrStmt = lang.ExprStmt('assign', incr)
