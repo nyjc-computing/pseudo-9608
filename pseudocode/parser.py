@@ -355,8 +355,10 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     name = identifier(tokens).name
     params = []
     if matchWord(tokens, '('):
-        passby = matchWord(tokens, 'BYVALUE', 'BYREF')
-        if not passby:
+        passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
+        if passbyToken:
+            passby = passbyToken.word
+        else:
             passby = 'BYVALUE'
         expr = declare(tokens)
         params += [expr]
@@ -380,7 +382,7 @@ def functionStmt(tokens: Tokens) -> lang.ProcFunc:
     name = identifier(tokens).name
     params = []
     if matchWord(tokens, '('):
-        passby = 'BYVALUE'
+        passby: str = 'BYVALUE'
         var = declare(tokens)
         params += [var]
         while matchWord(tokens, ','):
