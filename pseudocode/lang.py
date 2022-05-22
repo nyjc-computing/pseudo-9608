@@ -412,16 +412,17 @@ class Declare(Expr):
     __slots__ = ('name', 'type', 'metadata')
     def __init__(
         self,
-        name: Varname,
+        name: Name,
         type: Type,
         metadata: Mapping=None,
     ) -> None:
-        self.name = name
+        self.name = name.name
         self.type = type
         self.metadata = metadata
+        self._token = name
 
     def token(self):
-        return self.name.token()
+        return self._token
 
 
 
@@ -432,11 +433,13 @@ class Assign(Expr):
         name: Varname,
         assignee: "Get",
         expr: "Expr",
-        token: "Token"=None) -> None:
-        super().__init__(token=token)
+    ) -> None:
         self.name = name
         self.assignee = assignee
         self.expr = expr
+
+    def token(self):
+        return self.assignee.token()
 
 
 
@@ -446,7 +449,6 @@ class Unary(Expr):
         self,
         oper: function,
         right: "Expr",
-        token: "Token"=None,
     ) -> None:
         super().__init__(token=token)
         self.oper = oper
