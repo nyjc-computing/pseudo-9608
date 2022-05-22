@@ -393,15 +393,18 @@ class Literal(Expr):
 
 
 
-class Name(Expr):
+class Name:
     __slots__ = ('name',)
     def __init__(
         self,
         name: Varname,
-        token: "Token"=None,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.name = name
+        self._token = token
+
+    def token(self) -> "Token":
+        return self._token
 
 
 
