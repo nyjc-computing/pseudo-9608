@@ -103,7 +103,7 @@ class TypedValue:
     def __init__(
         self,
         type: Type,
-        value: Optional[Val],
+        value: Optional[Value],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -181,7 +181,7 @@ class Object(PseudoValue):
     def getType(self, name: Key) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: Key) -> Optional[Val]:
+    def getValue(self, name: Key) -> Optional[Value]:
         return self.data[name].value
 
     def get(self, name: Key) -> "TypedValue":
@@ -384,7 +384,7 @@ class Literal(Expr):
     A Literal represents any value coming directly from
     the source code.
     """
-    def __init__(self, type: Type, value: Val, *, token: "Token") -> None:
+    def __init__(self, type: Type, value: Value, *, token: "Token") -> None:
         self.type = type
         self.value = value
         self._token = token
