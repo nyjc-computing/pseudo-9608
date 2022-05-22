@@ -99,7 +99,7 @@ def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Value:
     if isinstance(obj, lang.Expr):
         obj = evaluate(frame, obj)
     if not isinstance(obj, lang.Object):
-        raise builtin.RuntimeError("Invalid object", expr.frame.token())
+        raise builtin.RuntimeError("Invalid object", expr.token())
     name = expr.name
     if isinstance(obj, lang.Array):
         name = evalIndex(frame, expr.name)
@@ -227,7 +227,7 @@ def execRepeat(
     **kwargs,
 ) -> None:
     executeStmts(frame, stmt.stmts)
-    while evaluate(frame, stmt) is False:
+    while evaluate(frame, stmt.cond) is False:
         executeStmts(frame, stmt.stmts)
 
 def execFile(
@@ -235,7 +235,7 @@ def execFile(
     stmt: lang.FileAction,
     **kwargs,
 ) -> None:
-    name = evalLiteral(frame, stmt.name)
+    name: str = evaluate(frame, stmt.name)
     if stmt.action == 'open':
         undeclaredElseError(
             frame, name, "File already opened", stmt.name.token()

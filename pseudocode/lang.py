@@ -384,7 +384,8 @@ class Literal(Expr):
     A Literal represents any value coming directly from
     the source code.
     """
-    def __init__(self, type: Type, value: Value, *, token: "Token") -> None:
+    __slots__ = ('type', 'value', '_token')
+    def __init__(self, type: Type, value: Lit, *, token: "Token") -> None:
         self.type = type
         self.value = value
         self._token = token
