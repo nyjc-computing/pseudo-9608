@@ -10,10 +10,24 @@ pip install pseudo-9608
 
 ## Usage
 
+### Running psuedocode on a file
+
 ```
 import pseudocode
 
-pseudocode.run('myfile.pseudo')
+pseudocode.runFile('myfile.pseudo')
+```
+
+### Running psuedocode on a string
+
+```
+import pseudocode
+
+code = """
+OUTPUT "Hello World!"
+"""
+
+pseudocode.run(code)
 ```
 
 # Chapters

@@ -1,3 +1,4 @@
+from typing import TextIO
 import random
 
 from .builtin import TYPES, RuntimeError
@@ -9,7 +10,7 @@ system = Frame(typesys=TypeSystem(*TYPES))
 
 
 
-def RND():
+def RND() -> float:
     return random.random()
 system.declare('RND', 'REAL')
 system.setValue('RND', Builtin(
@@ -17,7 +18,7 @@ system.setValue('RND', Builtin(
     func=RND,
 ))
 
-def RANDOMBETWEEN(start, end):
+def RANDOMBETWEEN(start: int, end: int) -> int:
     if not (start < end):
         raise RuntimeError(f"{start} not less than {end}", None)
     return random.randint(start, end)
@@ -30,7 +31,7 @@ system.setValue('RANDOMBETWEEN', Builtin(
     func=RANDOMBETWEEN,
 ))
 
-def EOF(file):
+def EOF(file: TextIO) -> bool:
     # Python has no in-built EOF support;
     # if read() or readline() return an empty string,
     # that's considered EOF

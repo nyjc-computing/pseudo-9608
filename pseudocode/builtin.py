@@ -5,11 +5,9 @@ class PseudoError(Exception):
     def __init__(self, msg, token, line=None):
         super().__init__(msg)
         self.token = token
-        self.line = None
+        self.line = line
         self.col = None
-        if line is not None:
-            self.line = line
-        elif type(token) is dict:
+        if token:
             self.line = token.line
             self.col = token.col
         else:

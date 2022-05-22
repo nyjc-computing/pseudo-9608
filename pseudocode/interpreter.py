@@ -1,36 +1,40 @@
-from .builtin import RuntimeError
-from .lang import Object, Array, File, Callable, Builtin
-from .lang import Literal, Unary, Binary, Get, Call, Assign
-from .system import EOF
+from typing import Optional, Iterable, Tuple, Callable as function
+
+from . import builtin, lang, system
 
 
 
 # Helper functions
 
 def expectTypeElseError(
-    exprmode,
-    expected,
-    errmsg="Expected",
-    token=None,
-):
+    exprmode: str,
+    expected: str,
+    errmsg: str="Expected",
+    token: lang.Token=None,
+) -> None:
     if type(expected) is str:
         expected = (expected,)
     if not exprmode in expected:
         if not token: token = exprmode
-        raise RuntimeError(f"{errmsg} {expected}", token)
+        raise builtin.RuntimeError(f"{errmsg} {expected}", token)
 
-def declaredElseError(frame, name, errmsg="Undeclared", token=None):
+def declaredElseError(
+    frame: lang.Frame,
+    name: lang.Varname,
+    errmsg: str="Undeclared",
+    token: lang.Token=None,
+) -> None:
     if not frame.has(name):
-        raise RuntimeError(errmsg, token)
+        raise builtin.RuntimeError(errmsg, token)
 
 def undeclaredElseError(
-    frame,
-    name,
+    frame: lang.Frame,
+    name: lang.Varname,
     errmsg="Already declared",
-    token=None,
-):
+    token: lang.Token=None,
+) -> None:
     if frame.has(name):
-        raise RuntimeError(errmsg, token)
+        raise builtin.RuntimeError(errmsg, token)
 
 
 
@@ -38,12 +42,16 @@ class Interpreter:
     """
     Interprets a list of statements with a given frame.
     """
-    outputHandler = print
-    def __init__(self, frame, statements):
+    outputHandler: function = print
+    def __init__(
+        self,
+        frame: lang.Frame,
+        statements: Iterable[lang.Stmt],
+    ) -> None:
         self.frame = frame
         self.statements = statements
 
-    def registerOutputHandler(self, handler):
+    def registerOutputHandler(self, handler: function) -> None:
         """
         Register handler as the function to use to handle
         any output from the executed statements.
@@ -51,7 +59,7 @@ class Interpreter:
         """
         self.outputHandler = handler
 
-    def interpret(self):
+    def interpret(self) -> None:
         executeStmts(
             self.frame,
             self.statements,
@@ -62,135 +70,179 @@ class Interpreter:
 
 # Evaluators
 
-def evalIndex(frame, indexes):
+def evalIndex(
+    frame: lang.Frame,
+    indexes: Iterable[tuple],
+) -> Tuple[int]:
     return tuple((
-        evaluate(frame, indexExpr)
-        for indexExpr in indexes
+        evaluate(frame, expr) for expr in indexes
     ))
 
-def evalLiteral(frame, literal):
+def evalLiteral(
+    frame: lang.Frame,
+    literal: lang.Literal,
+) -> lang.Lit:
     return literal.value
 
-def evalUnary(frame, expr):
-    rightval = expr.right.accept(frame, evaluate)
+def evalUnary(frame: lang.Frame, expr: lang.Unary) -> lang.Lit:
+    rightval = evaluate(frame, expr.right)
     return expr.oper(rightval)
 
-def evalBinary(frame, expr):
-    leftval = expr.left.accept(frame, evaluate)
-    rightval = expr.right.accept(frame, evaluate)
+def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.Lit:
+    leftval = evaluate(frame, expr.left)
+    rightval = evaluate(frame, expr.right)
     return expr.oper(leftval, rightval)
 
-def evalGet(frame, expr):
+def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Val:
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
     obj = expr.frame
     # evaluate obj until object is retrieved
-    if type(obj) in (Get, Call):
+    if isinstance(obj, lang.Expr):
         obj = evaluate(frame, obj)
-    if not isinstance(obj, Object):
-        raise RuntimeError("Invalid object", expr.frame.token())
+    if not isinstance(obj, lang.Object):
+        raise builtin.RuntimeError("Invalid object", expr.frame.token())
     name = expr.name
-    if type(obj) in (Array,):
+    if isinstance(obj, lang.Array):
         name = evalIndex(frame, expr.name)
     return obj.getValue(name)
 
-def evalCall(frame, expr, **kwargs):
-    callable = expr.callable.accept(frame, evalGet)
-    if isinstance(callable, Builtin):
-        if callable.func is EOF:
-            name = expr.args[0].accept(frame, evaluate)
+def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Val:
+    callable = evalGet(frame, expr.callable)
+    if isinstance(callable, lang.Builtin):
+        if callable.func is system.EOF:
+            name = evaluate(frame, expr.args[0])
             file = frame.getValue(name)
             return callable.func(file.iohandler)
-        argvals = [arg.accept(frame, evaluate) for arg in expr.args]
+        argvals = [evaluate(frame, arg) for arg in expr.args]
         return callable.func(*argvals)
-    elif isinstance(callable, Callable):
+    elif isinstance(callable, lang.Callable):
         # Assign args to param slots
         for arg, slot in zip(expr.args, callable.params):
-            argval = arg.accept(frame, evaluate)
+            argval = evaluate(frame, arg)
             slot.value = argval
         for stmt in callable.stmts:
-            returnval = stmt.accept(callable.frame, execute, **kwargs)
+            returnval = execute(callable.frame, stmt, **kwargs)
             if returnval is not None:
                 return returnval
 
-def evalAssign(frame, expr):
-    value = expr.expr.accept(frame, evaluate)
+def evalAssign(frame: lang.Frame, expr: lang.Assign) -> None:
+    value = evaluate(frame, expr.expr)
     obj = expr.assignee.frame
-    if type(obj) in (Get, Call):
+    if type(obj) in (lang.Get, lang.Call):
         obj = evaluate(frame, obj)
     name = expr.name
-    if type(obj) in (Array,):
+    if type(obj) in (lang.Array,):
         name = evalIndex(frame, expr.name)
     obj.setValue(name, value)
 
-def evaluate(frame, expr, **kwargs):
-    if isinstance(expr, Literal):
-        return expr.accept(frame, evalLiteral)
-    if isinstance(expr, Unary):
-        return expr.accept(frame, evalUnary)
-    if isinstance(expr, Binary):
-        return expr.accept(frame, evalBinary)
-    if isinstance(expr, Assign):
-        return expr.accept(frame, evalAssign)
-    if isinstance(expr, Get):
-        return expr.accept(frame, evalGet)
-    if isinstance(expr, Call):
-        return expr.accept(frame, evalCall)
+def evaluate(
+    frame: lang.Frame,
+    expr: lang.Expr,
+    **kwargs,
+) -> Optional[lang.Val]:
+    if isinstance(expr, lang.Literal):
+        return evalLiteral(frame, expr)
+    if isinstance(expr, lang.Unary):
+        return evalUnary(frame, expr)
+    if isinstance(expr, lang.Binary):
+        return evalBinary(frame, expr)
+    if isinstance(expr, lang.Assign):
+        return evalAssign(frame, expr)
+    if isinstance(expr, lang.Get):
+        return evalGet(frame, expr)
+    if isinstance(expr, lang.Call):
+        return evalCall(frame, expr)
     else:
         raise TypeError(f"Unexpected expr {expr}")
 
 # Executors
 
-def executeStmts(frame, stmts, *args, **kwargs):
+def executeStmts(
+    frame: lang.Frame,
+    stmts: Iterable[lang.Stmt],
+    *args,
+    **kwargs,
+) -> Optional[lang.Val]:
     for stmt in stmts:
-        returnval = stmt.accept(frame, execute, *args, **kwargs)
+        returnval = execute(frame, stmt, *args, **kwargs)
         if returnval is not None:
             return returnval
 
-def execOutput(frame, stmt, *, output=None, **kwargs):
+def execOutput(
+    frame: lang.Frame,
+    stmt: lang.Output,
+    *,
+    output: function,
+    **kwargs,
+) -> None:
     for expr in stmt.exprs:
-        value = expr.accept(frame, evaluate)
+        value = evaluate(frame, expr)
         if type(value) is bool:
             value = str(value).upper()
         output(str(value), end='')
     output('')  # Add \n
 
-def execInput(frame, stmt, **kwargs):
+def execInput(
+    frame: lang.Frame,
+    stmt: lang.Input,
+    **kwargs,
+) -> None:
     name = stmt.name
     frame.setValue(name, input())
 
-def execCase(frame, stmt, **kwargs):
-    cond = stmt.cond.accept(frame, evaluate)
+def execCase(
+    frame: lang.Frame,
+    stmt: lang.Conditional,
+    **kwargs,
+) -> None:
+    cond = evaluate(frame, stmt.cond)
     if cond in stmt.stmtMap:
         execute(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
         execute(frame, stmt.fallback, **kwargs)
 
-def execIf(frame, stmt, **kwargs):
-    if stmt.cond.accept(frame, evaluate):
+def execIf(
+    frame: lang.Frame,
+    stmt: lang.Conditional,
+    **kwargs,
+) -> None:
+    if evaluate(frame, stmt.cond):
         executeStmts(frame, stmt.stmtMap[True], **kwargs)
     elif stmt.fallback:
         executeStmts(frame, stmt.fallback, **kwargs)
 
-def execWhile(frame, stmt, **kwargs):
+def execWhile(
+    frame: lang.Frame,
+    stmt: lang.Loop,
+    **kwargs,
+) -> None:
     if stmt.init:
         execute(frame, stmt.init, **kwargs)
-    while stmt.cond.accept(frame, evaluate) is True:
+    while evaluate(frame, stmt.cond) is True:
         executeStmts(frame, stmt.stmts, **kwargs)
 
-def execRepeat(frame, stmt, **kwargs):
+def execRepeat(
+    frame: lang.Frame,
+    stmt: lang.Loop,
+    **kwargs,
+) -> None:
     executeStmts(frame, stmt.stmts)
-    while stmt.cond.accept(frame, evaluate) is False:
+    while evaluate(frame, stmt) is False:
         executeStmts(frame, stmt.stmts)
 
-def execFile(frame, stmt, **kwargs):
-    name = stmt.name.accept(frame, evalLiteral)
+def execFile(
+    frame: lang.Frame,
+    stmt: lang.FileAction,
+    **kwargs,
+) -> None:
+    name = evalLiteral(frame, stmt.name)
     if stmt.action == 'open':
         undeclaredElseError(
             frame, name, "File already opened", stmt.name.token()
         )
         frame.declare(name, 'FILE')
-        file = File(name, stmt.mode, open(name, stmt.mode[0].lower()))
+        file = lang.File(name, stmt.mode, open(name, stmt.mode[0].lower()))
         frame.setValue(name, file)
     elif stmt.action == 'read':
         declaredElseError(
@@ -201,7 +253,7 @@ def execFile(frame, stmt, **kwargs):
             frame.getType(name), 'FILE', stmt.name.token()
         )
         expectTypeElseError(file.mode, 'READ', stmt.name.token())
-        varname = stmt.data.accept(frame, evaluate)
+        varname = evaluate(frame, stmt.data)
         declaredElseError(frame, varname, stmt.data.token())
         # TODO: Catch and handle Python file io errors
         line = file.iohandler.readline().rstrip()
@@ -218,7 +270,7 @@ def execFile(frame, stmt, **kwargs):
         expectTypeElseError(
             file.mode, ('WRITE', 'APPEND'), stmt.name.token()
         )
-        writedata = stmt.data.accept(frame, evaluate)
+        writedata = evaluate(frame, stmt.data)
         if type(writedata) is bool:
             writedata = str(writedata).upper()
         else:
@@ -239,26 +291,54 @@ def execFile(frame, stmt, **kwargs):
         file.iohandler.close()
         frame.delete(name)
 
-def execute(frame, stmt, *args, **kwargs):
+def execCall(
+    frame: lang.Frame,
+    stmt: lang.ExprStmt,
+    **kwargs,
+) -> None:
+    evaluate(frame, stmt.expr, **kwargs)
+
+def execAssign(
+    frame: lang.Frame,
+    stmt: lang.ExprStmt,
+    **kwargs,
+) -> None:
+    evaluate(frame, stmt.expr, **kwargs)
+
+def execReturn(
+    frame: lang.Frame,
+    stmt: lang.ExprStmt,
+    **kwargs,
+) -> None:
+    return evaluate(frame, stmt.expr, **kwargs)
+
+
+
+def execute(
+    frame: lang.Frame,
+    stmt: lang.Stmt,
+    *args,
+    **kwargs,
+) -> Optional[lang.Val]:
     if stmt.rule == 'output':
-        stmt.accept(frame, execOutput, **kwargs)
+        execOutput(frame, stmt, **kwargs)
     if stmt.rule == 'input':
-        stmt.accept(frame, execInput, **kwargs)
-    if stmt.rule == 'assign':
-        stmt.expr.accept(frame, evaluate, **kwargs)
+        execInput(frame, stmt, **kwargs)
     if stmt.rule == 'case':
-        stmt.accept(frame, execCase, **kwargs)
+        execCase(frame, stmt, **kwargs)
     if stmt.rule == 'if':
-        stmt.accept(frame, execIf, **kwargs)
+        execIf(frame, stmt, **kwargs)
     if stmt.rule == 'while':
-        stmt.accept(frame, execWhile, **kwargs)
+        execWhile(frame, stmt, **kwargs)
     if stmt.rule == 'repeat':
-        stmt.accept(frame, execRepeat, **kwargs)
-    if stmt.rule == 'call':
-        stmt.expr.accept(frame, evalCall, **kwargs)
-    if stmt.rule == 'return':
-        return stmt.expr.accept(frame, evaluate, **kwargs)
+        execRepeat(frame, stmt, **kwargs)
     if stmt.rule == 'file':
-        stmt.accept(frame, execFile, **kwargs)
+        execFile(frame, stmt, **kwargs)
+    if stmt.rule == 'call':
+        execCall(frame, stmt, **kwargs)
+    if stmt.rule == 'assign':
+        execAssign(frame, stmt, **kwargs)
+    if stmt.rule == 'return':
+        return execReturn(frame, stmt, **kwargs)
     if stmt.rule in ('declare', 'procedure', 'function'):
         pass
