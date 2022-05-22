@@ -13,7 +13,7 @@ Index = Union[Tuple[int, ...], Tuple["Expr", ...]]
 # for storing values
 Key = Union[Varname, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
-Val = Union[Lit, "PseudoValue"]  # in TypedValue
+Value = Union[Lit, "PseudoValue"]  # in TypedValue
 Param = Union["Declare", "TypedValue"]  # Callable params
 Cases = MutableMapping[Lit, List["Stmt"]]
 Rule = str  # Stmt rules
@@ -125,7 +125,7 @@ class TypedValue:
 
 
 
-class Value:
+class PseudoValue:
     """
     Base class for pseudo values.
     Represents a value stored in the frame.
@@ -133,7 +133,7 @@ class Value:
 
 
 
-class Object(Value):
+class Object(PseudoValue):
     """
     Represents a space for storing of TypedValues in 9608 pseudocode.
     Provides methods for managing TypedValues.
@@ -256,7 +256,7 @@ class Array(Object):
 
 
 
-class Builtin(Value):
+class Builtin(PseudoValue):
     """
     Represents a system function in pseudo.
 
@@ -284,7 +284,7 @@ class Builtin(Value):
 
 
 
-class Callable(Value):
+class Callable(PseudoValue):
     """
     Base class for Function and Procedure.
     Represents a Callable in pseudo.
@@ -327,7 +327,7 @@ class Procedure(Callable):
 
 
 
-class File(Value):
+class File(PseudoValue):
     """
     Represents a file object in a frame.
 

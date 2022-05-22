@@ -93,7 +93,7 @@ def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.Lit:
     rightval = evaluate(frame, expr.right)
     return expr.oper(leftval, rightval)
 
-def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Val:
+def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Value:
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
     obj = expr.frame
@@ -107,7 +107,7 @@ def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Val:
         name = evalIndex(frame, expr.name)
     return obj.getValue(name)
 
-def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Val:
+def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Value:
     callable = evalGet(frame, expr.callable)
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
@@ -140,7 +140,7 @@ def evaluate(
     frame: lang.Frame,
     expr: lang.Expr,
     **kwargs,
-) -> Optional[lang.Val]:
+) -> Optional[lang.Value]:
     if isinstance(expr, lang.Literal):
         return evalLiteral(frame, expr)
     if isinstance(expr, lang.Unary):
@@ -163,7 +163,7 @@ def executeStmts(
     stmts: Iterable[lang.Stmt],
     *args,
     **kwargs,
-) -> Optional[lang.Val]:
+) -> Optional[lang.Value]:
     for stmt in stmts:
         returnval = execute(frame, stmt, *args, **kwargs)
         if returnval is not None:
@@ -320,7 +320,7 @@ def execute(
     stmt: lang.Stmt,
     *args,
     **kwargs,
-) -> Optional[lang.Val]:
+) -> Optional[lang.Value]:
     if stmt.rule == 'output':
         execOutput(frame, stmt, **kwargs)
     if stmt.rule == 'input':
