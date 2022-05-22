@@ -117,7 +117,7 @@ def arrayExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
     while matchWord(tokens, ','):
         index += (expression(tokens),)
     matchWordElseError(tokens, ']')
-    return lang.Get(objGet, name=index, token=objGet.token())
+    return lang.Get(objGet, index, token=objGet.token())
 
 def value(tokens: Tokens) -> lang.Expr:
     # Unary expressions
@@ -133,18 +133,18 @@ def value(tokens: Tokens) -> lang.Expr:
         return literal(tokens)
     # A name or call or attribute
     if expectType(tokens, 'name'):
-        expr = name(tokens)
+        getExpr = name(tokens)
         while expectWord(tokens, '[', '(', '.'):
             # Array get
             if matchWord(tokens, '['):
-                expr = arrayExpr(tokens, expr)
+                getExpr = arrayExpr(tokens, getExpr)
             # Function call
             elif matchWord(tokens, '('):
-                expr = callExpr(tokens, expr)
+                getExpr = callExpr(tokens, getExpr)
             # Attribute get
             elif matchWord(tokens, '.'):
-                expr = attrExpr(tokens, expr)
-        return expr
+                getExpr = attrExpr(tokens, getExpr)
+        return getExpr
     else:
         raise builtin.ParseError("Unexpected token", check(tokens))
 
