@@ -444,7 +444,7 @@ class Assign(Expr):
 
 
 class Unary(Expr):
-    __slots__ = ('oper', 'right')
+    __slots__ = ('oper', 'right', '_token')
     def __init__(
         self,
         oper: function,
@@ -462,17 +462,19 @@ class Unary(Expr):
 
 
 class Binary(Expr):
-    __slots__ = ('left', 'oper', 'right')
+    __slots__ = ('left', 'oper', 'right', '_token')
     def __init__(
         self,
         left: "Expr",
         oper: function,
         right: "Expr",
+        *,
         token: "Token",
     ) -> None:
         self.left = left
         self.oper = oper
         self.right = right
+        self._token = token
 
     def token(self):
         return self._token
