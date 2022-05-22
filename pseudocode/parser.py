@@ -23,46 +23,6 @@ def consume(tokens: Tokens) -> lang.Token:
     token = tokens.pop(0)
     return token
 
-def makeExpr(
-    *,
-    type: lang.Type=None,
-    value:lang.Val=None,
-    frame: lang.Object=None,
-    name: lang.Varname=None,
-    assignee: Union[lang.Object, lang.Expr]=None,
-    expr: lang.Expr=None,
-    left: lang.Expr=None,
-    oper: function=None,
-    right: lang.Expr=None,
-    callable: lang.Callable=None,
-    args: Iterable[lang.Arg]=None,
-    token: lang.Token=None,
-    metadata: Mapping=None,
-) -> lang.Expr:
-    if name is not None:
-        if frame is not None:
-            return lang.Get(frame, name, token=token)
-        elif expr is not None:
-            if assignee is None:
-                assignee = name
-            return lang.Assign(name, assignee, expr)
-        elif type is not None:
-            return lang.Declare(name, type, metadata, token=token)
-        else:
-            return lang.Name(name, token=token)
-    if type is not None and value is not None:
-        return lang.Literal(type, value, token=token)
-    if oper is not None and right is not None:
-        if left is not None:
-            return lang.Binary(left, oper, right, token=token)
-        else:
-            return lang.Unary(oper, right, token=token)
-    if callable is not None and args is not None:
-        return lang.Call(callable, args, token=token)
-    raise ValueError(
-        "Could not find valid keyword argument combination"
-    )
-
 def expectWord(tokens: Tokens, *words: str) -> Optional[lang.Token]:
     if check(tokens).word in words:
         return check(tokens)
