@@ -1,4 +1,6 @@
 from typing import Iterable, Mapping, Callable as function
+from sys import exc_info
+from traceback import format_exception
 
 from . import builtin
 from .lang import Frame
@@ -13,6 +15,12 @@ from .interpreter import Interpreter
 __version__ = '0.2.1'
 
 
+
+# https://stackoverflow.com/a/66416364/318186
+def printException():
+    etype, value, tb = exc_info()
+    info, error = format_exception(etype, value, tb)[-2:]
+    print(f'Exception in:\n{info}\n{error}')
 
 def error(lines: Iterable, err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
@@ -61,8 +69,9 @@ class Pseudo:
         except builtin.ParseError as err:
             result['error'] = err
             return result
-        except Exception as err:
-            breakpoint()
+        except Exception:
+            printException()
+            return result
 
         # Resolving
         resolver = Resolver(globalFrame, statements)
@@ -71,8 +80,9 @@ class Pseudo:
         except builtin.LogicError as err:
             result['error'] = err
             return result
-        except Exception as err:
-            breakpoint()
+        except Exception:
+            printException()
+            return result
 
         # Interpreting
         interpreter = Interpreter(globalFrame, statements)
@@ -81,7 +91,7 @@ class Pseudo:
             interpreter.interpret()
         except builtin.RuntimeError as err:
             result['error'] = err
-        except Exception as err:
-            breakpoint()
+        except Exception:
+            printException()
         finally:
             return result
