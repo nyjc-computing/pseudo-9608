@@ -367,12 +367,6 @@ class Expr:
     - token() -> Token
         Returns the token asociated with the expr
     """
-    def __init__(
-        self,
-        token: "Token",
-    ) -> None:
-        self._token = token
-
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -380,7 +374,7 @@ class Expr:
         return f'{type(self).__name__}({attrstr})'
 
     def token(self) -> "Token":
-        return self._token
+        raise NotImplementedError
 
 
 
