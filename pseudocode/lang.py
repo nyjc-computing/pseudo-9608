@@ -583,7 +583,7 @@ class Loop(Stmt):
     def __init__(
         self,
         rule: Rule,
-        init: "Stmt",
+        init: Optional["Stmt"],
         cond: "Expr",
         stmts: Iterable["Stmt"],
     ) -> None:

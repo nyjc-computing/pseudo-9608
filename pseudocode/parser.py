@@ -249,7 +249,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
-    return lang.Declare(name, typetoken.word, metadata, token=name.token())
+    return lang.Declare(name.name, typetoken.word, metadata, token=name.token())
     
 def declareStmt(tokens: Tokens) -> lang.ExprStmt:
     expr = declare(tokens)
@@ -331,7 +331,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
     end = value(tokens)
-    step = lang.Literal('INTEGER', 1, token=init.token())
+    step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token())
     if matchWord(tokens, 'STEP'):
         step = value(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
