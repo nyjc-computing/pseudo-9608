@@ -430,11 +430,11 @@ class Assign(Expr):
     __slots__ = ('name', 'assignee', 'expr')
     def __init__(
         self,
-        name: Varname,
+        name: Name,
         assignee: "Get",
         expr: "Expr",
     ) -> None:
-        self.name = name
+        self.name = name.name
         self.assignee = assignee
         self.expr = expr
 
@@ -449,10 +449,15 @@ class Unary(Expr):
         self,
         oper: function,
         right: "Expr",
+        *,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.oper = oper
         self.right = right
+        self._token = token
+
+    def token(self):
+        return self._token
 
 
 
@@ -463,12 +468,14 @@ class Binary(Expr):
         left: "Expr",
         oper: function,
         right: "Expr",
-        token: "Token"=None,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.left = left
         self.oper = oper
         self.right = right
+
+    def token(self):
+        return self._token
 
 
 
