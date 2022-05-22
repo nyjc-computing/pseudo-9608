@@ -398,7 +398,10 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     for expr in stmt.exprs:
         resolve(obj, expr)
     frame.types.setTemplate(stmt.name, obj)
-    
+
+def verifyExprStmt(frame: lang.Frame, stmt: lang.ExprStmt) -> None:
+    return resolve(frame, stmt.expr)
+
 
 
 def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
@@ -420,7 +423,5 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
         verifyFile(frame, stmt)
     elif stmt.rule == 'declaretype':
         verifyDeclareType(frame, stmt)
-    elif stmt.rule in ('assign', 'declare', 'return'):
-        return resolve(frame, stmt.expr)
-    elif stmt.rule == 'call':
-        return resolveProcCall(frame, stmt.expr)
+    elif stmt.rule in ('assign', 'declare', 'return', 'call'):
+        verifyExprStmt(frame, stmt)
