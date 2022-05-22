@@ -8,12 +8,10 @@ from . import builtin, lang, system
 
 def expectTypeElseError(
     exprmode: str,
-    expected: str,
+    *expected: str,
     errmsg: str="Expected",
     token: lang.Token=None,
 ) -> None:
-    if type(expected) is str:
-        expected = (expected,)
     if not exprmode in expected:
         if not token: token = exprmode
         raise builtin.RuntimeError(f"{errmsg} {expected}", token)
@@ -93,7 +91,7 @@ def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.Lit:
     rightval = evaluate(frame, expr.right)
     return expr.oper(leftval, rightval)
 
-def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Val:
+def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Value:
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
     obj = expr.frame
@@ -101,13 +99,13 @@ def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Val:
     if isinstance(obj, lang.Expr):
         obj = evaluate(frame, obj)
     if not isinstance(obj, lang.Object):
-        raise builtin.RuntimeError("Invalid object", expr.frame.token())
+        raise builtin.RuntimeError("Invalid object", expr.token())
     name = expr.name
     if isinstance(obj, lang.Array):
         name = evalIndex(frame, expr.name)
     return obj.getValue(name)
 
-def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Val:
+def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Value:
     callable = evalGet(frame, expr.callable)
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
@@ -131,16 +129,16 @@ def evalAssign(frame: lang.Frame, expr: lang.Assign) -> None:
     obj = expr.assignee.frame
     if type(obj) in (lang.Get, lang.Call):
         obj = evaluate(frame, obj)
-    name = expr.name
+    name = expr.assignee.name
     if type(obj) in (lang.Array,):
-        name = evalIndex(frame, expr.name)
+        name = evalIndex(frame, expr.assignee.name)
     obj.setValue(name, value)
 
 def evaluate(
     frame: lang.Frame,
     expr: lang.Expr,
     **kwargs,
-) -> Optional[lang.Val]:
+) -> Optional[lang.Value]:
     if isinstance(expr, lang.Literal):
         return evalLiteral(frame, expr)
     if isinstance(expr, lang.Unary):
@@ -163,7 +161,7 @@ def executeStmts(
     stmts: Iterable[lang.Stmt],
     *args,
     **kwargs,
-) -> Optional[lang.Val]:
+) -> Optional[lang.Value]:
     for stmt in stmts:
         returnval = execute(frame, stmt, *args, **kwargs)
         if returnval is not None:
@@ -188,7 +186,7 @@ def execInput(
     stmt: lang.Input,
     **kwargs,
 ) -> None:
-    name = stmt.name
+    name = stmt.name.name
     frame.setValue(name, input())
 
 def execCase(
@@ -198,16 +196,17 @@ def execCase(
 ) -> None:
     cond = evaluate(frame, stmt.cond)
     if cond in stmt.stmtMap:
-        execute(frame, stmt.stmtMap[cond], **kwargs)
+        executeStmts(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
-        execute(frame, stmt.fallback, **kwargs)
+        executeStmts(frame, stmt.fallback, **kwargs)
 
 def execIf(
     frame: lang.Frame,
     stmt: lang.Conditional,
     **kwargs,
 ) -> None:
-    if evaluate(frame, stmt.cond):
+    cond = evaluate(frame, stmt.cond)
+    if cond in stmt.stmtMap:
         executeStmts(frame, stmt.stmtMap[True], **kwargs)
     elif stmt.fallback:
         executeStmts(frame, stmt.fallback, **kwargs)
@@ -228,7 +227,7 @@ def execRepeat(
     **kwargs,
 ) -> None:
     executeStmts(frame, stmt.stmts)
-    while evaluate(frame, stmt) is False:
+    while evaluate(frame, stmt.cond) is False:
         executeStmts(frame, stmt.stmts)
 
 def execFile(
@@ -236,7 +235,7 @@ def execFile(
     stmt: lang.FileAction,
     **kwargs,
 ) -> None:
-    name = evalLiteral(frame, stmt.name)
+    name: str = evaluate(frame, stmt.name)
     if stmt.action == 'open':
         undeclaredElseError(
             frame, name, "File already opened", stmt.name.token()
@@ -250,9 +249,9 @@ def execFile(
         )
         file = frame.getValue(name)
         expectTypeElseError(
-            frame.getType(name), 'FILE', stmt.name.token()
+            frame.getType(name), 'FILE', token=stmt.name.token()
         )
-        expectTypeElseError(file.mode, 'READ', stmt.name.token())
+        expectTypeElseError(file.mode, 'READ', token=stmt.name.token())
         varname = evaluate(frame, stmt.data)
         declaredElseError(frame, varname, stmt.data.token())
         # TODO: Catch and handle Python file io errors
@@ -261,14 +260,14 @@ def execFile(
         frame.setValue(varname, line)
     elif stmt.action == 'write':
         declaredElseError(
-            frame, name, "File not open", stmt.name.token()
+            frame, name, "File not open", token=stmt.name.token()
         )
         file = frame.getValue(name)
         expectTypeElseError(
-            frame.getType(name), 'FILE', stmt.name.token()
+            frame.getType(name), 'FILE', token=stmt.name.token()
         )
         expectTypeElseError(
-            file.mode, ('WRITE', 'APPEND'), stmt.name.token()
+            file.mode, 'WRITE', 'APPEND', token=stmt.name.token()
         )
         writedata = evaluate(frame, stmt.data)
         if type(writedata) is bool:
@@ -319,7 +318,7 @@ def execute(
     stmt: lang.Stmt,
     *args,
     **kwargs,
-) -> Optional[lang.Val]:
+) -> Optional[lang.Value]:
     if stmt.rule == 'output':
         execOutput(frame, stmt, **kwargs)
     if stmt.rule == 'input':

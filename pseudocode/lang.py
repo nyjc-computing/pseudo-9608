@@ -1,5 +1,5 @@
-from typing import Any, Optional, Union, Iterable, Mapping
-from typing import Tuple, Dict, NewType
+from typing import Any, Optional, Union, Iterable, Mapping, MutableMapping
+from typing import Tuple, List, Dict
 from typing import Callable as function, TextIO
 
 # Pseudocode types
@@ -8,15 +8,16 @@ Type = str
 # Varname represents a declared name
 Varname = str
 # Index represents array indexes used in Array
-Index = Tuple[int]
+Index = Union[Tuple[int, ...], Tuple["Expr", ...]]
 # Key represents names that can be used in an Object
 # for storing values
 Key = Union[Varname, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
-Val = Union[Lit, "PseudoValue"]  # in TypedValue
-Param = Union["Get", "TypedValue"]  # Callable params
-Arg = NewType('Arg', "Expr")  # Call args
+Value = Union[Lit, "PseudoValue"]  # in TypedValue
+Param = Union["Declare", "TypedValue"]  # Callable params
+Cases = MutableMapping[Lit, List["Stmt"]]
 Rule = str  # Stmt rules
+FileData = Optional[Union["Expr", str]]
 
 # ----------------------------------------------------------------------
 class Token:
@@ -65,7 +66,7 @@ class TypeSystem:
         self,
         *types: Type,
     ) -> None:
-        self.data: Dict[Type, "TypedValue"] = {}
+        self.data: Mapping[Type, "TypedValue"] = {}
         for typeName in types:
             self.declare(typeName)
             self.setTemplate(typeName, None)
@@ -102,7 +103,7 @@ class TypedValue:
     def __init__(
         self,
         type: Type,
-        value: Optional[Val],
+        value: Optional[Value],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -124,7 +125,7 @@ class TypedValue:
 
 
 
-class Value:
+class PseudoValue:
     """
     Base class for pseudo values.
     Represents a value stored in the frame.
@@ -132,7 +133,7 @@ class Value:
 
 
 
-class Object(Value):
+class Object(PseudoValue):
     """
     Represents a space for storing of TypedValues in 9608 pseudocode.
     Provides methods for managing TypedValues.
@@ -180,7 +181,7 @@ class Object(Value):
     def getType(self, name: Key) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: Key) -> Optional[Val]:
+    def getValue(self, name: Key) -> Optional[Value]:
         return self.data[name].value
 
     def get(self, name: Key) -> "TypedValue":
@@ -255,7 +256,7 @@ class Array(Object):
 
 
 
-class Builtin(Value):
+class Builtin(PseudoValue):
     """
     Represents a system function in pseudo.
 
@@ -283,7 +284,7 @@ class Builtin(Value):
 
 
 
-class Callable(Value):
+class Callable(PseudoValue):
     """
     Base class for Function and Procedure.
     Represents a Callable in pseudo.
@@ -326,7 +327,7 @@ class Procedure(Callable):
 
 
 
-class File(Value):
+class File(PseudoValue):
     """
     Represents a file object in a frame.
 
@@ -367,12 +368,6 @@ class Expr:
     - token() -> Token
         Returns the token asociated with the expr
     """
-    def __init__(
-        self,
-        token: "Token",
-    ) -> None:
-        self._token = token
-
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -380,102 +375,130 @@ class Expr:
         return f'{type(self).__name__}({attrstr})'
 
     def token(self) -> "Token":
-        return self._token
+        raise NotImplementedError
 
 
 
-class Literal(TypedValue, Expr):
+class Literal(Expr):
     """
     A Literal represents any value coming directly from
     the source code.
     """
+    __slots__ = ('type', 'value', '_token')
+    def __init__(self, type: Type, value: Lit, *, token: "Token") -> None:
+        self.type = type
+        self.value = value
+        self._token = token
+
+    def token(self) -> "Token":
+        return self._token
 
 
 
-class Name(Expr):
-    __slots__ = ('name',)
+class Name:
+    __slots__ = ('name', '_token')
     def __init__(
         self,
         name: Varname,
-        token: "Token"=None,
+        *,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.name = name
+        self._token = token
+
+    def token(self) -> "Token":
+        return self._token
 
 
 
 class Declare(Expr):
-    __slots__ = ('name', 'type', 'metadata')
+    __slots__ = ('name', 'type', 'metadata', '_token')
     def __init__(
         self,
         name: Varname,
         type: Type,
         metadata: Mapping=None,
-        token: "Token"=None,
+        *,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.name = name
         self.type = type
         self.metadata = metadata
+        self._token = token
+
+    def token(self):
+        return self._token
 
 
 
 class Assign(Expr):
-    __slots__ = ('name', 'assignee', 'expr')
+    __slots__ = ('assignee', 'expr')
     def __init__(
         self,
-        name: Varname,
         assignee: "Get",
         expr: "Expr",
-        token: "Token"=None) -> None:
-        super().__init__(token=token)
-        self.name = name
+    ) -> None:
         self.assignee = assignee
         self.expr = expr
+
+    def token(self):
+        return self.assignee.token()
 
 
 
 class Unary(Expr):
-    __slots__ = ('oper', 'right')
+    __slots__ = ('oper', 'right', '_token')
     def __init__(
         self,
         oper: function,
         right: "Expr",
-        token: "Token"=None,
+        *,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.oper = oper
         self.right = right
+        self._token = token
+
+    def token(self):
+        return self._token
 
 
 
 class Binary(Expr):
-    __slots__ = ('left', 'oper', 'right')
+    __slots__ = ('left', 'oper', 'right', '_token')
     def __init__(
         self,
         left: "Expr",
         oper: function,
         right: "Expr",
-        token: "Token"=None,
+        *,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.left = left
         self.oper = oper
         self.right = right
+        self._token = token
+
+    def token(self):
+        return self._token
 
 
 
 class Get(Expr):
-    __slots__ = ('frame', 'name')
+    __slots__ = ('frame', 'name', '_token')
     def __init__(
         self,
-        frame: "Frame",
-        name: Varname,
-        token: "Token"=None,
+        frame: Union["Frame", object],
+        name: Key,
+        *,
+        token: "Token",
     ) -> None:
-        super().__init__(token=token)
         self.frame = frame
         self.name = name
+        self._token = token
+
+    def token(self):
+        return self._token
 
 
 
@@ -483,17 +506,19 @@ class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(
         self,
-        callable: "Callable",
-        args: Iterable[Arg],
-        token: "Token"=None,
+        callable: "Get",
+        args: Iterable["Expr"],
     ) -> None:
-        super().__init__(token=token)
         self.callable = callable
         self.args = args
+
+    def token(self):
+        return self.callable.token()
 
 
 
 class Stmt:
+    rule: str = NotImplemented
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -531,7 +556,7 @@ class Input(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Varname,
+        name: "Name",
     ) -> None:
         self.rule = rule
         self.name = name
@@ -544,8 +569,8 @@ class Conditional(Stmt):
         self,
         rule: Rule,
         cond: "Expr",
-        stmtMap: Mapping[Lit, "Stmt"],
-        fallback: "Stmt",
+        stmtMap: Mapping[Lit, Iterable["Stmt"]],
+        fallback: Optional[Iterable["Stmt"]],
     ) -> None:
         self.rule = rule
         self.cond = cond
@@ -559,7 +584,7 @@ class Loop(Stmt):
     def __init__(
         self,
         rule: Rule,
-        init: "Stmt",
+        init: Optional["Stmt"],
         cond: "Expr",
         stmts: Iterable["Stmt"],
     ) -> None:
@@ -610,9 +635,9 @@ class FileAction(Stmt):
         self,
         rule: Rule,
         action: str,
-        name: Varname,
-        mode: str,
-        data: "Expr",
+        name: "Expr",
+        mode: Optional[str],
+        data: FileData,
     ) -> None:
         self.rule = rule
         self.action = action

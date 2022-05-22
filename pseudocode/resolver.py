@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Iterator
+from typing import Any, Optional, Union, Literal, Iterable, Iterator
 from itertools import product
 
 from . import builtin, lang
@@ -7,30 +7,29 @@ from . import builtin, lang
 
 # Helper functions
 
-def isProcedure(callable: lang.Callable) -> bool:
+def isProcedure(callable: Any) -> bool:
     return isinstance(callable, lang.Procedure)
 
-def isFunction(callable: lang.Callable) -> bool:
+def isFunction(callable: Any) -> bool:
     return type(callable) in (lang.Builtin, lang.Function)
 
 def expectTypeElseError(
     exprtype: lang.Type,
     *expected: lang.Type,
-    token: lang.Token=None,
+    token: lang.Token,
 ) -> None:
-    assert token, "Missing token"
     if exprtype not in expected:
         # Stringify expected types
-        expected = f"({', '.join(expected)})"
-        raise builtin.LogicError(f"Expected {expected}, is {exprtype}", token)
+        typesStr = f"({', '.join(expected)})"
+        raise builtin.LogicError(f"Expected {typesStr}, is {exprtype}", token)
 
 def declaredElseError(
-    frame: lang.Frame,
+    frame: Union[lang.Object, lang.TypeSystem],
     name: lang.Varname,
     errmsg: str="Undeclared",
     declaredType: lang.Type=None,
     *,
-    token: lang.Token=None,
+    token: lang.Token,
 ) -> None:
     if not frame.has(name):
         raise builtin.LogicError(errmsg, name, token)
@@ -38,6 +37,21 @@ def declaredElseError(
         expectTypeElseError(
             frame.getType(name), declaredType, token=token
         )
+
+def lookupElseError(
+    frame: lang.Frame,
+    name: lang.Key,
+    errmsg: str="Undeclared",
+    *,
+    token: lang.Token,
+) -> lang.Frame:
+    if frame.has(name):
+        return frame
+    if isinstance(frame, lang.Frame):
+        frame: Optional[lang.Frame] = frame.lookup(name)
+        if frame:
+            return frame
+    raise builtin.LogicError(errmsg, name, token)
 
 def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     ranges = [
@@ -103,12 +117,13 @@ def resolveDeclare(
             frame.setValue(expr.name, array)
         return expr.type
     assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
-    # BYREF
+    # BYREF -- TODO: resolveByref() as a separate function
     expectTypeElseError(
         expr.type, frame.outer.getType(expr.name), token=expr.token()
     )
     # Reference frame vars in local
     frame.set(expr.name, frame.outer.get(expr.name))
+    return expr.type
 
 def resolveUnary(
     frame: lang.Frame,
@@ -144,7 +159,7 @@ def resolveBinary(
         ):
             raise builtin.LogicError(
                 f"Illegal comparison of {lType} and {rType}",
-                token=expr.oper.token(),
+                token=expr.token(),
             )
         return 'BOOLEAN'
     if expr.oper in (builtin.gt, builtin.gte, builtin.lt, builtin.lte):
@@ -169,8 +184,8 @@ def resolveAssign(
         exprType, assnType, token=expr.token()
     )
 
-# Helper for resolving object+attribute types
-def resolveObj(
+# Helper for resolving attribute types
+def resolveAttr(
     typesystem: lang.TypeSystem,
     objType: lang.Type,
     name: lang.Varname,
@@ -192,7 +207,7 @@ def resolveObj(
 
 def resolveArray(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Get,
 ) -> lang.Type:
     def intsElseError(frame, *indexes):
         for indexExpr in indexes:
@@ -202,7 +217,7 @@ def resolveArray(
             )
     # Array indexes must be integer
     intsElseError(frame, *expr.name)
-    array = frame.getValue(expr.frame.name)
+    array: lang.Array = frame.getValue(expr.frame.name)
     return array.elementType
     
 def resolveGet(
@@ -219,18 +234,19 @@ def resolveGet(
     #    - custom types: check attribute existence in template
     #    - arrays: check element type in frame
     if expr.frame is builtin.NULL:
-        while not frame.has(expr.name):
-            frame = frame.lookup(expr.name)
-            if not frame:
+        target: Optional[lang.Frame] = frame
+        while not target.has(expr.name):
+            target = target.lookup(expr.name)
+            if not target:
                 raise builtin.LogicError("Undeclared", expr.token())
-        expr.frame = frame
+        expr.frame: lang.Frame = target
     # If frame is a Get Expr, resolve it recursively
     if isinstance(expr.frame, lang.Get):
         # Resolve Get frame
         objType = resolveGet(frame, expr.frame)
         if objType not in builtin.TYPES:
             # Check objType and attribute existence in types
-            return resolveObj(
+            return resolveAttr(
                 frame.types, objType, expr.name, token=expr.token()
             )
         elif objType == 'ARRAY':
@@ -241,37 +257,36 @@ def resolveGet(
 
 def resolveProcCall(
     frame: lang.Frame,
-    expr: lang.Callable,
-) -> lang.Type:
-    resolveGet(frame, expr.callable)
+    expr: lang.Call,
+) -> Literal['NULL']:
     # Resolve global frame where procedure is declared
+    callableType = resolveGet(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
-    resolveCall(frame, expr)
-    return 'NULL'
+    resolveCall(frame, callable, callableType, token=expr.callable.token())
+    return callableType
 
 def resolveFuncCall(
     frame: lang.Frame,
-    expr: lang.Callable,
+    expr: lang.Call,
 ) -> lang.Type:
-    resolveGet(frame, expr.callable)
     # Resolve global frame where function is declared
+    callableType = resolveGet(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
-    callableType = callFrame.getType(expr.callable.name)
     if not isFunction(callable):
-        raise builtin.LogicError(
-            "Not FUNCTION",
-            token=expr.callable.token(),
-        )
-    resolveCall(frame, expr)
+        raise builtin.LogicError("Not FUNCTION", token=expr.callable.token())
+    resolveCall(frame, callable, callableType, token=expr.callable.token())
     return callableType
     
 def resolveCall(
     frame: lang.Frame,
-    expr: lang.Callable,
+    expr: lang.Call,
+    callableType: Union[Literal['NULL'], lang.Type],
+    *,
+    token: lang.Token,
 ) -> None:
     """
     resolveCall() does not carry out any frame insertion or
@@ -283,14 +298,19 @@ def resolveCall(
     if numArgs != numParams:
         raise builtin.LogicError(
             f"Expected {numParams} args, got {numArgs}",
-            token=expr.callable.token(),
+            token=token,
         )
     # Type-check arguments
     for arg, param in zip(expr.args, callable.params):
         # param is a slot from either local or frame
         argtype = resolve(frame, arg)
         expectTypeElseError(argtype, param.type, token=arg.token())
-    # TODO: Return statement type
+    for stmt in callable.stmts:
+        if isProcedure(callable) and stmt.rule == 'return':
+            raise builtin.LogicError("Unexpected RETURN", token)
+        returnType = verify(frame, stmt)
+        if isFunction(callable) and stmt.rule == 'return':
+            expectTypeElseError(returnType, callableType, token=token)
 
 def resolve(
     frame: lang.Frame,
@@ -328,24 +348,26 @@ def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
-    declaredElseError(frame, stmt.name)
+    declaredElseError(frame, stmt.name.name, token=stmt.name.token())
 
 def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolve(frame, stmt.cond)
-    verifyStmts(frame, stmt.stmtMap.values())
+    for statements in stmt.stmtMap.values():
+        verifyStmts(frame, statements)
     if stmt.fallback:
-        verify(frame, stmt.fallback)
+        verifyStmts(frame, stmt.fallback)
 
 def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
-    verifyStmts(frame, stmt.stmtMap[True])
+    for statements in stmt.stmtMap.values():
+        verifyStmts(frame, statements)
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
 
 def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
     if stmt.init:
-        resolve(frame, stmt.init)
+        verify(frame, stmt.init)
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
@@ -358,7 +380,7 @@ def verifyParams(frame: lang.Frame, params: Iterable[lang.Param], passby: str) -
 
 def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     # Set up local frame
-    local = lang.Frame(outer=frame)
+    local = lang.Frame(typesys=frame.types, outer=frame)
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(stmt.name, 'NULL')
     frame.setValue(stmt.name, lang.Procedure(
@@ -370,7 +392,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
 
 def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     # Set up local frame
-    local = lang.Frame(outer=frame)
+    local = lang.Frame(typesys=frame.types, outer=frame)
     # Assign function in frame first, to make recursive calls work
     frame.declare(stmt.name, stmt.returnType)
     frame.setValue(stmt.name, lang.Function(
@@ -384,13 +406,11 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     verifyStmts(local, stmt.stmts)
 
 def verifyFile(frame: lang.Frame, stmt: lang.FileAction) -> None:
-    evalLiteral(frame, stmt.name)
+    resolve(frame, stmt.name)
     if stmt.action == 'open':
         pass
-    elif stmt.action in ('read', 'write'):
+    if isinstance(stmt.data, lang.Expr):
         resolve(frame, stmt.data)
-    elif stmt.action == 'close':
-        pass
 
 def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.declare(stmt.name)
@@ -398,7 +418,12 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     for expr in stmt.exprs:
         resolve(obj, expr)
     frame.types.setTemplate(stmt.name, obj)
-    
+
+def verifyExprStmt(frame: lang.Frame, stmt: lang.ExprStmt) -> Optional[lang.Value]:
+    if stmt.rule == 'call':
+        return resolveProcCall(frame, stmt.expr)
+    return resolve(frame, stmt.expr)
+
 
 
 def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
@@ -420,7 +445,5 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
         verifyFile(frame, stmt)
     elif stmt.rule == 'declaretype':
         verifyDeclareType(frame, stmt)
-    elif stmt.rule in ('assign', 'declare', 'return'):
-        return resolve(frame, stmt.expr)
-    elif stmt.rule == 'call':
-        return resolveProcCall(frame, stmt.expr)
+    elif stmt.rule in ('assign', 'declare', 'return', 'call'):
+        verifyExprStmt(frame, stmt)
