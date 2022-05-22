@@ -328,7 +328,7 @@ def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
-    declaredElseError(frame, stmt.name)
+    declaredElseError(frame, stmt.name.name)
 
 def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolve(frame, stmt.cond)

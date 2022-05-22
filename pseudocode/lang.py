@@ -555,7 +555,7 @@ class Input(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Varname,
+        name: "Name",
     ) -> None:
         self.rule = rule
         self.name = name

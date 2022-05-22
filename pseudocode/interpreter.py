@@ -188,7 +188,7 @@ def execInput(
     stmt: lang.Input,
     **kwargs,
 ) -> None:
-    name = stmt.name
+    name = stmt.name.name
     frame.setValue(name, input())
 
 def execCase(
