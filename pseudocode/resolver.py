@@ -332,14 +332,16 @@ def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
 
 def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolve(frame, stmt.cond)
-    verifyStmts(frame, stmt.stmtMap.values())
+    for statements in stmt.stmtMap.values():
+        verifyStmts(frame, statements)
     if stmt.fallback:
         verify(frame, stmt.fallback)
 
 def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
-    verifyStmts(frame, stmt.stmtMap[True])
+    for statements in stmt.stmtMap.values():
+        verifyStmts(frame, statements)
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
 

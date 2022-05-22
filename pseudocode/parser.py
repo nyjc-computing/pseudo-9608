@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Tuple, List
+from typing import Optional, Iterable, Tuple, List, Dict
 
 from . import builtin, lang
 
@@ -277,15 +277,14 @@ def caseStmt(tokens: Tokens) -> lang.Conditional:
     matchWordElseError(tokens, 'OF', msg="after CASE")
     cond = value(tokens)
     matchWordElseError(tokens, '\n', msg="after CASE OF")
-    stmts = {}
+    stmts: lang.Cases = {}
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
-        val = value(tokens).evaluate()
+        val: lang.Lit = literal(tokens).value
         matchWordElseError(tokens, ':', msg="after CASE value")
-        stmt = statement1(tokens)
-        stmts[val] = stmt
+        stmts[val] = [statement1(tokens)]
     fallback = None
     if matchWord(tokens, 'OTHERWISE'):
-        fallback = statement6(tokens)
+        fallback = [statement6(tokens)]
     matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
     matchWordElseError(tokens, '\n', msg="after ENDCASE")
     return lang.Conditional('case', cond, stmts, fallback)
@@ -295,7 +294,7 @@ def ifStmt(tokens: Tokens) -> lang.Conditional:
     matchWord(tokens, '\n')  # optional line break
     matchWordElseError(tokens, 'THEN')
     matchWordElseError(tokens, '\n', msg="after THEN")
-    stmts = {True: []}
+    stmts: lang.Cases = {True: []}
     while not expectWord(tokens, 'ELSE', 'ENDIF'):
         stmts[True] += [statement1(tokens)]
     fallback = None

@@ -1,5 +1,5 @@
-from typing import Any, Optional, Union, Iterable, Mapping
-from typing import Tuple, Dict
+from typing import Any, Optional, Union, Iterable, Mapping, MutableMapping
+from typing import Tuple, List, Dict
 from typing import Callable as function, TextIO
 
 # Pseudocode types
@@ -15,6 +15,7 @@ Key = Union[Varname, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
 Val = Union[Lit, "PseudoValue"]  # in TypedValue
 Param = Union["Get", "TypedValue"]  # Callable params
+Cases = MutableMapping[Lit, List["Stmt"]]
 Rule = str  # Stmt rules
 
 # ----------------------------------------------------------------------
@@ -64,7 +65,7 @@ class TypeSystem:
         self,
         *types: Type,
     ) -> None:
-        self.data: Dict[Type, "TypedValue"] = {}
+        self.data: Mapping[Type, "TypedValue"] = {}
         for typeName in types:
             self.declare(typeName)
             self.setTemplate(typeName, None)
@@ -568,8 +569,8 @@ class Conditional(Stmt):
         self,
         rule: Rule,
         cond: "Expr",
-        stmtMap: Mapping[Lit, "Stmt"],
-        fallback: "Stmt",
+        stmtMap: Mapping[Lit, Iterable["Stmt"]],
+        fallback: Optional[Iterable["Stmt"]],
     ) -> None:
         self.rule = rule
         self.cond = cond

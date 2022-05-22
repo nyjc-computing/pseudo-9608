@@ -198,16 +198,17 @@ def execCase(
 ) -> None:
     cond = evaluate(frame, stmt.cond)
     if cond in stmt.stmtMap:
-        execute(frame, stmt.stmtMap[cond], **kwargs)
+        executeStmts(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
-        execute(frame, stmt.fallback, **kwargs)
+        executeStmts(frame, stmt.fallback, **kwargs)
 
 def execIf(
     frame: lang.Frame,
     stmt: lang.Conditional,
     **kwargs,
 ) -> None:
-    if evaluate(frame, stmt.cond):
+    cond = evaluate(frame, stmt.cond)
+    if cond in stmt.stmtMap:
         executeStmts(frame, stmt.stmtMap[True], **kwargs)
     elif stmt.fallback:
         executeStmts(frame, stmt.fallback, **kwargs)
