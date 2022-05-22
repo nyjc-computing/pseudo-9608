@@ -8,12 +8,10 @@ from . import builtin, lang, system
 
 def expectTypeElseError(
     exprmode: str,
-    expected: str,
+    *expected: str,
     errmsg: str="Expected",
     token: lang.Token=None,
 ) -> None:
-    if type(expected) is str:
-        expected = (expected,)
     if not exprmode in expected:
         if not token: token = exprmode
         raise builtin.RuntimeError(f"{errmsg} {expected}", token)
@@ -251,9 +249,9 @@ def execFile(
         )
         file = frame.getValue(name)
         expectTypeElseError(
-            frame.getType(name), 'FILE', stmt.name.token()
+            frame.getType(name), 'FILE', token=stmt.name.token()
         )
-        expectTypeElseError(file.mode, 'READ', stmt.name.token())
+        expectTypeElseError(file.mode, 'READ', token=stmt.name.token())
         varname = evaluate(frame, stmt.data)
         declaredElseError(frame, varname, stmt.data.token())
         # TODO: Catch and handle Python file io errors
@@ -262,14 +260,14 @@ def execFile(
         frame.setValue(varname, line)
     elif stmt.action == 'write':
         declaredElseError(
-            frame, name, "File not open", stmt.name.token()
+            frame, name, "File not open", token=stmt.name.token()
         )
         file = frame.getValue(name)
         expectTypeElseError(
-            frame.getType(name), 'FILE', stmt.name.token()
+            frame.getType(name), 'FILE', token=stmt.name.token()
         )
         expectTypeElseError(
-            file.mode, ('WRITE', 'APPEND'), stmt.name.token()
+            file.mode, 'WRITE', 'APPEND', token=stmt.name.token()
         )
         writedata = evaluate(frame, stmt.data)
         if type(writedata) is bool:
