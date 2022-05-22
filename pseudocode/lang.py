@@ -1,5 +1,5 @@
 from typing import Any, Optional, Union, Iterable, Mapping
-from typing import Tuple, Dict, NewType
+from typing import Tuple, Dict
 from typing import Callable as function, TextIO
 
 # Pseudocode types
@@ -8,14 +8,13 @@ Type = str
 # Varname represents a declared name
 Varname = str
 # Index represents array indexes used in Array
-Index = Tuple[int]
+Index = Union[Tuple[int], Tuple["Expr"]]
 # Key represents names that can be used in an Object
 # for storing values
 Key = Union[Varname, Index]  # in TypedValue
 Lit = Union[bool, int, float, str]  # Simple data types
 Val = Union[Lit, "PseudoValue"]  # in TypedValue
 Param = Union["Get", "TypedValue"]  # Callable params
-Arg = NewType('Arg', "Expr")  # Call args
 Rule = str  # Stmt rules
 
 # ----------------------------------------------------------------------
@@ -488,8 +487,8 @@ class Get(Expr):
     __slots__ = ('frame', 'name', '_token')
     def __init__(
         self,
-        frame: "Frame",
-        name: Varname,
+        frame: Union["Frame", object],
+        name: Key,
         *,
         token: "Token",
     ) -> None:
@@ -506,8 +505,8 @@ class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(
         self,
-        callable: "Callable",
-        args: Iterable[Arg],
+        callable: Union["Callable", "Get"],
+        args: Iterable["Expr"],
     ) -> None:
         self.callable = callable
         self.args = args

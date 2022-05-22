@@ -1,9 +1,8 @@
-from typing import Union, Optional
-from typing import Iterable, Tuple, Mapping, Callable as function
+from typing import Optional, Iterable, Tuple, List
 
 from . import builtin, lang
 
-Tokens = Iterable[lang.Token]
+Tokens = List[lang.Token]
 
 
 
