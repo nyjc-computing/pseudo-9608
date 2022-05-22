@@ -482,16 +482,18 @@ class Binary(Expr):
 
 
 class Get(Expr):
-    __slots__ = ('frame', 'name')
+    __slots__ = ('frame', 'name', '_token')
     def __init__(
         self,
         frame: "Frame",
-        name: Varname,
-        token: "Token"=None,
+        name: Name,
     ) -> None:
-        super().__init__(token=token)
         self.frame = frame
-        self.name = name
+        self.name = name.name
+        self._token = name.token()
+
+    def token(self):
+        return self._token
 
 
 
@@ -501,11 +503,12 @@ class Call(Expr):
         self,
         callable: "Callable",
         args: Iterable[Arg],
-        token: "Token"=None,
     ) -> None:
-        super().__init__(token=token)
         self.callable = callable
         self.args = args
+
+    def token(self):
+        return self.callable.token()
 
 
 
