@@ -118,7 +118,7 @@ def matchTypeElseError(
 # 5. <> | =
 # 6. AND | OR
 
-def identifier(tokens: Tokens) -> Optional[lang.Expr]:
+def identifier(tokens: Tokens) -> Optional[lang.Name]:
     if expectType(tokens, 'name'):
         token = consume(tokens)
         return makeExpr(name=token.word, token=token)

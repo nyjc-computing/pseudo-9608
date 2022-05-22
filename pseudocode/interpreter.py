@@ -70,24 +70,30 @@ class Interpreter:
 
 # Evaluators
 
-def evalIndex(frame: lang.Frame, indexes: Iterable[tuple]) -> lang.Val:
+def evalIndex(
+    frame: lang.Frame,
+    indexes: Iterable[tuple],
+) -> Tuple[int]:
     return tuple((
         evaluate(frame, expr) for expr in indexes
     ))
 
-def evalLiteral(frame: lang.Frame, literal: lang.Literal) -> lang.Lit:
+def evalLiteral(
+    frame: lang.Frame,
+    literal: lang.Literal,
+) -> lang.Lit:
     return literal.value
 
-def evalUnary(frame: lang.Frame, expr: lang.Expr) -> lang.Lit:
+def evalUnary(frame: lang.Frame, expr: lang.Unary) -> lang.Lit:
     rightval = evaluate(frame, expr.right)
     return expr.oper(rightval)
 
-def evalBinary(frame: lang.Frame, expr: lang.Expr) -> lang.Lit:
+def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.Lit:
     leftval = evaluate(frame, expr.left)
     rightval = evaluate(frame, expr.right)
     return expr.oper(leftval, rightval)
 
-def evalGet(frame: lang.Frame, expr: lang.Expr) -> lang.Val:
+def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Val:
     # Frame should have been inserted in resolver
     # So ignore the frame that is passed here
     obj = expr.frame
@@ -101,7 +107,7 @@ def evalGet(frame: lang.Frame, expr: lang.Expr) -> lang.Val:
         name = evalIndex(frame, expr.name)
     return obj.getValue(name)
 
-def evalCall(frame: lang.Frame, expr: lang.Expr, **kwargs) -> lang.Val:
+def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Val:
     callable = evalGet(frame, expr.callable)
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
@@ -120,7 +126,7 @@ def evalCall(frame: lang.Frame, expr: lang.Expr, **kwargs) -> lang.Val:
             if returnval is not None:
                 return returnval
 
-def evalAssign(frame: lang.Frame, expr: lang.Expr) -> None:
+def evalAssign(frame: lang.Frame, expr: lang.Assign) -> None:
     value = evaluate(frame, expr.expr)
     obj = expr.assignee.frame
     if type(obj) in (lang.Get, lang.Call):
@@ -142,8 +148,7 @@ def evaluate(
     if isinstance(expr, lang.Binary):
         return evalBinary(frame, expr)
     if isinstance(expr, lang.Assign):
-        evalAssign(frame, expr)
-        return
+        return evalAssign(frame, expr)
     if isinstance(expr, lang.Get):
         return evalGet(frame, expr)
     if isinstance(expr, lang.Call):
@@ -166,7 +171,7 @@ def executeStmts(
 
 def execOutput(
     frame: lang.Frame,
-    stmt: lang.Stmt,
+    stmt: lang.Output,
     *,
     output: function,
     **kwargs,
@@ -178,35 +183,59 @@ def execOutput(
         output(str(value), end='')
     output('')  # Add \n
 
-def execInput(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
+def execInput(
+    frame: lang.Frame,
+    stmt: lang.Input,
+    **kwargs,
+) -> None:
     name = stmt.name
     frame.setValue(name, input())
 
-def execCase(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
+def execCase(
+    frame: lang.Frame,
+    stmt: lang.Conditional,
+    **kwargs,
+) -> None:
     cond = evaluate(frame, stmt.cond)
     if cond in stmt.stmtMap:
         execute(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
         execute(frame, stmt.fallback, **kwargs)
 
-def execIf(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
+def execIf(
+    frame: lang.Frame,
+    stmt: lang.Conditional,
+    **kwargs,
+) -> None:
     if evaluate(frame, stmt.cond):
         executeStmts(frame, stmt.stmtMap[True], **kwargs)
     elif stmt.fallback:
         executeStmts(frame, stmt.fallback, **kwargs)
 
-def execWhile(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
+def execWhile(
+    frame: lang.Frame,
+    stmt: lang.Loop,
+    **kwargs,
+) -> None:
     if stmt.init:
         execute(frame, stmt.init, **kwargs)
     while evaluate(frame, stmt.cond) is True:
         executeStmts(frame, stmt.stmts, **kwargs)
 
-def execRepeat(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
+def execRepeat(
+    frame: lang.Frame,
+    stmt: lang.Loop,
+    **kwargs,
+) -> None:
     executeStmts(frame, stmt.stmts)
     while evaluate(frame, stmt) is False:
         executeStmts(frame, stmt.stmts)
 
-def execFile(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
+def execFile(
+    frame: lang.Frame,
+    stmt: lang.FileAction,
+    **kwargs,
+) -> None:
     name = evalLiteral(frame, stmt.name)
     if stmt.action == 'open':
         undeclaredElseError(
@@ -262,6 +291,29 @@ def execFile(frame: lang.Frame, stmt: lang.Stmt, **kwargs) -> None:
         file.iohandler.close()
         frame.delete(name)
 
+def execCall(
+    frame: lang.Frame,
+    stmt: lang.ExprStmt,
+    **kwargs,
+) -> None:
+    evaluate(frame, stmt.expr, **kwargs)
+
+def execAssign(
+    frame: lang.Frame,
+    stmt: lang.ExprStmt,
+    **kwargs,
+) -> None:
+    evaluate(frame, stmt.expr, **kwargs)
+
+def execReturn(
+    frame: lang.Frame,
+    stmt: lang.ExprStmt,
+    **kwargs,
+) -> None:
+    return evaluate(frame, stmt.expr, **kwargs)
+
+
+
 def execute(
     frame: lang.Frame,
     stmt: lang.Stmt,
@@ -283,10 +335,10 @@ def execute(
     if stmt.rule == 'file':
         execFile(frame, stmt, **kwargs)
     if stmt.rule == 'call':
-        evalCall(frame, stmt.expr, **kwargs)
+        execCall(frame, stmt, **kwargs)
     if stmt.rule == 'assign':
-        evaluate(frame, stmt.expr, **kwargs)
+        execAssign(frame, stmt, **kwargs)
     if stmt.rule == 'return':
-        return evaluate(frame, stmt.expr, **kwargs)
+        return execReturn(frame, stmt, **kwargs)
     if stmt.rule in ('declare', 'procedure', 'function'):
         pass

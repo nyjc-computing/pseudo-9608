@@ -96,7 +96,6 @@ class TypedValue:
     Represents a value in 9608 pseudocode.
     Each TypedValue has a type and a value.
     """
-    __slots__ = ('type', 'value')
     def __init__(
         self,
         type: Type,
@@ -112,7 +111,9 @@ class TypedValue:
         return f"<{self.type}: {repr(self.value)}>"
 
     def copy(self) -> "TypedValue":
-        """This returns an empty copy of the typedvalue"""
+        """
+        This returns an empty copy of the typedvalue
+        """
         Class = type(self)
         if isinstance(self.value, Object):
             return Class(self.type, self.value.copy())
@@ -224,11 +225,12 @@ class Frame(Object):
     def delete(self, name) -> None:
         del self.data[name]
 
-    def lookup(self, name) -> "Frame":
+    def lookup(self, name) -> Optional["Frame"]:
         if self.has(name):
             return self
         if self.outer:
             return self.outer.lookup(name)
+        return None
 
 
 
@@ -337,7 +339,7 @@ class File(Value):
     __slots__ = ('name', 'mode', 'iohandler')
     def __init__(
         self,
-        name: Name,
+        name: Varname,
         mode: str,
         iohandler: TextIO,
     ) -> None:
@@ -353,16 +355,15 @@ class File(Value):
 class Expr:
     """
     Represents an expression in 9608 pseudocode.
-    An expression resolves to a type, and evaluates
-    to a value.
+    An expression can be resolved to a Type,
+    and evaluated to a Value.
+    An Expr must return an associated token for error-reporting purposes.
 
     Methods
     -------
-    - token() -> dict
-        Returns the token asociated with the expr, for error
-        reporting purposes.
+    - token() -> Token
+        Returns the token asociated with the expr
     """
-    __slots__ = NotImplemented
     def __init__(
         self,
         token: "Token",

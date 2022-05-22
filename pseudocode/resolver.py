@@ -76,7 +76,7 @@ def resolveExprs(
 
 def evalLiteral(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Literal,
 ) -> lang.Lit:
     """Return the value of a Literal"""
     return expr.value
@@ -89,7 +89,7 @@ def resolveLiteral(
 
 def resolveDeclare(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Declare,
     passby: str='BYVALUE',
 ) -> lang.Type:
     """Declare variable in frame"""
@@ -112,7 +112,7 @@ def resolveDeclare(
 
 def resolveUnary(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Unary,
 ) -> lang.Type:
     rType = resolve(frame, expr.right)
     if expr.oper is builtin.sub:
@@ -127,7 +127,7 @@ def resolveUnary(
 
 def resolveBinary(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Binary,
 ) -> lang.Type:
     lType = resolve(frame, expr.left)
     rType = resolve(frame, expr.right)
@@ -160,7 +160,7 @@ def resolveBinary(
 
 def resolveAssign(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Assign,
 ) -> lang.Type:
     # assignee frame might be a Frame or Get(Object)
     assnType = resolveGet(frame, expr.assignee)
@@ -207,7 +207,7 @@ def resolveArray(
     
 def resolveGet(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Get,
 ) -> lang.Type:
     """Insert frame into Get expr"""
     assert isinstance(expr, lang.Get), "Not a Get Expr"
@@ -241,7 +241,7 @@ def resolveGet(
 
 def resolveProcCall(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Callable,
 ) -> lang.Type:
     resolveGet(frame, expr.callable)
     # Resolve global frame where procedure is declared
@@ -254,7 +254,7 @@ def resolveProcCall(
 
 def resolveFuncCall(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Callable,
 ) -> lang.Type:
     resolveGet(frame, expr.callable)
     # Resolve global frame where function is declared
@@ -271,7 +271,7 @@ def resolveFuncCall(
     
 def resolveCall(
     frame: lang.Frame,
-    expr: lang.Expr,
+    expr: lang.Callable,
 ) -> None:
     """
     resolveCall() does not carry out any frame insertion or
@@ -324,39 +324,39 @@ def verifyStmts(frame: lang.Frame, stmts: Iterable[lang.Stmt]) -> None:
                 stmtType, stmt.returnType, token=stmt.name.token()
             )
 
-def verifyOutput(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
     resolveExprs(frame, stmt.exprs)
 
-def verifyInput(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
     declaredElseError(frame, stmt.name)
 
-def verifyCase(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolve(frame, stmt.cond)
     verifyStmts(frame, stmt.stmtMap.values())
     if stmt.fallback:
         verify(frame, stmt.fallback)
 
-def verifyIf(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmtMap[True])
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
 
-def verifyLoop(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
     if stmt.init:
         resolve(frame, stmt.init)
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
-def verifyParams(frame: lang.Frame, params, passby) -> None:
+def verifyParams(frame: lang.Frame, params: Iterable[lang.Param], passby: str) -> None:
     for i, expr in enumerate(params):
         resolveDeclare(frame, expr, passby=passby)
         # params: replace Declare Expr with slot
         params[i] = frame.get(expr.name)
 
-def verifyProcedure(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     # Set up local frame
     local = lang.Frame(outer=frame)
     # Assign procedure in frame first, to make recursive calls work
@@ -368,7 +368,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.Stmt) -> None:
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
-def verifyFunction(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     # Set up local frame
     local = lang.Frame(outer=frame)
     # Assign function in frame first, to make recursive calls work
@@ -383,7 +383,7 @@ def verifyFunction(frame: lang.Frame, stmt: lang.Stmt) -> None:
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
-def verifyFile(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verifyFile(frame: lang.Frame, stmt: lang.FileAction) -> None:
     evalLiteral(frame, stmt.name)
     if stmt.action == 'open':
         pass
