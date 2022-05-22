@@ -45,7 +45,7 @@ def makeExpr(
         elif expr is not None:
             if assignee is None:
                 assignee = name
-            return lang.Assign(name, assignee, expr, token=token)
+            return lang.Assign(name, assignee, expr)
         elif type is not None:
             return lang.Declare(name, type, metadata, token=token)
         else:
@@ -121,71 +121,46 @@ def matchTypeElseError(
 def identifier(tokens: Tokens) -> Optional[lang.Name]:
     if expectType(tokens, 'name'):
         token = consume(tokens)
-        return makeExpr(name=token.word, token=token)
+        return lang.Name(name=token.word, token=token)
     raise builtin.ParseError(f"Expected variable name", consume(tokens))
 
-def literal(tokens: Tokens) -> lang.Expr:
+def literal(tokens: Tokens) -> lang.Literal:
     token = consume(tokens)
-    return makeExpr(
-        type=token.type,
-        value=token.value,
-        token=token,
-    )
+    return lang.Literal(token.type, token.value, token=token)
 
-def unary(tokens: Tokens) -> lang.Expr:
+def unary(tokens: Tokens) -> lang.Unary:
     oper = consume(tokens)
     right = value(tokens)
-    return makeExpr(
-        oper=oper.value,
-        right=right,
-        token=oper,
-    )
+    return lang.Unary(oper.value, right, token=oper)
 
-def name(tokens: Tokens) -> lang.Expr:
+def name(tokens: Tokens) -> lang.Get:
     iden = identifier(tokens)
-    return makeExpr(
-        frame=builtin.NULL,
-        name=iden.name,
-        token=iden.token(),
-    )
+    return lang.Get(builtin.NULL, iden.name, token=iden.token())
 
-def callExpr(tokens: Tokens, expr: lang.Expr) -> lang.Expr:
+def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
     args = []
     argcount = 0
     while not expectWord(tokens, ')'):
-        if argcount == 0:
+        if argcount > 0:
             matchWordElseError(tokens, ',')
         arg = expression(tokens)
         args += [arg]
         argcount += 1
     matchWordElseError(tokens, ')', msg="after '('")
-    return makeExpr(
-        callable=expr,
-        args=args,
-        token=name.token(),
-    )
+    return lang.Call(callable, args)
 
-def attrExpr(tokens: Tokens, expr: lang.Expr) -> lang.Expr:
+def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.Get:
     name = identifier(tokens)
-    return makeExpr(
-        frame=expr,
-        name=name.name,
-        token=name.token(),
-    )
+    return lang.Get(objGet, name.name, token=name.token())
 
-def arrayExpr(tokens: Tokens, expr: lang.Expr) -> lang.Expr:
+def arrayExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
     index = (expression(tokens),)
     while matchWord(tokens, ','):
         index += (expression(tokens),)
     matchWordElseError(tokens, ']')
-    return makeExpr(
-        frame=expr,
-        name=index,
-        token=expr.token(),
-    )
+    return lang.Get(objGet, name=index, token=objGet.token())
 
 def value(tokens: Tokens) -> lang.Expr:
-    token = check(tokens)
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary(tokens)
@@ -212,7 +187,7 @@ def value(tokens: Tokens) -> lang.Expr:
                 expr = attrExpr(tokens, expr)
         return expr
     else:
-        raise builtin.ParseError("Unexpected token", token)
+        raise builtin.ParseError("Unexpected token", check(tokens))
 
 def muldiv(tokens: Tokens) -> lang.Binary:
     # *, /
@@ -220,12 +195,7 @@ def muldiv(tokens: Tokens) -> lang.Binary:
     while expectWord(tokens, '*', '/'):
         oper = consume(tokens)
         right = value(tokens)
-        expr = makeExpr(
-            left=expr,
-            oper=oper.value,
-            right=right,
-            token=oper,
-        )
+        expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
 def addsub(tokens: Tokens) -> lang.Binary:
@@ -233,12 +203,7 @@ def addsub(tokens: Tokens) -> lang.Binary:
     while expectWord(tokens, '+', '-'):
         oper = consume(tokens)
         right = muldiv(tokens)
-        expr = makeExpr(
-            left=expr,
-            oper=oper.value,
-            right=right,
-            token=oper,
-        )
+        expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
 def comparison(tokens: Tokens) -> lang.Binary:
@@ -247,12 +212,7 @@ def comparison(tokens: Tokens) -> lang.Binary:
     while expectWord(tokens, '<', '<=', '>', '>='):
         oper = consume(tokens)
         right = addsub(tokens)
-        expr = makeExpr(
-            left=expr,
-            oper=oper.value,
-            right=right,
-            token=oper,
-        )
+        expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
 def equality(tokens: Tokens) -> lang.Binary:
@@ -261,12 +221,7 @@ def equality(tokens: Tokens) -> lang.Binary:
     while expectWord(tokens, '<>', '='):
         oper = consume(tokens)
         right = comparison(tokens)
-        expr = makeExpr(
-            left=expr,
-            oper=oper.value,
-            right=right,
-            token=oper,
-        )
+        expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
 def logical(tokens: Tokens) -> lang.Binary:
@@ -275,12 +230,7 @@ def logical(tokens: Tokens) -> lang.Binary:
     while expectWord(tokens, 'AND', 'OR'):
         oper = consume(tokens)
         right = equality(tokens)
-        expr = makeExpr(
-            left=expr,
-            oper=oper.value,
-            right=right,
-            token=oper,
-        )
+        expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
 def expression(tokens: Tokens) -> lang.Expr:
@@ -298,12 +248,7 @@ def assignment(tokens: Tokens) -> lang.Assign:
             assignee = attrExpr(tokens, assignee)
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
-    return makeExpr(
-        name=assignee.name,
-        assignee=assignee,
-        expr=expr,
-        token=assignee.token(),
-    )
+    return lang.Assign(assignee.name, assignee, expr)
 
 # Statement parsers
 
@@ -345,11 +290,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
-    return makeExpr(
-        name=name,
-        type=typetoken.word,
-        metadata=metadata,
-    )
+    return lang.Declare(name, typetoken.word, metadata, token=name.token())
     
 def declareStmt(tokens: Tokens) -> lang.ExprStmt:
     expr = declare(tokens)
@@ -432,7 +373,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
     end = value(tokens)
-    step = makeExpr(type='INTEGER', value=1, token=init.token())
+    step = lang.Literal('INTEGER', 1, token=init.token())
     if matchWord(tokens, 'STEP'):
         step = value(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
@@ -441,27 +382,13 @@ def forStmt(tokens: Tokens) -> lang.Loop:
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
-    getCounter = makeExpr(
-        frame=builtin.NULL,
-        name=init.name,
-        token=init.token(),
-    )
-    cond = makeExpr(
-        left=getCounter,
-        oper=builtin.lte,
-        right=end,
-        token=init.token(),
-    )
+    getCounter = lang.Get(builtin.NULL, name=init.name, token=init.token())
+    cond = lang.Binary(getCounter, builtin.lte, end, token=init.token())
     # Add increment statement
-    incr = makeExpr(
-        name=init.name,
-        assignee=init.assignee,
-        expr=makeExpr(
-            left=getCounter,
-            oper=builtin.add,
-            right=step,
-            token=step.token(),
-        ),
+    incr = lang.Assign(
+        init.name,
+        init.assignee,
+        lang.Binary(getCounter, builtin.add, step, token=step.token()),
         token=init.token(),
     )
     initStmt = lang.ExprStmt('assign', init)
