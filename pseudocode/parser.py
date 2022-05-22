@@ -340,11 +340,10 @@ def forStmt(tokens: Tokens) -> lang.Loop:
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
-    getCounter = lang.Get(builtin.NULL, name=init.name, token=init.token())
+    getCounter = lang.Get(builtin.NULL, init.assignee.name, token=init.token())
     cond = lang.Binary(getCounter, builtin.lte, end, token=init.token())
     # Add increment statement
     incr = lang.Assign(
-        init.name,
         init.assignee,
         lang.Binary(getCounter, builtin.add, step, token=step.token()),
     )
