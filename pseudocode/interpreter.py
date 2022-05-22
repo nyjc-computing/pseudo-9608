@@ -129,9 +129,9 @@ def evalAssign(frame: lang.Frame, expr: lang.Assign) -> None:
     obj = expr.assignee.frame
     if type(obj) in (lang.Get, lang.Call):
         obj = evaluate(frame, obj)
-    name = expr.name
+    name = expr.assignee.name
     if type(obj) in (lang.Array,):
-        name = evalIndex(frame, expr.name)
+        name = evalIndex(frame, expr.assignee.name)
     obj.setValue(name, value)
 
 def evaluate(
