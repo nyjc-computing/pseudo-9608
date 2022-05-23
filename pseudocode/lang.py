@@ -12,7 +12,7 @@ IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
 Args = Iterable["Expr", ...]  # Callable args
 Param = Union["Declare", "TypedValue"]  # Callable params
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
-Cases = MutableMapping[PyLiteral, List["Stmt"]]
+Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
 
