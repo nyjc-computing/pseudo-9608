@@ -1,6 +1,8 @@
-from typing import Any, Optional, Union, Iterable, Mapping, MutableMapping
+from typing import Any, Optional, Union
+from typing import Iterable, Mapping, MutableMapping, Protocol
 from typing import Tuple, List, Dict
 from typing import Callable as function, TextIO
+from abc import abstractmethod
 
 # Pseudocode types
 PyLiteral = Union[bool, int, float, str]  # Simple data types
@@ -57,6 +59,21 @@ class Name:
 
     def token(self) -> "Token":
         return self._token
+
+
+
+class PseudoMap(Protocol):
+    """
+    Represents a mapping of keys to values used in pseudo.
+
+    Methods
+    -------
+    has(key)
+        returns True if the key exists in the map
+    """
+    @abstractmethod
+    def has(self, key) -> bool:
+        raise NotImplementedError
 
 
 
