@@ -5,6 +5,7 @@ from typing import Callable as function, TextIO
 from abc import abstractmethod
 
 # Pseudocode types
+# These are used for type-checking
 PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
@@ -12,7 +13,8 @@ IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Literal", ...]  # Array indexes
 IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
 Args = Iterable["Expr", ...]  # Callable args
-Param = Union["Declare", "TypedValue"]  # Callable params
+ParamDecl = "Declare"  # ProcFunc params (in statement)
+Param = "TypedValue"  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
 # Rule = str  # Stmt rules
