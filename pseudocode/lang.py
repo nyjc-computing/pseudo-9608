@@ -3,21 +3,18 @@ from typing import Tuple, List, Dict
 from typing import Callable as function, TextIO
 
 # Pseudocode types
-# Type represents a pseudocode type, whether built-in or declared
-Type = str
-# Varname represents a declared name
-Varname = str
-# Index represents array indexes used in Array
-Index = Union[Tuple[int, ...], Tuple["Expr", ...]]
-# Key represents names that can be used in an Object
-# for storing values
-Key = Union[Varname, Index]  # in TypedValue
 PyLiteral = Union[bool, int, float, str]  # Simple data types
-Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
+Type = str  # pseudocode type, whether built-in or declared
+NameKey = str  # Key for Object/Frame
+IndexKey = Tuple[int, ...]  # Key for Array
+IndexExpr = Tuple["Literal", ...]  # Array indexes
+IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
+Args = Iterable["Expr", ...]  # Callable args
 Param = Union["Declare", "TypedValue"]  # Callable params
+Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]
-Rule = str  # Stmt rules
-FileData = Optional[Union["Expr", str]]
+# Rule = str  # Stmt rules
+# FileData = Optional[Union["Expr", str]]
 
 # ----------------------------------------------------------------------
 class Token:
