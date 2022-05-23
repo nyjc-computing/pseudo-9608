@@ -12,10 +12,10 @@ Index = Union[Tuple[int, ...], Tuple["Expr", ...]]
 # Key represents names that can be used in an Object
 # for storing values
 Key = Union[Varname, Index]  # in TypedValue
-Lit = Union[bool, int, float, str]  # Simple data types
-Value = Union[Lit, "PseudoValue"]  # in TypedValue
+PyLiteral = Union[bool, int, float, str]  # Simple data types
+Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Param = Union["Declare", "TypedValue"]  # Callable params
-Cases = MutableMapping[Lit, List["Stmt"]]
+Cases = MutableMapping[PyLiteral, List["Stmt"]]
 Rule = str  # Stmt rules
 FileData = Optional[Union["Expr", str]]
 
@@ -30,7 +30,7 @@ class Token:
         column: int,
         type: Type,
         word: str,
-        value: Any,
+        value: PyLiteral,
     ) -> None:
         self.line = line
         self.col = column
@@ -404,7 +404,7 @@ class Literal(Expr):
     the source code.
     """
     __slots__ = ('type', 'value', '_token')
-    def __init__(self, type: Type, value: Lit, *, token: "Token") -> None:
+    def __init__(self, type: Type, value: PyLiteral, *, token: "Token") -> None:
         self.type = type
         self.value = value
         self._token = token
@@ -572,7 +572,7 @@ class Conditional(Stmt):
         self,
         rule: Rule,
         cond: "Expr",
-        stmtMap: Mapping[Lit, Iterable["Stmt"]],
+        stmtMap: Mapping[PyLiteral, Iterable["Stmt"]],
         fallback: Optional[Iterable["Stmt"]],
     ) -> None:
         self.rule = rule

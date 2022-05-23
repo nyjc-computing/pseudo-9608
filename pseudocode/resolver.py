@@ -92,7 +92,7 @@ def resolveExprs(
 def evalLiteral(
     frame: lang.Frame,
     expr: lang.Literal,
-) -> lang.Lit:
+) -> lang.PyLiteral:
     """Return the value of a Literal"""
     return expr.value
     

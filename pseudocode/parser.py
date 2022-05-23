@@ -279,7 +279,7 @@ def caseStmt(tokens: Tokens) -> lang.Conditional:
     matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts: lang.Cases = {}
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
-        val: lang.Lit = literal(tokens).value
+        val: lang.PyLiteral = literal(tokens).value
         matchWordElseError(tokens, ':', msg="after CASE value")
         stmts[val] = [statement1(tokens)]
     fallback = None
