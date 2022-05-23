@@ -112,7 +112,7 @@ class TypeTemplate:
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
 
-    def copy(self) -> "TypedValue":
+    def clone(self) -> "TypedValue":
         """
         This returns an empty TypedValue of the same type
         """
