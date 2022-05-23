@@ -77,6 +77,51 @@ class PseudoMap(Protocol):
 
 
 
+class TypedValue:
+    """
+    Represents a value in 9608 pseudocode.
+    Each TypedValue has a type and a value.
+    """
+    def __init__(
+        self,
+        type: Type,
+        value: Optional[Value],
+    ) -> None:
+        self.type = type
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"<{self.type}: {repr(self.value)}>"
+
+
+
+class TypeTemplate:
+    """
+    Represents a type template in 9608 pseudocode.
+    A type template can be cloned to create a TypedValue slot
+    (for an Object or Frame).
+    """
+    def __init__(
+        self,
+        type: Type,
+        value: Optional["Object"],
+    ) -> None:
+        self.type = type
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"<{self.type}: {repr(self.value)}>"
+
+    def copy(self) -> "TypedValue":
+        """
+        This returns an empty TypedValue of the same type
+        """
+        if isinstance(self.value, Object):
+            return TypedValue(self.type, self.value.copy())
+        return TypedValue(self.type, self.value)
+
+
+
 class TypeSystem:
     """
     Handles registration of types in 9608 pseudocode.
@@ -125,36 +170,6 @@ class TypeSystem:
         if template:
             return template.copy()
         return template
-
-
-
-class TypedValue:
-    """
-    Represents a value in 9608 pseudocode.
-    Each TypedValue has a type and a value.
-    """
-    def __init__(
-        self,
-        type: Type,
-        value: Optional[Value],
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self.type = type
-        self.value = value
-
-    def __repr__(self) -> str:
-        return f"<{self.type}: {repr(self.value)}>"
-
-    def copy(self) -> "TypedValue":
-        """
-        This returns an empty copy of the typedvalue
-        """
-        Class = type(self)
-        if isinstance(self.value, Object):
-            return Class(self.type, self.value.copy())
-        return Class(self.type, self.value)
 
 
 
