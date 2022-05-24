@@ -112,7 +112,7 @@ class TypeTemplate:
         self.value = value
 
     def __repr__(self) -> str:
-        return f"<{self.type}: {repr(self.value)}>"
+        return f"<{self.type}: {type(self.value)}>"
 
     def clone(self) -> "TypedValue":
         """
@@ -126,6 +126,7 @@ class TypeTemplate:
 
 class TypeSystem:
     """
+    A space that maps Types to TypeTemplates.
     Handles registration of types in 9608 pseudocode.
     Each type is registered with a name, and an optional template.
     Existence checks should be carried out (using has()) before using the
@@ -134,8 +135,8 @@ class TypeSystem:
     Methods
     -------
     has(type)
-        returns True if the type has been declared, otherwise returns False
-    declare(type)
+        returns True if the type has been registered, otherwise returns False
+    register(type)
         declares the existence of a type
     setTemplate(type, template)
         set the template used to initialise a TypedValue with this type
@@ -149,11 +150,10 @@ class TypeSystem:
         self.data: Mapping[Type, "TypedValue"] = {}
         for typeName in types:
             self.declare(typeName)
-            self.setTemplate(typeName, None)
 
     def __repr__(self) -> str:
         nameTypePairs = [
-            f"{name}: {self.data[name].value}"
+            f"{name}: {repr(self.data[name])}"
             for name in self.data
         ]
         return f"{{{', '.join(nameTypePairs)}}}"
@@ -162,16 +162,13 @@ class TypeSystem:
         return name in self.data
 
     def declare(self, name: str) -> None:
-        self.data[name] = TypedValue(name, None)
+        self.data[name] = TypeTemplate(name, None)
 
-    def setTemplate(self, name: Type, template: Optional["Object"]) -> None:
+    def setTemplate(self, name: Type, template: "Object") -> None:
         self.data[name].value = template
 
-    def clone(self, name: Type) -> Optional["Object"]:
-        template = self.data[name].value
-        if template:
-            return template.copy()
-        return template
+    def cloneType(self, name: Type) -> Optional["Object"]:
+        return self.data[name].clone()
 
 
 
