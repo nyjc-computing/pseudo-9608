@@ -1,8 +1,9 @@
-from typing import Any, Optional, Union
-from typing import Iterable, Mapping, MutableMapping, Protocol
+from typing import Optional, Union
+from typing import Iterable, Iterator, Mapping, MutableMapping, Protocol
 from typing import Tuple, List, Dict
 from typing import Callable as function, TextIO
 from abc import abstractmethod
+from itertools import product
 
 # Pseudocode types
 # These are used for type-checking
@@ -282,14 +283,23 @@ class Frame(Object):
 class Array(PseudoValue):
     """
     A space that maps IndexKeys to TypedValues.
+    Arrays differ from Objects in the use of IndexKey instead of NameKey,
+    and in being statically allocated at init.
+
+    Attributes
+    ----------
+    dim: int
+        integer representing the number of dimensions of the array
+    ranges: Iterable[Tuple[int, int]]
+        an interable containing (start, end) tuple pairs of the array indexes
+    elementType: Type
+        The type of each array element
 
     Methods
     -------
-    has(name)
+    has(index)
         returns True if the index exists in frame,
         otherwise returns False
-    declare(name, type)
-        initialises a named TypedValue from the type system
     get(name)
         retrieves the slot associated with the name
     getType(name)
@@ -299,13 +309,69 @@ class Array(PseudoValue):
         retrieves the value associated with the name
     setValue(name, value)
         updates the value associated with the name
-    copy()
-        return a copy of the object
     """
+    def __init__(
+        self,
+        typesys: "TypeSystem",
+        ranges: Iterable[Tuple[int, int]],
+    ) -> None:
+        self.types = typesys
+        # ranges is an iterable of (start, end) indexes
+        self.data: Dict[IndexKey, "TypedValue"] = {
+            index: self.types.cloneType(type)
+            for index in self.rangeProduct(ranges)
+        }
+        self.ranges = ranges
+
+    def __repr__(self) -> str:
+        nameValuePairs = [
+            f"{index}: {self.getValue(index)}"
+            for index in self.data
+        ]
+        return f"{{{', '.join(nameValuePairs)}}}: {self.elementType}"
+
+    @staticmethod
+    def rangeProduct(indexes: Iterable[Tuple[int, int]]) -> Iterator:
+        """
+        Returns an iterator from an interable of (start, end) tuples.
+        E.g. ((0, 2), (0, 3)) will return the following iterations:
+            (0, 0), ..., (0, 3),
+            (1, 0), ..., (1, 3),
+            (2, 0), ..., (2, 3),
+        """
+        ranges = (
+            range(start, end + 1)
+            for (start, end) in indexes
+        )
+        return product(*ranges)
+
+    @property
+    def dim(self) -> int:
+        """
+        Returns the number of dimensions the array has, as an integer.
+        E.g. a 1D array would return 1, 2D array would return 2, ...
+        """
+        return len(self.ranges)
+
     @property
     def elementType(self) -> Type:
         for elem in self.data.values():
             return elem.type
+
+    def has(self, index: IndexKey) -> bool:
+        return index in self.data
+
+    def getType(self, index: IndexKey) -> Type:
+        return self.data[index].type
+
+    def getValue(self, index: IndexKey) -> Optional[Value]:
+        return self.data[index].value
+
+    def get(self, index: IndexKey) -> "TypedValue":
+        return self.data[index]
+
+    def setValue(self, index: IndexKey, value: Value) -> None:
+        self.data[index].value = value
 
 
 
