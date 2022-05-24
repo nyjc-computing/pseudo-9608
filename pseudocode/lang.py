@@ -317,11 +317,11 @@ class Array(PseudoValue):
     ) -> None:
         self.types = typesys
         # ranges is an iterable of (start, end) indexes
+        self.ranges = ranges
         self.data: Dict[IndexKey, "TypedValue"] = {
             index: self.types.cloneType(type)
             for index in self.rangeProduct(ranges)
         }
-        self.ranges = ranges
 
     def __repr__(self) -> str:
         nameValuePairs = [
@@ -448,7 +448,8 @@ class Procedure(Callable):
 
 class File(PseudoValue):
     """
-    Represents a file object in a frame.
+    Represents a file object in pseudo.
+    Files can be opened in READ, WRITE, or APPEND mode.
 
     Attributes
     ----------
