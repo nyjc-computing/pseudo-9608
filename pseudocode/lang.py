@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from typing import Iterable, Iterator, Mapping, MutableMapping, Protocol
 from typing import Tuple, List, Dict
 from typing import Callable as function, TextIO
@@ -595,7 +595,7 @@ class Get(Expr):
     def __init__(
         self,
         frame: Union["Frame", object],
-        name: Key,
+        name: Name,
         *,
         token: "Token",
     ) -> None:
@@ -613,7 +613,7 @@ class Call(Expr):
     def __init__(
         self,
         callable: "Get",
-        args: Iterable["Expr"],
+        args: Args,
     ) -> None:
         self.callable = callable
         self.args = args
@@ -637,7 +637,7 @@ class ExprStmt(Stmt):
     __slots__ = ('rule', 'expr')
     def __init__(
         self,
-        rule: Rule,
+        rule: str,
         expr: "Expr",
     ) -> None:
         self.rule = rule
@@ -649,7 +649,7 @@ class Output(Stmt):
     __slots__ = ('rule', 'exprs')
     def __init__(
         self,
-        rule: Rule,
+        rule: str,
         exprs: Iterable["Expr"],
     ) -> None:
         self.rule = rule
@@ -661,7 +661,7 @@ class Input(Stmt):
     __slots__ = ('rule', 'name')
     def __init__(
         self,
-        rule: Rule,
+        rule: str,
         name: "Name",
     ) -> None:
         self.rule = rule
@@ -673,7 +673,7 @@ class Conditional(Stmt):
     __slots__ = ('rule', 'cond', 'stmtMap', 'fallback')
     def __init__(
         self,
-        rule: Rule,
+        rule: str,
         cond: "Expr",
         stmtMap: Mapping[PyLiteral, Iterable["Stmt"]],
         fallback: Optional[Iterable["Stmt"]],
@@ -689,7 +689,7 @@ class Loop(Stmt):
     __slots__ = ('rule', 'init', 'cond', 'stmts')
     def __init__(
         self,
-        rule: Rule,
+        rule: str,
         init: Optional["Stmt"],
         cond: "Expr",
         stmts: Iterable["Stmt"],
@@ -705,8 +705,8 @@ class ProcFunc(Stmt):
     __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
-        rule: Rule,
-        name: NameKey,
+        rule: str,
+        name: Name,
         passby: str,
         params: Iterable[Param],
         stmts: Iterable["Stmt"],
@@ -725,8 +725,8 @@ class TypeStmt(Stmt):
     __slots__ = ('rule', 'name', 'exprs')
     def __init__(
         self,
-        rule: Rule,
-        name: NameKey,
+        rule: str,
+        name: Name,
         exprs: Iterable["Expr"],
     ) -> None:
         self.rule = rule
@@ -739,11 +739,11 @@ class FileAction(Stmt):
     __slots__ = ('rule', 'action', 'name', 'mode', 'data')
     def __init__(
         self,
-        rule: Rule,
+        rule: str,
         action: str,
         name: "Expr",
         mode: Optional[str],
-        data: FileData,
+        data: Any,
     ) -> None:
         self.rule = rule
         self.action = action
