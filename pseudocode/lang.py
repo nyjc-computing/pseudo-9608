@@ -12,7 +12,7 @@ NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Literal", ...]  # Array indexes
 IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
-Args = Iterable["Expr", ...]  # Callable args
+Args = Iterable["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 Param = "TypedValue"  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
@@ -49,14 +49,14 @@ class Name:
     __slots__ = ('name', '_token')
     def __init__(
         self,
-        name: Varname,
+        name: NameKey,
         *,
         token: "Token",
     ) -> None:
         self.name = name
         self._token = token
 
-    def __str__(self) -> Varname:
+    def __str__(self) -> NameKey:
         return self.name
 
     def token(self) -> "Token":
@@ -211,7 +211,7 @@ class Object(PseudoValue):
         self,
         typesys: "TypeSystem",
     ) -> None:
-        self.data: Dict[Key, "TypedValue"] = {}
+        self.data: Dict[NameKey, "TypedValue"] = {}
         self.types = typesys
 
     def __repr__(self) -> str:
@@ -221,23 +221,23 @@ class Object(PseudoValue):
         ]
         return f"{{{', '.join(nameTypePairs)}}}"
 
-    def has(self, name: Key) -> bool:
+    def has(self, name: NameKey) -> bool:
         return name in self.data
 
-    def declare(self, name: Key, type: str) -> None:
+    def declare(self, name: NameKey, type: str) -> None:
         self.data[name] = TypedValue(type, None)
         self.data[name].value = self.types.clone(type)
 
-    def getType(self, name: Key) -> Type:
+    def getType(self, name: NameKey) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: Key) -> Optional[Value]:
+    def getValue(self, name: NameKey) -> Optional[Value]:
         return self.data[name].value
 
-    def get(self, name: Key) -> "TypedValue":
+    def get(self, name: NameKey) -> "TypedValue":
         return self.data[name]
 
-    def setValue(self, name: Key, value: Any) -> None:
+    def setValue(self, name: NameKey, value: Any) -> None:
         self.data[name].value = value
 
     def copy(self) -> "Object":
@@ -393,7 +393,7 @@ class File(PseudoValue):
     __slots__ = ('name', 'mode', 'iohandler')
     def __init__(
         self,
-        name: Varname,
+        name: NameKey,
         mode: str,
         iohandler: TextIO,
     ) -> None:
@@ -449,7 +449,7 @@ class Declare(Expr):
     __slots__ = ('name', 'type', 'metadata', '_token')
     def __init__(
         self,
-        name: Varname,
+        name: NameKey,
         type: Type,
         metadata: Mapping=None,
         *,
@@ -634,7 +634,7 @@ class ProcFunc(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Varname,
+        name: NameKey,
         passby: str,
         params: Iterable[Param],
         stmts: Iterable["Stmt"],
@@ -654,7 +654,7 @@ class TypeStmt(Stmt):
     def __init__(
         self,
         rule: Rule,
-        name: Varname,
+        name: NameKey,
         exprs: Iterable["Expr"],
     ) -> None:
         self.rule = rule
