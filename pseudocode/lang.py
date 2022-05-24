@@ -182,8 +182,9 @@ class PseudoValue:
 
 class Object(PseudoValue):
     """
-    Represents a space for storing of TypedValues in 9608 pseudocode.
-    Provides methods for managing TypedValues.
+    A space that maps NameKeys to TypedValues.
+    Existence checks should be carried out (using has()) before using the
+    methods here.
 
     Methods
     -------
@@ -222,8 +223,7 @@ class Object(PseudoValue):
         return name in self.data
 
     def declare(self, name: NameKey, type: str) -> None:
-        self.data[name] = TypedValue(type, None)
-        self.data[name].value = self.types.clone(type)
+        self.data[name] = self.types.cloneType(type)
 
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
@@ -234,24 +234,18 @@ class Object(PseudoValue):
     def get(self, name: NameKey) -> "TypedValue":
         return self.data[name]
 
-    def setValue(self, name: NameKey, value: Any) -> None:
+    def setValue(self, name: NameKey, value: Value) -> None:
         self.data[name].value = value
-
-    def copy(self) -> "Object":
-        """This returns an empty copy of the object"""
-        Class = type(self)
-        newobj = Class(typesys=self.types)
-        for name in self.data:
-            newobj.declare(name, self.getType(name))
-        return newobj
 
 
 
 class Frame(Object):
     """
-    Represents a space for storing of TypedValues in 9608 pseudocode.
+    An Object that carries a reference to an outer Frame.
     Frames differ from Objects in that they can be chained, and slots can be
     deleted after declaration.
+    Existence checks should be carried out (using has()) before using the
+    methods here.
 
     Methods
     -------
@@ -285,16 +279,28 @@ class Frame(Object):
 
 
 
-class Array(Object):
+class Array(PseudoValue):
     """
-    Represents a space containing elements of identical type in 9608
-    pseudocode.
-    Each element is indexed by N integers.
+    A space that maps IndexKeys to TypedValues.
 
-    Attributes
-    ----------
-    elementType: str
-       The common type of each element
+    Methods
+    -------
+    has(name)
+        returns True if the index exists in frame,
+        otherwise returns False
+    declare(name, type)
+        initialises a named TypedValue from the type system
+    get(name)
+        retrieves the slot associated with the name
+    getType(name)
+        retrieves the type information associated
+        the name
+    getValue(name)
+        retrieves the value associated with the name
+    setValue(name, value)
+        updates the value associated with the name
+    copy()
+        return a copy of the object
     """
     @property
     def elementType(self) -> Type:
