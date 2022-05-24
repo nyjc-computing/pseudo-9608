@@ -241,9 +241,9 @@ class Object(PseudoValue):
 
 class Frame(Object):
     """
-    An Object that carries a reference to an outer Frame.
-    Frames differ from Objects in that they can be chained, and slots can be
-    deleted after declaration.
+    Frames differ from Objects in that they can be chained (with a reference to an
+    outer Frame, names can be reassigned to a different TypedValue, and slots can
+    be deleted after declaration.
     Existence checks should be carried out (using has()) before using the
     methods here.
 
@@ -264,13 +264,13 @@ class Frame(Object):
         super().__init__(typesys=typesys)
         self.outer = outer
 
-    def set(self, name, typedValue) -> None:
+    def set(self, name: NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
 
-    def delete(self, name) -> None:
+    def delete(self, name: NameKey) -> None:
         del self.data[name]
 
-    def lookup(self, name) -> Optional["Frame"]:
+    def lookup(self, name: NameKey) -> Optional["Frame"]:
         if self.has(name):
             return self
         if self.outer:
