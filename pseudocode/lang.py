@@ -20,8 +20,12 @@ ParamDecl = "Declare"  # ProcFunc params (in statement)
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
-NameExpr = Union["UnresolvedName", "GetName"]  # For Name parsing
-Get = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]  # Any kind of Get
+# NameExprs are GetExprs that use a NameKey
+NameKeyExpr = Union["UnresolvedName", "GetName"]
+# GetExprs hold Exprs that evaluate to a KeyMap and a Key
+GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
+# NameExprs start with a name
+NameExpr = Union[GetExpr, "Call"]
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
 
@@ -581,7 +585,7 @@ class Assign(Expr):
     __slots__ = ('assignee', 'expr')
     def __init__(
         self,
-        assignee: Get,
+        assignee: GetExpr,
         expr: "Expr",
     ) -> None:
         self.assignee = assignee
@@ -648,7 +652,7 @@ class GetName(Expr):
     def __init__(
         self,
         frame: "Frame",
-        name: NameExpr,
+        name: Name,
     ) -> None:
         self.frame = frame
         self.name = name
@@ -662,7 +666,7 @@ class GetIndex(Expr):
     __slots__ = ('array', 'index')
     def __init__(
         self,
-        array: Get,
+        array: NameExpr,
         index: IndexExpr,
     ) -> None:
         self.array = array
@@ -677,8 +681,8 @@ class GetAttr(Expr):
     __slots__ = ('object', 'name')
     def __init__(
         self,
-        object: Get,
-        name: NameExpr,
+        object: NameExpr,
+        name: Name,
     ) -> None:
         self.object = object
         self.name = name
@@ -692,7 +696,7 @@ class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(
         self,
-        callable: Get,
+        callable: NameKeyExpr,
         args: Args,
     ) -> None:
         self.callable = callable
@@ -787,7 +791,7 @@ class ProcFunc(Stmt):
     def __init__(
         self,
         rule: str,
-        name: Get,
+        name: GetExpr,
         passby: str,
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
@@ -807,7 +811,7 @@ class TypeStmt(Stmt):
     def __init__(
         self,
         rule: str,
-        name: Get,
+        name: NameExpr,
         exprs: Iterable["Expr"],
     ) -> None:
         self.rule = rule
@@ -834,7 +838,7 @@ class ReadFile(Stmt):
         self,
         rule: str,
         filename: "Expr",
-        target: Get,  # TODO: Support other Gets
+        target: GetExpr,  # TODO: Support other Gets
     ) -> None:
         self.rule = rule
         self.filename = filename

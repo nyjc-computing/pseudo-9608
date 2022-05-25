@@ -110,11 +110,11 @@ def callExpr(tokens: Tokens, callableExpr: lang.Get) -> lang.Call:
     matchWordElseError(tokens, ')', msg="after '('")
     return lang.Call(callableExpr, args)
 
-def attrExpr(tokens: Tokens, objExpr: lang.Expr) -> lang.Get:
+def attrExpr(tokens: Tokens, objExpr: lang.KeyMapExpr) -> lang.GetAttr:
     name = identifier(tokens)
     return lang.GetAttr(objExpr, name)
 
-def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.Get:
+def indexExpr(tokens: Tokens, arrayExpr: lang.KeyMapExpr) -> lang.GetIndex:
     indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
@@ -202,7 +202,7 @@ def expression(tokens: Tokens) -> lang.Expr:
     return expr
 
 def assignment(tokens: Tokens) -> lang.Assign:
-    assignee: lang.Get = identifier(tokens)
+    assignee: lang.GetExpr = identifier(tokens)
     while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
