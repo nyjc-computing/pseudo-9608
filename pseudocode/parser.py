@@ -92,7 +92,7 @@ def unary(tokens: Tokens) -> lang.Unary:
     right = value(tokens)
     return lang.Unary(oper.value, right, token=oper)
 
-def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
+def callExpr(tokens: Tokens, callable: lang.Name) -> lang.Call:
     args = tuple()
     while not expectWord(tokens, ')'):
         if len(args) > 0:
@@ -101,11 +101,11 @@ def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
     matchWordElseError(tokens, ')', msg="after '('")
     return lang.Call(callable, args)
 
-def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.GetAttr:
+def attrExpr(tokens: Tokens, objGet: lang.Name) -> lang.GetAttr:
     name = identifier(tokens)
     return lang.GetAttr(objGet, name)
 
-def indexExpr(tokens: Tokens, objGet: lang.Get) -> lang.GetIndex:
+def indexExpr(tokens: Tokens, objGet: lang.Name) -> lang.GetIndex:
     indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
@@ -333,7 +333,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
-    getCounter = lang.Get(builtin.NULL, init.assignee.name, token=init.token())
+    getCounter = lang.Name(init.assignee.name)
     cond = lang.Binary(getCounter, builtin.lte, end, token=init.token())
     # Add increment statement
     incr = lang.Assign(
