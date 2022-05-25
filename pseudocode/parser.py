@@ -110,7 +110,7 @@ def indexExpr(tokens: Tokens, objGet: lang.Name) -> lang.GetIndex:
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
     matchWordElseError(tokens, ']')
-    return lang.GetIndex(objGet, indexes, token=objGet.token())
+    return lang.GetIndex(objGet, indexes)
 
 def value(tokens: Tokens) -> Union[lang.Name, lang.Expr]:
     # Unary expressions
