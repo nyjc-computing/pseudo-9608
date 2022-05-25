@@ -629,6 +629,19 @@ class Binary(Expr):
 
 
 
+class UnresolvedName(Expr):
+    __slots__ = ('name',)
+    def __init__(
+        self,
+        name: Name,
+    ) -> None:
+        self.name = name
+
+    def token(self):
+        return self.name.token()
+
+
+
 class GetName(Expr):
     __slots__ = ('frame', 'name')
     def __init__(
