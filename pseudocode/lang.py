@@ -525,7 +525,7 @@ class Expr:
     - token() -> Token
         Returns the token asociated with the expr
     """
-    __slots__: Iterable[str] = NotImplemented
+    __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -689,7 +689,7 @@ class Call(Expr):
 
 class Stmt:
     rule: str = NotImplemented
-    __slots__: Iterable[str] = NotImplemented
+    __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__

@@ -92,9 +92,9 @@ def unary(tokens: Tokens) -> lang.Unary:
     right = value(tokens)
     return lang.Unary(oper.value, right, token=oper)
 
-def name(tokens: Tokens) -> lang.Get:
-    iden = identifier(tokens)
-    return lang.Get(builtin.NULL, str(iden), token=iden.token())
+# def name(tokens: Tokens) -> lang.Get:
+#     iden = identifier(tokens)
+#     return lang.Get(builtin.NULL, str(iden), token=iden.token())
 
 def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
     args = []
@@ -133,7 +133,7 @@ def value(tokens: Tokens) -> lang.Expr:
         return literal(tokens)
     # A name or call or attribute
     if expectType(tokens, 'name'):
-        getExpr = name(tokens)
+        getExpr = identifier(tokens)
         while expectWord(tokens, '[', '(', '.'):
             # Array get
             if matchWord(tokens, '['):
@@ -197,7 +197,7 @@ def expression(tokens: Tokens) -> lang.Expr:
     return expr
 
 def assignment(tokens: Tokens) -> lang.Assign:
-    assignee = name(tokens)  # Get Expr
+    assignee = identifier(tokens)
     while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
