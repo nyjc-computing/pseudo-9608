@@ -412,7 +412,7 @@ def readfileStmt(tokens: Tokens) -> lang.ReadFile:
     matchWordElseError(tokens, ',', msg="after file identifier")
     varname = identifier(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.ReadFile('file', filename, None, varname)
+    return lang.ReadFile('file', filename, varname)
 
 def writefileStmt(tokens: Tokens) -> lang.WriteFile:
     filename = value(tokens)
