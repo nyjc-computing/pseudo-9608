@@ -689,6 +689,7 @@ class Call(Expr):
 
 class Stmt:
     rule: str = NotImplemented
+    __slots__: Iterable[str] = NotImplemented
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
