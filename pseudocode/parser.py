@@ -112,7 +112,7 @@ def indexExpr(tokens: Tokens, objGet: lang.Name) -> lang.GetIndex:
     matchWordElseError(tokens, ']')
     return lang.GetIndex(objGet, indexes, token=objGet.token())
 
-def value(tokens: Tokens) -> lang.Expr:
+def value(tokens: Tokens) -> Union[lang.Name, lang.Expr]:
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary(tokens)
@@ -259,7 +259,7 @@ def typeStmt(tokens: Tokens) -> lang.TypeStmt:
         matchWordElseError(tokens, '\n')
     matchWordElseError(tokens, 'ENDTYPE')
     matchWordElseError(tokens, '\n')
-    return lang.TypeStmt('declaretype', str(name), exprs)
+    return lang.TypeStmt('declaretype', name, exprs)
 
 def assignStmt(tokens: Tokens) -> lang.ExprStmt:
     expr = assignment(tokens)
