@@ -735,18 +735,48 @@ class TypeStmt(Stmt):
 
 
 
-class FileAction(Stmt):
-    __slots__ = ('rule', 'action', 'name', 'mode', 'data')
+class OpenFile(Stmt):
+    __slots__ = ('rule', 'filename', 'mode')
     def __init__(
         self,
         rule: str,
-        action: str,
-        name: "Expr",
-        mode: Optional[str],
-        data: Any,
+        filename: "Expr",
+        mode: str,
     ) -> None:
         self.rule = rule
-        self.action = action
-        self.name = name
+        self.filename = filename
         self.mode = mode
+
+class ReadFile(Stmt):
+    __slots__ = ('rule', 'filename', 'target')
+    def __init__(
+        self,
+        rule: str,
+        filename: "Expr",
+        target: Name,  # TODO: Support other Gets
+    ) -> None:
+        self.rule = rule
+        self.filename = filename
+        self.target = target
+
+class WriteFile(Stmt):
+    __slots__ = ('rule', 'filename', 'data')
+    def __init__(
+        self,
+        rule: str,
+        filename: "Expr",
+        data: "Expr",  # TODO: Support other Gets
+    ) -> None:
+        self.rule = rule
+        self.filename = filename
         self.data = data
+
+class CloseFile(Stmt):
+    __slots__ = ('rule', 'filename')
+    def __init__(
+        self,
+        rule: str,
+        filename: "Expr",
+    ) -> None:
+        self.rule = rule
+        self.filename = filename
