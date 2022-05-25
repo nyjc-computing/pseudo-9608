@@ -102,11 +102,11 @@ def callExpr(tokens: Tokens, callableExpr: lang.Get) -> lang.Call:
     matchWordElseError(tokens, ')', msg="after '('")
     return lang.Call(callableExpr, args)
 
-def attrExpr(tokens: Tokens, objExpr: lang.Expr) -> lang.GetAttr:
+def attrExpr(tokens: Tokens, objExpr: lang.Expr) -> lang.Get:
     name = identifier(tokens)
     return lang.GetAttr(objExpr, name)
 
-def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.GetIndex:
+def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.Get:
     indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
@@ -142,7 +142,7 @@ def value(tokens: Tokens) -> lang.Expr:
     else:
         raise builtin.ParseError("Unexpected token", check(tokens))
 
-def muldiv(tokens: Tokens) -> lang.Binary:
+def muldiv(tokens: Tokens) -> lang.Expr:
     # *, /
     expr = value(tokens)
     while expectWord(tokens, '*', '/'):
@@ -151,7 +151,7 @@ def muldiv(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def addsub(tokens: Tokens) -> lang.Binary:
+def addsub(tokens: Tokens) -> lang.Expr:
     expr = muldiv(tokens)
     while expectWord(tokens, '+', '-'):
         oper = consume(tokens)
@@ -159,7 +159,7 @@ def addsub(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def comparison(tokens: Tokens) -> lang.Binary:
+def comparison(tokens: Tokens) -> lang.Expr:
     # <, <=, >, >=
     expr = addsub(tokens)
     while expectWord(tokens, '<', '<=', '>', '>='):
@@ -168,7 +168,7 @@ def comparison(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def equality(tokens: Tokens) -> lang.Binary:
+def equality(tokens: Tokens) -> lang.Expr:
     # <>, =
     expr = comparison(tokens)
     while expectWord(tokens, '<>', '='):
@@ -177,7 +177,7 @@ def equality(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def logical(tokens: Tokens) -> lang.Binary:
+def logical(tokens: Tokens) -> lang.Expr:
     # AND, OR
     expr = equality(tokens)
     while expectWord(tokens, 'AND', 'OR'):
@@ -191,7 +191,7 @@ def expression(tokens: Tokens) -> lang.Expr:
     return expr
 
 def assignment(tokens: Tokens) -> lang.Assign:
-    assignee = identifier(tokens)
+    assignee: lang.Get = identifier(tokens)
     while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
@@ -367,7 +367,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     return lang.ProcFunc('procedure', name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens: Tokens) -> lang.ExprStmt:
-    callable: lang.Call = value(tokens)
+    callable: lang.Expr = value(tokens)
     matchWordElseError(tokens, '\n')
     return lang.ExprStmt('call', callable)
 
