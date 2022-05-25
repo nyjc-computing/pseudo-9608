@@ -1,4 +1,5 @@
 from typing import Union, Optional, Iterable, Tuple, List
+from typing import Callable as function
 
 from . import builtin, lang
 
@@ -93,6 +94,12 @@ def unary(tokens: Tokens) -> lang.Unary:
     right = value(tokens)
     return lang.Unary(oper.value, right, token=oper)
 
+def grouping(tokens: Tokens) -> lang.Expr:
+    matchWord(tokens, '(')
+    expr = expression(tokens)
+    matchWordElseError(tokens, ')', msg="after '('")
+    return expr
+
 def callExpr(tokens: Tokens, callableExpr: lang.Get) -> lang.Call:
     args: Tuple[lang.Expr, ...] = tuple()
     while not expectWord(tokens, ')'):
@@ -113,7 +120,37 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.Get:
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, indexes)
 
+def name(tokens: Tokens) -> lang.Get:
+    getExpr : lang.Get = identifier(tokens)
+    while expectWord(tokens, '[', '(', '.'):
+        # Array get
+        if matchWord(tokens, '['):
+            getExpr = indexExpr(tokens, getExpr)
+        # Function call
+        elif matchWord(tokens, '('):
+            getExpr = callExpr(tokens, getExpr)
+        # Attribute get
+        elif matchWord(tokens, '.'):
+            getExpr = attrExpr(tokens, getExpr)
+    return getExpr
+
+def parser(tokens: Tokens) -> function[[Tokens], function]:
+    # Unary expressions
+    if expectWord(tokens, '-', 'NOT'):
+        return unary
+    #  A grouping
+    if expectWord(tokens, '('):
+        return grouping
+    # A single value
+    if expectType(tokens, *builtin.TYPES):
+        return literal
+    # A name or call or attribute
+    if expectType(tokens, 'name'):
+        return name
+
 def value(tokens: Tokens) -> lang.Expr:
+    parse = parser(tokens)
+    return parse(tokens)
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary(tokens)
