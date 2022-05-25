@@ -346,7 +346,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
 
 def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     name = identifier(tokens)
-    params = []
+    params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
@@ -364,7 +364,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     while not matchWord(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDPROCEDURE")
-    return lang.ProcFunc('procedure', str(name), passby, params, stmts, 'NULL')
+    return lang.ProcFunc('procedure', name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens: Tokens) -> lang.ExprStmt:
     callable: lang.Call = value(tokens)
