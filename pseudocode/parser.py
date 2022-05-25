@@ -373,7 +373,7 @@ def callStmt(tokens: Tokens) -> lang.ExprStmt:
 
 def functionStmt(tokens: Tokens) -> lang.ProcFunc:
     name = identifier(tokens)
-    params = []
+    params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: str = 'BYVALUE'
         var = declare(tokens)
@@ -390,7 +390,7 @@ def functionStmt(tokens: Tokens) -> lang.ProcFunc:
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
     return lang.ProcFunc(
-        'function', str(name), passby, params, stmts, typetoken.word
+        'function', name, passby, params, stmts, typetoken.word
     )
 
 def returnStmt(tokens: Tokens) -> lang.ExprStmt:

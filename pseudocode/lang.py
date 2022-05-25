@@ -775,7 +775,7 @@ class ProcFunc(Stmt):
         rule: str,
         name: Name,
         passby: str,
-        params: Iterable[Param],
+        params: Iterable[Declare],
         stmts: Iterable["Stmt"],
         returnType: Type,
     ) -> None:
