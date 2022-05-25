@@ -147,7 +147,7 @@ class ObjectTemplate:
         typesys: "TypeSystem",
     ) -> None:
         self.types = typesys
-        self.data: Dict[NameKey, Type] = {}
+        self.data: MutableMapping[NameKey, Type] = {}
 
     def __repr__(self) -> str:
         return repr(self.data)
@@ -190,28 +190,24 @@ class TypeSystem:
         self,
         *types: Type,
     ) -> None:
-        self.data: Mapping[Type, "TypedValue"] = {}
+        self.data: MutableMapping[Type, TypeTemplate] = {}
         for typeName in types:
             self.declare(typeName)
 
     def __repr__(self) -> str:
-        nameTypePairs = [
-            f"{name}: {repr(self.data[name])}"
-            for name in self.data
-        ]
-        return f"{{{', '.join(nameTypePairs)}}}"
+       return f"{{{', '.join(self.data.keys())}}}"
 
-    def has(self, name: str) -> bool:
-        return name in self.data
+    def has(self, type: Type) -> bool:
+        return type in self.data
 
-    def declare(self, name: str) -> None:
-        self.data[name] = TypeTemplate(name, None)
+    def declare(self, type: Type) -> None:
+        self.data[type] = TypeTemplate(type, None)
 
-    def setTemplate(self, name: Type, template: "Object") -> None:
-        self.data[name].value = template
+    def setTemplate(self, type: Type, template: "ObjectTemplate") -> None:
+        self.data[type].value = template
 
-    def cloneType(self, name: Type) -> Optional["Object"]:
-        return self.data[name].clone()
+    def cloneType(self, type: Type) -> "TypedValue":
+        return self.data[type].clone()
 
 
 
@@ -250,7 +246,7 @@ class Object(PseudoValue):
         self,
         typesys: "TypeSystem",
     ) -> None:
-        self.data: Dict[NameKey, "TypedValue"] = {}
+        self.data: MutableMapping[NameKey, "TypedValue"] = {}
         self.types = typesys
 
     def __repr__(self) -> str:
@@ -353,12 +349,13 @@ class Array(PseudoValue):
     def __init__(
         self,
         typesys: "TypeSystem",
-        ranges: Iterable[Tuple[int, int]],
+        ranges: Collection[Tuple[int, int]],
+        type: Type,
     ) -> None:
         self.types = typesys
         # ranges is an iterable of (start, end) indexes
         self.ranges = ranges
-        self.data: Dict[IndexKey, "TypedValue"] = {
+        self.data: MutableMapping[IndexKey, "TypedValue"] = {
             index: self.types.cloneType(type)
             for index in self.rangeProduct(ranges)
         }
