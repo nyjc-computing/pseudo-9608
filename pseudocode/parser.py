@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Tuple, List, Dict
+from typing import Optional, Iterable, Tuple, List
 
 from . import builtin, lang
 
@@ -91,10 +91,6 @@ def unary(tokens: Tokens) -> lang.Unary:
     oper = consume(tokens)
     right = value(tokens)
     return lang.Unary(oper.value, right, token=oper)
-
-# def name(tokens: Tokens) -> lang.Get:
-#     iden = identifier(tokens)
-#     return lang.Get(builtin.NULL, str(iden), token=iden.token())
 
 def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
     args = tuple()
