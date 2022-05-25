@@ -79,14 +79,14 @@ def evalIndex(
 def evalLiteral(
     frame: lang.Frame,
     literal: lang.Literal,
-) -> lang.Lit:
+) -> lang.PyLiteral:
     return literal.value
 
-def evalUnary(frame: lang.Frame, expr: lang.Unary) -> lang.Lit:
+def evalUnary(frame: lang.Frame, expr: lang.Unary) -> lang.PyLiteral:
     rightval = evaluate(frame, expr.right)
     return expr.oper(rightval)
 
-def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.Lit:
+def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.PyLiteral:
     leftval = evaluate(frame, expr.left)
     rightval = evaluate(frame, expr.right)
     return expr.oper(leftval, rightval)

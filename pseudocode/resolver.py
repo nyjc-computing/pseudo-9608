@@ -25,17 +25,18 @@ def expectTypeElseError(
 
 def declaredElseError(
     frame: Union[lang.Object, lang.TypeSystem],
-    name: lang.Varname,
+    name: lang.Name,
     errmsg: str="Undeclared",
     declaredType: lang.Type=None,
     *,
     token: lang.Token,
 ) -> None:
-    if not frame.has(name):
-        raise builtin.LogicError(errmsg, name, token)
+    nameStr = str(name)
+    if not frame.has(nameStr):
+        raise builtin.LogicError(errmsg, nameStr, token)
     if declaredType:
         expectTypeElseError(
-            frame.getType(name), declaredType, token=token
+            frame.getType(nameStr), declaredType, token=token
         )
 
 def lookupElseError(
@@ -91,7 +92,7 @@ def resolveExprs(
 def evalLiteral(
     frame: lang.Frame,
     expr: lang.Literal,
-) -> lang.Lit:
+) -> lang.PyLiteral:
     """Return the value of a Literal"""
     return expr.value
     
@@ -108,7 +109,10 @@ def resolveDeclare(
 ) -> lang.Type:
     """Declare variable in frame"""
     if passby == 'BYVALUE':
-        frame.declare(expr.name, expr.type)
+        try:
+            frame.declare(expr.name, expr.type)
+        except AttributeError:  # Array.clone() not supported
+            raise builtin.LogicError("TYPE does not support attribute of type ARRAY", expr.token())
         if expr.type == 'ARRAY':
             array = lang.Array(typesys=frame.types)
             elemType = expr.metadata['type']
@@ -188,7 +192,7 @@ def resolveAssign(
 def resolveAttr(
     typesystem: lang.TypeSystem,
     objType: lang.Type,
-    name: lang.Varname,
+    name: lang.Name,
     *,
     token: lang.Token,
 ) -> lang.Type:
@@ -348,7 +352,7 @@ def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
-    declaredElseError(frame, stmt.name.name, token=stmt.name.token())
+    declaredElseError(frame, stmt.name, token=stmt.name.token())
 
 def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolve(frame, stmt.cond)

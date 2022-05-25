@@ -80,7 +80,7 @@ def matchTypeElseError(
 def identifier(tokens: Tokens) -> lang.Name:
     if expectType(tokens, 'name'):
         token = consume(tokens)
-        return lang.Name(name=token.word, token=token)
+        return lang.Name(token.word, token=token)
     raise builtin.ParseError(f"Expected variable name", consume(tokens))
 
 def literal(tokens: Tokens) -> lang.Literal:
@@ -94,7 +94,7 @@ def unary(tokens: Tokens) -> lang.Unary:
 
 def name(tokens: Tokens) -> lang.Get:
     iden = identifier(tokens)
-    return lang.Get(builtin.NULL, iden.name, token=iden.token())
+    return lang.Get(builtin.NULL, str(iden), token=iden.token())
 
 def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
     args = []
@@ -110,7 +110,7 @@ def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
 
 def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.Get:
     name = identifier(tokens)
-    return lang.Get(objGet, name.name, token=name.token())
+    return lang.Get(objGet, str(name), token=name.token())
 
 def arrayExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
     index: List[lang.Expr] = [expression(tokens)]
@@ -249,7 +249,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
-    return lang.Declare(name.name, typetoken.word, metadata, token=name.token())
+    return lang.Declare(str(name), typetoken.word, metadata, token=name.token())
     
 def declareStmt(tokens: Tokens) -> lang.ExprStmt:
     expr = declare(tokens)
@@ -266,7 +266,7 @@ def typeStmt(tokens: Tokens) -> lang.TypeStmt:
         matchWordElseError(tokens, '\n')
     matchWordElseError(tokens, 'ENDTYPE')
     matchWordElseError(tokens, '\n')
-    return lang.TypeStmt('declaretype', name.name, exprs)
+    return lang.TypeStmt('declaretype', str(name), exprs)
 
 def assignStmt(tokens: Tokens) -> lang.ExprStmt:
     expr = assignment(tokens)
@@ -279,7 +279,7 @@ def caseStmt(tokens: Tokens) -> lang.Conditional:
     matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts: lang.Cases = {}
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
-        val: lang.Lit = literal(tokens).value
+        val: lang.PyLiteral = literal(tokens).value
         matchWordElseError(tokens, ':', msg="after CASE value")
         stmts[val] = [statement1(tokens)]
     fallback = None
@@ -352,7 +352,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     return lang.Loop('while', initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
-    name = identifier(tokens).name
+    name = identifier(tokens)
     params = []
     if matchWord(tokens, '('):
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
@@ -371,7 +371,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     while not matchWord(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDPROCEDURE")
-    return lang.ProcFunc('procedure', name, passby, params, stmts, 'NULL')
+    return lang.ProcFunc('procedure', str(name), passby, params, stmts, 'NULL')
 
 def callStmt(tokens: Tokens) -> lang.ExprStmt:
     callable: lang.Call = value(tokens)
@@ -379,7 +379,7 @@ def callStmt(tokens: Tokens) -> lang.ExprStmt:
     return lang.ExprStmt('call', callable)
 
 def functionStmt(tokens: Tokens) -> lang.ProcFunc:
-    name = identifier(tokens).name
+    name = identifier(tokens)
     params = []
     if matchWord(tokens, '('):
         passby: str = 'BYVALUE'
@@ -397,7 +397,7 @@ def functionStmt(tokens: Tokens) -> lang.ProcFunc:
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
     return lang.ProcFunc(
-        'function', name, passby, params, stmts, typetoken.word
+        'function', str(name), passby, params, stmts, typetoken.word
     )
 
 def returnStmt(tokens: Tokens) -> lang.ExprStmt:
@@ -417,9 +417,9 @@ def openfileStmt(tokens: Tokens) -> lang.FileAction:
 def readfileStmt(tokens: Tokens) -> lang.FileAction:
     name = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
-    data = identifier(tokens)
+    varname = identifier(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'read', name, None, data.name)
+    return lang.FileAction('file', 'read', name, None, str(varname))
 
 def writefileStmt(tokens: Tokens) -> lang.FileAction:
     name = value(tokens)
