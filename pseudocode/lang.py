@@ -594,7 +594,7 @@ class Get(Expr):
     __slots__ = ('frame', 'name', '_token')
     def __init__(
         self,
-        frame: Union["Frame", object],
+        frame: "Frame",
         name: Name,
         *,
         token: "Token",
