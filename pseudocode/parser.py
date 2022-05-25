@@ -1,4 +1,4 @@
-from typing import Union, Optional, Iterable, Tuple, List
+from typing import Optional, Iterable, Tuple, List
 from typing import Callable as function
 
 from . import builtin, lang
@@ -121,7 +121,7 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.KeyMapExpr) -> lang.GetIndex:
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, indexes)
 
-def name(tokens: Tokens) -> lang.Get:
+def name(tokens: Tokens) -> lang.NameExpr:
     getExpr : lang.NameExpr = identifier(tokens)
     # After Call Expr, we expect to have any Value except Callable
     # Might need a new type for this
