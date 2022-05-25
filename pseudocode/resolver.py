@@ -109,7 +109,10 @@ def resolveDeclare(
 ) -> lang.Type:
     """Declare variable in frame"""
     if passby == 'BYVALUE':
-        frame.declare(expr.name, expr.type)
+        try:
+            frame.declare(expr.name, expr.type)
+        except AttributeError:  # Array.clone() not supported
+            raise builtin.LogicError("TYPE does not support attribute of type ARRAY", expr.token())
         if expr.type == 'ARRAY':
             array = lang.Array(typesys=frame.types)
             elemType = expr.metadata['type']
