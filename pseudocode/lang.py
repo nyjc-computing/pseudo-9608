@@ -119,8 +119,8 @@ class TypeTemplate:
         """
         This returns an empty TypedValue of the same type
         """
-        if isinstance(self.value, Object):
-            return TypedValue(self.type, self.value.copy())
+        if isinstance(self.value, TypeTemplate):
+            return TypedValue(self.type, self.value.clone())
         return TypedValue(self.type, self.value)
 
 
@@ -203,8 +203,6 @@ class Object(PseudoValue):
         retrieves the value associated with the name
     setValue(name, value)
         updates the value associated with the name
-    copy()
-        return a copy of the object
     """
     def __init__(
         self,
