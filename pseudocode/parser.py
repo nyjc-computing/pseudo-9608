@@ -122,16 +122,20 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.KeyMapExpr) -> lang.GetIndex:
     return lang.GetIndex(arrayExpr, indexes)
 
 def name(tokens: Tokens) -> lang.Get:
-    getExpr : lang.Get = identifier(tokens)
-    while expectWord(tokens, '[', '(', '.'):
+    getExpr : lang.NameExpr = identifier(tokens)
+    # After Call Expr, we expect to have any Value except Callable
+    # Might need a new type for this
+    # Should not parse for Call anymore
+    # Add more layers to recursive descent parser
+    # Function call
+    if matchWord(tokens, '('):
+       getExpr = callExpr(tokens, getExpr)
+    while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
             getExpr = indexExpr(tokens, getExpr)
-        # Function call
-        elif matchWord(tokens, '('):
-            getExpr = callExpr(tokens, getExpr)
         # Attribute get
-        elif matchWord(tokens, '.'):
+        if matchWord(tokens, '.'):
             getExpr = attrExpr(tokens, getExpr)
     return getExpr
 
