@@ -1,6 +1,6 @@
-from typing import Any, Optional, Union
-from typing import Iterable, Iterator, Mapping, MutableMapping, Protocol
-from typing import Tuple, List, Dict
+from typing import Optional, Union, Protocol
+from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
+from typing import Tuple, List
 from typing import Callable as function, TextIO
 from abc import abstractmethod
 from itertools import product
@@ -392,8 +392,7 @@ class Array(PseudoValue):
 
     @property
     def elementType(self) -> Type:
-        for elem in self.data.values():
-            return elem.type
+        return tuple(self.data.values())[0].type
 
     def has(self, index: IndexKey) -> bool:
         return index in self.data
