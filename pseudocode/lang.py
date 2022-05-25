@@ -579,7 +579,7 @@ class Assign(Expr):
     __slots__ = ('assignee', 'expr')
     def __init__(
         self,
-        assignee: Union["GetName", "GetIndex", "GetAttr"],
+        assignee: Get,
         expr: "Expr",
     ) -> None:
         self.assignee = assignee
