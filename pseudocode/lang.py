@@ -19,6 +19,7 @@ ParamDecl = "Declare"  # ProcFunc params (in statement)
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
+Get = Union["GetName", "GetAttr", "GetIndex"]  # Any kind of Get
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
 

@@ -97,23 +97,20 @@ def unary(tokens: Tokens) -> lang.Unary:
 #     return lang.Get(builtin.NULL, str(iden), token=iden.token())
 
 def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
-    args = []
-    argcount = 0
+    args = tuple()
     while not expectWord(tokens, ')'):
-        if argcount > 0:
+        if len(args) > 0:
             matchWordElseError(tokens, ',')
-        arg = expression(tokens)
-        args += [arg]
-        argcount += 1
+        args += (expression(tokens)),
     matchWordElseError(tokens, ')', msg="after '('")
     return lang.Call(callable, args)
 
-def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.Get:
+def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.GetAttr:
     name = identifier(tokens)
     return lang.GetAttr(objGet, name)
 
-def indexExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
-    indexes: Tuple[lang.Expr] = (literal(tokens),)
+def indexExpr(tokens: Tokens, objGet: lang.Get) -> lang.GetIndex:
+    indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
     matchWordElseError(tokens, ']')
