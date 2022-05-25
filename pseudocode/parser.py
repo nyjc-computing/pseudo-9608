@@ -84,7 +84,7 @@ def identifier(tokens: Tokens) -> lang.Name:
     raise builtin.ParseError(f"Expected variable name", consume(tokens))
 
 def literal(tokens: Tokens) -> lang.Literal:
-    token = consume(tokens)
+    token = matchTypeElseError(tokens, *builtin.LITERAL, msg="index")
     return lang.Literal(token.type, token.value, token=token)
 
 def unary(tokens: Tokens) -> lang.Unary:
@@ -110,14 +110,14 @@ def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
 
 def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.Get:
     name = identifier(tokens)
-    return lang.Get(objGet, str(name), token=name.token())
+    return lang.GetAttr(objGet, name)
 
-def arrayExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
-    index: List[lang.Expr] = [expression(tokens)]
+def indexExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
+    indexes: Tuple[lang.Expr] = (literal(tokens),)
     while matchWord(tokens, ','):
-        index += [expression(tokens)]
+        indexes += (literal(tokens),)
     matchWordElseError(tokens, ']')
-    return lang.Get(objGet, tuple(index), token=objGet.token())
+    return lang.GetIndex(objGet, indexes, token=objGet.token())
 
 def value(tokens: Tokens) -> lang.Expr:
     # Unary expressions
@@ -137,7 +137,7 @@ def value(tokens: Tokens) -> lang.Expr:
         while expectWord(tokens, '[', '(', '.'):
             # Array get
             if matchWord(tokens, '['):
-                getExpr = arrayExpr(tokens, getExpr)
+                getExpr = indexExpr(tokens, getExpr)
             # Function call
             elif matchWord(tokens, '('):
                 getExpr = callExpr(tokens, getExpr)
