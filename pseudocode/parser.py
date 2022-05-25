@@ -77,10 +77,11 @@ def matchTypeElseError(
 # 5. <> | =
 # 6. AND | OR
 
-def identifier(tokens: Tokens) -> lang.Name:
+def identifier(tokens: Tokens) -> lang.UnresolvedName:
     if expectType(tokens, 'name'):
         token = consume(tokens)
-        return lang.Name(token.word, token=token)
+        name = lang.Name(token.word, token=token)
+        return lang.UnresolvedName(name)
     raise builtin.ParseError(f"Expected variable name", consume(tokens))
 
 def literal(tokens: Tokens) -> lang.Literal:
@@ -92,27 +93,27 @@ def unary(tokens: Tokens) -> lang.Unary:
     right = value(tokens)
     return lang.Unary(oper.value, right, token=oper)
 
-def callExpr(tokens: Tokens, callable: lang.Name) -> lang.Call:
+def callExpr(tokens: Tokens, callableExpr: lang.Get) -> lang.Call:
     args: Tuple[lang.Expr, ...] = tuple()
     while not expectWord(tokens, ')'):
         if len(args) > 0:
             matchWordElseError(tokens, ',')
         args += (expression(tokens)),
     matchWordElseError(tokens, ')', msg="after '('")
-    return lang.Call(callable, args)
+    return lang.Call(callableExpr, args)
 
-def attrExpr(tokens: Tokens, objGet: lang.Name) -> lang.GetAttr:
+def attrExpr(tokens: Tokens, objExpr: lang.Expr) -> lang.GetAttr:
     name = identifier(tokens)
-    return lang.GetAttr(objGet, name)
+    return lang.GetAttr(objExpr, name)
 
-def indexExpr(tokens: Tokens, objGet: lang.Name) -> lang.GetIndex:
+def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.GetIndex:
     indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
     matchWordElseError(tokens, ']')
-    return lang.GetIndex(objGet, indexes)
+    return lang.GetIndex(arrayExpr, indexes)
 
-def value(tokens: Tokens) -> Union[lang.Name, lang.Expr]:
+def value(tokens: Tokens) -> lang.Expr:
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary(tokens)

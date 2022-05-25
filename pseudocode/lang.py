@@ -20,7 +20,7 @@ ParamDecl = "Declare"  # ProcFunc params (in statement)
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
-Get = Union["GetName", "GetAttr", "GetIndex"]  # Any kind of Get
+Get = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]  # Any kind of Get
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
 
@@ -661,7 +661,7 @@ class GetIndex(Expr):
     __slots__ = ('array', 'index')
     def __init__(
         self,
-        array: "Array",
+        array: Get,
         index: IndexExpr,
     ) -> None:
         self.array = array
@@ -676,7 +676,7 @@ class GetAttr(Expr):
     __slots__ = ('object', 'name')
     def __init__(
         self,
-        object: "Object",
+        object: Get,
         name: Name,
     ) -> None:
         self.object = object
@@ -691,7 +691,7 @@ class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(
         self,
-        callable: "GetName",
+        callable: Get,
         args: Args,
     ) -> None:
         self.callable = callable
@@ -742,7 +742,7 @@ class Input(Stmt):
     def __init__(
         self,
         rule: str,
-        name: "Name",
+        name: Get,
     ) -> None:
         self.rule = rule
         self.name = name
@@ -786,7 +786,7 @@ class ProcFunc(Stmt):
     def __init__(
         self,
         rule: str,
-        name: Name,
+        name: Get,
         passby: str,
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
@@ -806,7 +806,7 @@ class TypeStmt(Stmt):
     def __init__(
         self,
         rule: str,
-        name: Name,
+        name: Get,
         exprs: Iterable["Expr"],
     ) -> None:
         self.rule = rule
@@ -833,7 +833,7 @@ class ReadFile(Stmt):
         self,
         rule: str,
         filename: "Expr",
-        target: Name,  # TODO: Support other Gets
+        target: Get,  # TODO: Support other Gets
     ) -> None:
         self.rule = rule
         self.filename = filename
