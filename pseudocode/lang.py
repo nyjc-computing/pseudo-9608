@@ -743,14 +743,14 @@ class Output(Stmt):
 
 
 class Input(Stmt):
-    __slots__ = ('rule', 'name')
+    __slots__ = ('rule', 'keyExpr')
     def __init__(
         self,
         rule: str,
-        name: Get,
+        key: GetExpr,
     ) -> None:
         self.rule = rule
-        self.name = name
+        self.key = key
 
 
 
