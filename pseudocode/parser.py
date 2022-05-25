@@ -101,7 +101,7 @@ def grouping(tokens: Tokens) -> lang.Expr:
     matchWordElseError(tokens, ')', msg="after '('")
     return expr
 
-def callExpr(tokens: Tokens, callableExpr: lang.Get) -> lang.Call:
+def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
     args: Tuple[lang.Expr, ...] = tuple()
     while not expectWord(tokens, ')'):
         if len(args) > 0:
@@ -110,11 +110,11 @@ def callExpr(tokens: Tokens, callableExpr: lang.Get) -> lang.Call:
     matchWordElseError(tokens, ')', msg="after '('")
     return lang.Call(callableExpr, args)
 
-def attrExpr(tokens: Tokens, objExpr: lang.KeyMapExpr) -> lang.GetAttr:
+def attrExpr(tokens: Tokens, objExpr: lang.NameExpr) -> lang.GetAttr:
     name = identifier(tokens)
     return lang.GetAttr(objExpr, name)
 
-def indexExpr(tokens: Tokens, arrayExpr: lang.KeyMapExpr) -> lang.GetIndex:
+def indexExpr(tokens: Tokens, arrayExpr: lang.NameExpr) -> lang.GetIndex:
     indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
