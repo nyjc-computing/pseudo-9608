@@ -8,6 +8,7 @@ from itertools import product
 # Pseudocode types
 # These are used for type-checking
 PyLiteral = Union[bool, int, float, str]  # Simple data types
+TokenValue = Union[PyLiteral, function, object]  # Token values
 Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
@@ -34,7 +35,7 @@ class Token:
         column: int,
         type: Type,
         word: str,
-        value: PyLiteral,
+        value: TokenValue,
     ) -> None:
         self.line = line
         self.col = column

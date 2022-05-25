@@ -1,5 +1,6 @@
-from typing import List, Tuple, Mapping
-Code = Mapping
+from typing import Optional
+from typing import List, Tuple, MutableMapping
+Code = MutableMapping
 
 from . import builtin, lang
 
@@ -22,7 +23,7 @@ def makeToken(
     code: Code,
     type: lang.Type,
     word: str,
-    value: lang.PyLiteral,
+    value: Optional[lang.TokenValue],
 ) -> lang.Token:
     line = code['line']
     column = code['cursor'] - code['lineStart'] - len(word)
