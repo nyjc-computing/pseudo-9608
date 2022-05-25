@@ -1,4 +1,4 @@
-from typing import Optional, Union, Protocol
+from typing import Any, Optional, Union, Protocol
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Tuple, List
 from typing import Callable as function, TextIO
@@ -8,7 +8,6 @@ from itertools import product
 # Pseudocode types
 # These are used for type-checking
 PyLiteral = Union[bool, int, float, str]  # Simple data types
-TokenValue = Union[PyLiteral, function, object]  # Token values
 Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
@@ -40,7 +39,7 @@ class Token:
         column: int,
         type: Type,
         word: str,
-        value: TokenValue,
+        value: Any,
     ) -> None:
         self.line = line
         self.col = column

@@ -345,7 +345,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token())
     if matchWord(tokens, 'STEP'):
         parse = parser(tokens)
-        step: lang.Expr = parse(tokens)
+        step = parse(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
     stmts = []
     while not matchWord(tokens, 'ENDFOR'):

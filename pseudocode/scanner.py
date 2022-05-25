@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any
 from typing import List, Tuple
 
 from . import builtin, lang
@@ -22,7 +22,7 @@ def makeToken(
     code: "Code",
     type: lang.Type,
     word: str,
-    value: Optional[lang.TokenValue],
+    value: Any,
 ) -> lang.Token:
     column = code.cursor - code.lineStart - len(word)
     return lang.Token(code.line, column, type, word, value)
