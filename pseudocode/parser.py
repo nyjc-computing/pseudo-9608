@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Tuple, List
+from typing import Union, Optional, Iterable, Tuple, List
 
 from . import builtin, lang
 
@@ -93,7 +93,7 @@ def unary(tokens: Tokens) -> lang.Unary:
     return lang.Unary(oper.value, right, token=oper)
 
 def callExpr(tokens: Tokens, callable: lang.Name) -> lang.Call:
-    args = tuple()
+    args: Tuple[lang.Expr] = tuple()
     while not expectWord(tokens, ')'):
         if len(args) > 0:
             matchWordElseError(tokens, ',')
