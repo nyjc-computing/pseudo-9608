@@ -402,33 +402,33 @@ def returnStmt(tokens: Tokens) -> lang.ExprStmt:
     matchWordElseError(tokens, '\n', msg="at end of RETURN")
     return lang.ExprStmt('return', expr)
 
-def openfileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def openfileStmt(tokens: Tokens) -> lang.OpenFile:
+    filename = value(tokens)
     matchWordElseError(tokens, 'FOR', msg="after file identifier")
     mode = matchWordElseError(
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
     )
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'open', name, mode.word, None)
+    return lang.OpenFile('file', filename, mode.word)
 
-def readfileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def readfileStmt(tokens: Tokens) -> lang.ReadFile:
+    filename = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     varname = identifier(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'read', name, None, str(varname))
+    return lang.ReadFile('file', filename, None, varname)
 
-def writefileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def writefileStmt(tokens: Tokens) -> lang.WriteFile:
+    filename = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     data = expression(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'write', name, None, data)
+    return lang.WriteFile('file', filename, data)
 
-def closefileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def closefileStmt(tokens: Tokens) -> lang.CloseFile:
+    filename = value(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'close', name, None, None)
+    return lang.CloseFile('file', filename)
 
 # Statement hierarchy
 # Statements are parsed in this order (most to least restrictive):
