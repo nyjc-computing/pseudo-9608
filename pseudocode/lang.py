@@ -102,7 +102,7 @@ class TypeTemplate:
     """
     Represents a type template in 9608 pseudocode.
     A type template can be cloned to create a TypedValue slot
-    (for an Object or Frame).
+    (in a Frame or Object).
     """
     def __init__(
         self,
@@ -122,6 +122,15 @@ class TypeTemplate:
         if isinstance(self.value, TypeTemplate):
             return TypedValue(self.type, self.value.clone())
         return TypedValue(self.type, self.value)
+
+
+
+class ObjectTemplate:
+    """
+    Represents an object template in 9608 pseudocode.
+    An object template can be cloned to create an Object
+    (in a Frame or nested Object).
+    """
 
 
 
