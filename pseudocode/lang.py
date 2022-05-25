@@ -15,6 +15,7 @@ IndexExpr = Tuple["Literal", ...]  # Array indexes
 IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
 Args = Iterable["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
+# HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
