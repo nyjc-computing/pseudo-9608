@@ -20,6 +20,7 @@ ParamDecl = "Declare"  # ProcFunc params (in statement)
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
+NameExpr = Union["UnresolvedName", "GetName"]  # For Name parsing
 Get = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]  # Any kind of Get
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
@@ -647,7 +648,7 @@ class GetName(Expr):
     def __init__(
         self,
         frame: "Frame",
-        name: Name,
+        name: NameExpr,
     ) -> None:
         self.frame = frame
         self.name = name
@@ -677,7 +678,7 @@ class GetAttr(Expr):
     def __init__(
         self,
         object: Get,
-        name: Name,
+        name: NameExpr,
     ) -> None:
         self.object = object
         self.name = name
