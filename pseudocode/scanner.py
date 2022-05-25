@@ -1,8 +1,7 @@
-from typing import Iterable, Tuple, Mapping
+from typing import List, Tuple, Mapping
 Code = Mapping
 
-from . import builtin
-from .lang import Token, Type, Lit
+from . import builtin, lang
 
 
 
@@ -21,13 +20,13 @@ def consume(code: Code) -> str:
 
 def makeToken(
     code: Code,
-    type: Type,
+    type: lang.Type,
     word: str,
-    value: Lit,
-) -> Token:
+    value: lang.PyLiteral,
+) -> lang.Token:
     line = code['line']
     column = code['cursor'] - code['lineStart'] - len(word)
-    return Token(line, column, type, word, value)
+    return lang.Token(line, column, type, word, value)
 
 
     
@@ -71,7 +70,7 @@ def symbol(code: Code) -> str:
 
 # Main scanning loop
 
-def scan(src: str) -> Tuple[Iterable]:
+def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
     if not src.endswith('\n'):
         src = src + '\n'
     code = {
