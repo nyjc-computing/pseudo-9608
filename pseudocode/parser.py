@@ -198,7 +198,7 @@ def assignment(tokens: Tokens) -> lang.Assign:
     while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
-            assignee = arrayExpr(tokens, assignee)
+            assignee = indexExpr(tokens, assignee)
         # Attribute get
         elif matchWord(tokens, '.'):
             assignee = attrExpr(tokens, assignee)
