@@ -107,7 +107,7 @@ class TypeTemplate:
     def __init__(
         self,
         type: Type,
-        value: Optional["Object"],
+        value: Optional["ObjectTemplate"],
     ) -> None:
         self.type = type
         self.value = value
@@ -119,7 +119,7 @@ class TypeTemplate:
         """
         This returns an empty TypedValue of the same type
         """
-        if isinstance(self.value, TypeTemplate):
+        if isinstance(self.value, ObjectTemplate):
             return TypedValue(self.type, self.value.clone())
         return TypedValue(self.type, self.value)
 
@@ -128,9 +128,32 @@ class TypeTemplate:
 class ObjectTemplate:
     """
     Represents an object template in 9608 pseudocode.
+    A space that maps Names to Types.
     An object template can be cloned to create an Object
     (in a Frame or nested Object).
     """
+    def __init__(
+        self,
+        typesys: "TypeSystem",
+    ) -> None:
+        self.types = typesys
+        self.data: Dict[NameKey, Type] = {}
+
+    def __repr__(self) -> str:
+        return repr(self.data)
+
+    def declare(self, name: NameKey, type: Type) -> None:
+        self.data[name] = type
+
+    def clone(self) -> "Object":
+        """
+        This returns an empty Object with the same names
+        declared.
+        """
+        obj = Object(typesys=self.types)
+        for name, type in self.data.items():
+            obj.declare(name, type)
+        return obj
 
 
 
