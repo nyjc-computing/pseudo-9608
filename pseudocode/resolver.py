@@ -5,12 +5,12 @@ from . import builtin, lang
 
 
 
-# Helper functions
+# Resolver helper functions
 
-def isProcedure(callable: Any) -> bool:
+def isProcedure(callable: lang.PseudoValue) -> bool:
     return isinstance(callable, lang.Procedure)
 
-def isFunction(callable: Any) -> bool:
+def isFunction(callable: lang.PseudoValue) -> bool:
     return type(callable) in (lang.Builtin, lang.Function)
 
 def expectTypeElseError(
@@ -41,7 +41,7 @@ def declaredElseError(
 
 def lookupElseError(
     frame: lang.Frame,
-    name: lang.Key,
+    name: lang.NameKey,
     errmsg: str="Undeclared",
     *,
     token: lang.Token,
@@ -178,41 +178,43 @@ def resolveBinary(
         return 'REAL'
 
 def resolveAssign(
-    frame: lang.Frame,
+    keymap: lang.PseudoMap,
     expr: lang.Assign,
 ) -> lang.Type:
     # assignee frame might be a Frame or Get(Object)
-    assnType = resolveGet(frame, expr.assignee)
-    exprType = resolve(frame, expr.expr)
+    assnType = resolveGetName(keymap, expr.assignee)
+    exprType = resolve(keymap, expr.expr)
     expectTypeElseError(
         exprType, assnType, token=expr.token()
     )
 
 # Helper for resolving attribute types
 def resolveAttr(
-    typesystem: lang.TypeSystem,
-    objType: lang.Type,
-    name: lang.Name,
+    frame: lang.Frame,
+    expr: lang.NameExpr,  # evaluates to Object
     *,
     token: lang.Token,
 ) -> lang.Type:
+    """Resolves a GetAttr Expr to return an attribute's type"""
+    objType = resolveGetName(expr.frame, expr.name)
     # Check objType existence in typesystem
     declaredElseError(
-        typesystem, objType,
+        frame.types, objType,
         errmsg="Undeclared type", token=token
     )
     # Check attribute existence in object template
-    objTemplate = typesystem.clone(objType)
+    objTemplate = frame.types.clone(objType)
     declaredElseError(
-        objTemplate, name,
+        objTemplate, expr.name,
         errmsg="Undeclared attribute", token=token
     )
-    return objTemplate.getType(name)
+    return objTemplate.getType(expr.name)
 
-def resolveArray(
+def resolveIndex(
     frame: lang.Frame,
-    expr: lang.Get,
+    expr: lang.GetIndex,  # evaluates to Array
 ) -> lang.Type:
+    """Resolves a GetIndex Expr to return an array element's type"""
     def intsElseError(frame, *indexes):
         for indexExpr in indexes:
             nameType = resolve(frame, indexExpr)
