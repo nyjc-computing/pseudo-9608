@@ -181,7 +181,6 @@ def resolveAssign(
         exprType, assnType, token=expr.token()
     )
 
-# Helper for resolving attribute types
 def resolveAttr(
     frame: lang.Frame,
     expr: lang.NameExpr,  # evaluates to Object
@@ -237,7 +236,6 @@ def resolveGet(frame, expr: lang.NameExpr) -> lang.Type:
         return resolveGetName(frame, expr)
     assert not isinstance(expr, lang.UnresolvedName), \
         "Encountered UnresolvedName in resolveGet"
-        
 
 def resolveProcCall(
     frame: lang.Frame,
