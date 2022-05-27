@@ -224,12 +224,12 @@ def outputStmt(tokens: Tokens) -> lang.Output:
     while matchWord(tokens, ','):
         exprs += [expression(tokens)]
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Output('output', exprs)
+    return lang.Output(exprs)
 
 def inputStmt(tokens: Tokens) -> lang.Input:
     name = identifier(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Input('input', name)
+    return lang.Input(name)
 
 def colonRange(tokens: Tokens) -> Tuple:
     """Parse and return a start:end range as a tuple"""
@@ -259,10 +259,10 @@ def declare(tokens: Tokens) -> lang.Declare:
         metadata['type'] = consume(tokens).word
     return lang.Declare(str(name), typetoken.word, metadata, token=name.token())
     
-def declareStmt(tokens: Tokens) -> lang.ExprStmt:
+def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     expr = declare(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.ExprStmt('declare', expr)
+    return lang.DeclareStmt(expr)
 
 def typeStmt(tokens: Tokens) -> lang.TypeStmt:
     name = identifier(tokens)
@@ -274,14 +274,14 @@ def typeStmt(tokens: Tokens) -> lang.TypeStmt:
         matchWordElseError(tokens, '\n')
     matchWordElseError(tokens, 'ENDTYPE')
     matchWordElseError(tokens, '\n')
-    return lang.TypeStmt('declaretype', name, exprs)
+    return lang.TypeStmt(name, exprs)
 
-def assignStmt(tokens: Tokens) -> lang.ExprStmt:
+def assignStmt(tokens: Tokens) -> lang.AssignStmt:
     expr = assignment(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.ExprStmt('assign', expr)
+    return lang.AssignStmt(expr)
 
-def caseStmt(tokens: Tokens) -> lang.Conditional:
+def caseStmt(tokens: Tokens) -> lang.Case:
     matchWordElseError(tokens, 'OF', msg="after CASE")
     parse = parser(tokens)
     cond: lang.Expr = parse(tokens)
@@ -296,9 +296,9 @@ def caseStmt(tokens: Tokens) -> lang.Conditional:
         fallback = [statement6(tokens)]
     matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
     matchWordElseError(tokens, '\n', msg="after ENDCASE")
-    return lang.Conditional('case', cond, stmts, fallback)
+    return lang.Case(cond, stmts, fallback)
 
-def ifStmt(tokens: Tokens) -> lang.Conditional:
+def ifStmt(tokens: Tokens) -> lang.If:
     cond = expression(tokens)
     matchWord(tokens, '\n')  # optional line break
     matchWordElseError(tokens, 'THEN')
@@ -315,7 +315,7 @@ def ifStmt(tokens: Tokens) -> lang.Conditional:
         fallback = false
     matchWordElseError(tokens, 'ENDIF', msg="at end of IF")
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Conditional('if', cond, stmts, fallback)
+    return lang.If(cond, stmts, fallback)
 
 def whileStmt(tokens: Tokens) -> lang.Loop:
     cond = expression(tokens)
@@ -325,7 +325,7 @@ def whileStmt(tokens: Tokens) -> lang.Loop:
     while not matchWord(tokens, 'ENDWHILE'):
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDWHILE")
-    return lang.Loop('while', None, cond, stmts)
+    return lang.Loop(None, cond, stmts)
 
 def repeatStmt(tokens: Tokens) -> lang.Loop:
     matchWordElseError(tokens, '\n', msg="after REPEAT")
@@ -334,7 +334,7 @@ def repeatStmt(tokens: Tokens) -> lang.Loop:
         stmts += [statement5(tokens)]
     cond = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
-    return lang.Loop('repeat', None, cond, stmts)
+    return lang.Loop(None, cond, stmts)
 
 def forStmt(tokens: Tokens) -> lang.Loop:
     init = assignment(tokens)
@@ -357,11 +357,11 @@ def forStmt(tokens: Tokens) -> lang.Loop:
         init.assignee,
         lang.Binary(init.assignee, builtin.add, step, token=step.token()),
     )
-    initStmt = lang.ExprStmt('assign', init)
-    incrStmt = lang.ExprStmt('assign', incr)
-    return lang.Loop('while', initStmt, cond, stmts + [incrStmt])
+    initStmt = lang.AssignStmt(init)
+    incrStmt = lang.AssignStmt(incr)
+    return lang.Loop(initStmt, cond, stmts + [incrStmt])
 
-def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
+def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     name = identifier(tokens)
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
@@ -381,15 +381,15 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     while not matchWord(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDPROCEDURE")
-    return lang.ProcFunc('procedure', name, passby, params, stmts, 'NULL')
+    return lang.ProcedureStmt(name, passby, params, stmts, 'NULL')
 
-def callStmt(tokens: Tokens) -> lang.ExprStmt:
+def callStmt(tokens: Tokens) -> lang.CallStmt:
     parse = parser(tokens)
     callable: lang.Expr = parse(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.ExprStmt('call', callable)
+    return lang.CallStmt(callable)
 
-def functionStmt(tokens: Tokens) -> lang.ProcFunc:
+def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     name = identifier(tokens)
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
@@ -407,14 +407,14 @@ def functionStmt(tokens: Tokens) -> lang.ProcFunc:
     while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
-    return lang.ProcFunc(
+    return lang.FunctionStmt(
         'function', name, passby, params, stmts, typetoken.word
     )
 
-def returnStmt(tokens: Tokens) -> lang.ExprStmt:
+def returnStmt(tokens: Tokens) -> lang.Return:
     expr = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of RETURN")
-    return lang.ExprStmt('return', expr)
+    return lang.Return(expr)
 
 def openfileStmt(tokens: Tokens) -> lang.OpenFile:
     parse = parser(tokens)
@@ -424,7 +424,7 @@ def openfileStmt(tokens: Tokens) -> lang.OpenFile:
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
     )
     matchWordElseError(tokens, '\n')
-    return lang.OpenFile('file', filename, mode.word)
+    return lang.OpenFile(filename, mode.word)
 
 def readfileStmt(tokens: Tokens) -> lang.ReadFile:
     parse = parser(tokens)
@@ -432,7 +432,7 @@ def readfileStmt(tokens: Tokens) -> lang.ReadFile:
     matchWordElseError(tokens, ',', msg="after file identifier")
     varname = identifier(tokens)  # TODO: support other kinds of Gets
     matchWordElseError(tokens, '\n')
-    return lang.ReadFile('file', filename, varname)
+    return lang.ReadFile(filename, varname)
 
 def writefileStmt(tokens: Tokens) -> lang.WriteFile:
     parse = parser(tokens)
@@ -440,13 +440,13 @@ def writefileStmt(tokens: Tokens) -> lang.WriteFile:
     matchWordElseError(tokens, ',', msg="after file identifier")
     data = expression(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.WriteFile('file', filename, data)
+    return lang.WriteFile(filename, data)
 
 def closefileStmt(tokens: Tokens) -> lang.CloseFile:
     parse = parser(tokens)
     filename: lang.Expr = parse(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.CloseFile('file', filename)
+    return lang.CloseFile(filename)
 
 # Statement hierarchy
 # Statements are parsed in this order (most to least restrictive):
