@@ -824,7 +824,7 @@ class OpenFile(Stmt):
     def __init__(
         self,
         rule: str,
-        filename: "Expr",
+        filename: "Expr",  # TODO: Support other Exprs
         mode: str,
     ) -> None:
         self.rule = rule
@@ -836,8 +836,8 @@ class ReadFile(Stmt):
     def __init__(
         self,
         rule: str,
-        filename: "Expr",
-        target: GetExpr,  # TODO: Support other Gets
+        filename: "Expr",  # TODO: Support other Exprs
+        target: GetExpr,
     ) -> None:
         self.rule = rule
         self.filename = filename
@@ -848,8 +848,8 @@ class WriteFile(Stmt):
     def __init__(
         self,
         rule: str,
-        filename: "Expr",
-        data: "Expr",  # TODO: Support other Gets
+        filename: "Expr",  # TODO: Support other Exprs
+        data: "Expr",
     ) -> None:
         self.rule = rule
         self.filename = filename
@@ -860,7 +860,7 @@ class CloseFile(Stmt):
     def __init__(
         self,
         rule: str,
-        filename: "Expr",
+        filename: "Expr",  # TODO: Support other Exprs
     ) -> None:
         self.rule = rule
         self.filename = filename

@@ -431,7 +431,7 @@ def readfileStmt(tokens: Tokens) -> lang.ReadFile:
     parse = parser(tokens)
     filename: lang.Expr = parse(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
-    varname = identifier(tokens)
+    varname = identifier(tokens)  # TODO: support other kinds of Gets
     matchWordElseError(tokens, '\n')
     return lang.ReadFile('file', filename, varname)
 
