@@ -188,7 +188,6 @@ def resolveAssign(
     keymap: lang.PseudoMap,
     expr: lang.Assign,
 ) -> lang.Type:
-    # assignee frame might be a Frame or Get(Object)
     if isinstance(expr.assignee, lang.UnresolvedName):
         expr.callable = resolveName(keymap, expr.assignee)
     assnType = resolveGetName(keymap, expr.assignee)
@@ -232,10 +231,10 @@ def resolveIndex(
                 nameType, 'INTEGER', token=indexExpr.token()
             )
     # Array indexes must be integer
+    intsElseError(frame, *expr.index)
     expectTypeElseError(
         ## Expect array
         resolve(frame, expr.arrayExpr), 'ARRAY', token=expr.arrayExpr.token())
-    intsElseError(frame, *expr.index)
     array: lang.Array = frame.getValue(expr.frame.name)
     return array.elementType
 
@@ -274,7 +273,6 @@ def resolveFuncCall(
     frame: lang.Frame,
     expr: lang.Call,
 ) -> lang.Type:
-    # Resolve global frame where function is declared
     if isinstance(expr.callable, lang.UnresolvedName):
         expr.callable = resolveName(frame, expr.callable)
     callableType = resolveGetName(frame, expr.callable)
@@ -351,7 +349,6 @@ def resolveExprs(
 def verifyStmts(frame: lang.Frame, stmts: Iterable[lang.Stmt]) -> None:
     for stmt in stmts:
         stmtType = verify(frame, stmt)
-        # For Return statements
         if stmt.rule == 'return':
             expectTypeElseError(
                 stmtType, stmt.returnType, token=stmt.name.token()
@@ -400,7 +397,6 @@ def verifyParams(frame: lang.Frame, params: Iterable[lang.Param], passby: str) -
         params[i] = frame.get(expr.name)
 
 def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
-    # Set up local frame
     local = lang.Frame(typesys=frame.types, outer=frame)
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(stmt.name, 'NULL')
@@ -408,11 +404,9 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, stmt.params, stmt.stmts
     ))
     verifyParams(local, stmt.params, stmt.passby)
-    # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
 def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
-    # Set up local frame
     local = lang.Frame(typesys=frame.types, outer=frame)
     # Assign function in frame first, to make recursive calls work
     frame.declare(stmt.name, stmt.returnType)
@@ -423,7 +417,6 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     # Check for return statements
     if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise builtin.LogicError("No RETURN in function", stmt.name.token())
-    # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
 def verifyFile(
