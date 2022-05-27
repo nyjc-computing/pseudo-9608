@@ -1,4 +1,4 @@
-from typing import Optional, Union, Iterable, Tuple, List
+from typing import Any, Optional, Union, Iterable, Tuple, List, Literal
 from typing import Callable as function
 
 from . import builtin, lang
@@ -138,7 +138,7 @@ def name(tokens: Tokens) -> lang.NameExpr:
             nameExpr = attrExpr(tokens, nameExpr)
     return nameExpr
 
-def parser(tokens: Tokens) -> function[[Tokens], lang.Expr]:
+def parser(tokens: Tokens) -> function[[Tokens], Any]:
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary
@@ -365,11 +365,10 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     name = identifier(tokens)
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
+        passby: lang.Passby = 'BYVALUE'
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
             passby = passbyToken.word
-        else:
-            passby = 'BYVALUE'
         expr = declare(tokens)
         params += [expr]
         while matchWord(tokens, ','):
@@ -385,7 +384,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
 
 def callStmt(tokens: Tokens) -> lang.CallStmt:
     parse = parser(tokens)
-    callable: lang.Expr = parse(tokens)
+    callable: lang.Call = parse(tokens)
     matchWordElseError(tokens, '\n')
     return lang.CallStmt(callable)
 
@@ -393,7 +392,7 @@ def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     name = identifier(tokens)
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
-        passby: str = 'BYVALUE'
+        passby: lang.Passby = 'BYVALUE'
         var = declare(tokens)
         params += [var]
         while matchWord(tokens, ','):

@@ -13,6 +13,7 @@ NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Literal", ...]  # Array indexes
 IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
+Passby = LiteralType['BYREF', 'BYVALUE']
 Args = Iterable["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
@@ -38,8 +39,8 @@ class Token:
         line: int,
         column: int,
         type: Type,
-        word: str,
-        value: Any,
+        word,
+        value,
     ) -> None:
         self.line = line
         self.col = column
