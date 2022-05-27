@@ -800,9 +800,27 @@ class Loop(Stmt):
         self.cond = cond
         self.stmts = stmts
 
-class While(Loop): ...
+class While(Loop):
+    def __init__(
+        self,
+        init: Optional["Stmt"],
+        cond: "Expr",
+        stmts: Iterable["Stmt"],
+    ) -> None:
+        self.init = init
+        self.cond = cond
+        self.stmts = stmts
 
-class Repeat(Loop): ...
+class Repeat(Loop):
+    def __init__(
+        self,
+        init: None,
+        cond: "Expr",
+        stmts: Iterable["Stmt"],
+    ) -> None:
+        self.init = init
+        self.cond = cond
+        self.stmts = stmts
 
 
 
@@ -811,7 +829,7 @@ class ProcFunc(Stmt):
     def __init__(
         self,
         name: GetExpr,
-        passby: str,
+        passby: Literal['BYVALUE', 'BYREF'],
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
         returnType: Type,
