@@ -1,6 +1,6 @@
 from typing import Any, Optional, Union, Protocol
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
-from typing import Tuple, List
+from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, TextIO
 from abc import abstractmethod
 from itertools import product
@@ -829,7 +829,7 @@ class ProcFunc(Stmt):
     def __init__(
         self,
         name: GetExpr,
-        passby: Literal['BYVALUE', 'BYREF'],
+        passby: LiteralType['BYVALUE', 'BYREF'],
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
         returnType: Type,
