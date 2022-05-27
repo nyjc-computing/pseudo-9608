@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Tuple, List
+from typing import Optional, Union, Iterable, Tuple, List
 from typing import Callable as function
 
 from . import builtin, lang
@@ -112,7 +112,7 @@ def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
 
 def attrExpr(tokens: Tokens, objExpr: lang.NameExpr) -> lang.GetAttr:
     name = identifier(tokens)
-    return lang.GetAttr(objExpr, name)
+    return lang.GetAttr(objExpr, name.name)
 
 def indexExpr(tokens: Tokens, arrayExpr: lang.NameExpr) -> lang.GetIndex:
     indexes: lang.IndexExpr = (literal(tokens),)
@@ -122,24 +122,23 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.NameExpr) -> lang.GetIndex:
     return lang.GetIndex(arrayExpr, indexes)
 
 def name(tokens: Tokens) -> lang.NameExpr:
-    getExpr : lang.NameExpr = identifier(tokens)
+    unresolvedName = identifier(tokens)
     # After Call Expr, we expect to have any Value except Callable
-    # Might need a new type for this
-    # Should not parse for Call anymore
-    # Add more layers to recursive descent parser
+    unresolvedNameOrCall: Union[lang.UnresolvedName, lang.Call] = unresolvedName
     # Function call
     if matchWord(tokens, '('):
-       getExpr = callExpr(tokens, getExpr)
+       unresolvedNameOrCall = callExpr(tokens, unresolvedName)
+    nameExpr: lang.NameExpr = unresolvedNameOrCall
     while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
-            getExpr = indexExpr(tokens, getExpr)
+            nameExpr = indexExpr(tokens, nameExpr)
         # Attribute get
         if matchWord(tokens, '.'):
-            getExpr = attrExpr(tokens, getExpr)
-    return getExpr
+            nameExpr = attrExpr(tokens, nameExpr)
+    return nameExpr
 
-def parser(tokens: Tokens) -> function[[Tokens], function]:
+def parser(tokens: Tokens) -> function[[Tokens], lang.Expr]:
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary
