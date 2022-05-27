@@ -727,6 +727,14 @@ class ExprStmt(Stmt):
         self.rule = rule
         self.expr = expr
 
+class AssignStmt(ExprStmt): ...
+
+class DeclareStmt(ExprStmt): ...
+
+class CallSmt(ExprStmt): ...
+
+class Return(ExprStmt): ...
+
 
 
 class Output(Stmt):
