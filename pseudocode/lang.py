@@ -707,7 +707,6 @@ class Call(Expr):
 
 
 class Stmt:
-    rule: str = NotImplemented
     __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
@@ -718,7 +717,7 @@ class Stmt:
 
 
 class ExprStmt(Stmt):
-    __slots__ = ('rule', 'expr')
+    __slots__ = ('expr',)
     def __init__(
         self,
         rule: str,
@@ -738,39 +737,33 @@ class Return(ExprStmt): ...
 
 
 class Output(Stmt):
-    __slots__ = ('rule', 'exprs')
+    __slots__ = ('exprs',)
     def __init__(
         self,
-        rule: str,
         exprs: Iterable["Expr"],
     ) -> None:
-        self.rule = rule
         self.exprs = exprs
 
 
 
 class Input(Stmt):
-    __slots__ = ('rule', 'keyExpr')
+    __slots__ = ('keyExpr',)
     def __init__(
         self,
-        rule: str,
         key: GetExpr,
     ) -> None:
-        self.rule = rule
         self.key = key
 
 
 
 class Conditional(Stmt):
-    __slots__ = ('rule', 'cond', 'stmtMap', 'fallback')
+    __slots__ = ('cond', 'stmtMap', 'fallback')
     def __init__(
         self,
-        rule: str,
         cond: "Expr",
         stmtMap: Mapping[PyLiteral, Iterable["Stmt"]],
         fallback: Optional[Iterable["Stmt"]],
     ) -> None:
-        self.rule = rule
         self.cond = cond
         self.stmtMap = stmtMap
         self.fallback = fallback
@@ -782,15 +775,13 @@ class If(Conditional): ...
 
 
 class Loop(Stmt):
-    __slots__ = ('rule', 'init', 'cond', 'stmts')
+    __slots__ = ('init', 'cond', 'stmts')
     def __init__(
         self,
-        rule: str,
         init: Optional["Stmt"],
         cond: "Expr",
         stmts: Iterable["Stmt"],
     ) -> None:
-        self.rule = rule
         self.init = init
         self.cond = cond
         self.stmts = stmts
@@ -798,17 +789,15 @@ class Loop(Stmt):
 
 
 class ProcFunc(Stmt):
-    __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
+    __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
-        rule: str,
         name: GetExpr,
         passby: str,
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
         returnType: Type,
     ) -> None:
-        self.rule = rule
         self.name = name
         self.passby = passby
         self.params = params
@@ -822,61 +811,51 @@ class FunctionStmt(ProcFunc): ...
 
 
 class TypeStmt(Stmt):
-    __slots__ = ('rule', 'name', 'exprs')
+    __slots__ = ('name', 'exprs')
     def __init__(
         self,
-        rule: str,
         name: NameExpr,
         exprs: Iterable["Expr"],
     ) -> None:
-        self.rule = rule
         self.name = name
         self.exprs = exprs
 
 
 
 class OpenFile(Stmt):
-    __slots__ = ('rule', 'filename', 'mode')
+    __slots__ = ('filename', 'mode')
     def __init__(
         self,
-        rule: str,
         filename: "Expr",  # TODO: Support other Exprs
         mode: str,
     ) -> None:
-        self.rule = rule
         self.filename = filename
         self.mode = mode
 
 class ReadFile(Stmt):
-    __slots__ = ('rule', 'filename', 'target')
+    __slots__ = ('filename', 'target')
     def __init__(
         self,
-        rule: str,
         filename: "Expr",  # TODO: Support other Exprs
         target: GetExpr,
     ) -> None:
-        self.rule = rule
         self.filename = filename
         self.target = target
 
 class WriteFile(Stmt):
-    __slots__ = ('rule', 'filename', 'data')
+    __slots__ = ('filename', 'data')
     def __init__(
         self,
-        rule: str,
         filename: "Expr",  # TODO: Support other Exprs
         data: "Expr",
     ) -> None:
-        self.rule = rule
         self.filename = filename
         self.data = data
 
 class CloseFile(Stmt):
-    __slots__ = ('rule', 'filename')
+    __slots__ = ('filename')
     def __init__(
         self,
-        rule: str,
         filename: "Expr",  # TODO: Support other Exprs
     ) -> None:
-        self.rule = rule
         self.filename = filename
