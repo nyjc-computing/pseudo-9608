@@ -720,7 +720,6 @@ class ExprStmt(Stmt):
     __slots__ = ('expr',)
     def __init__(
         self,
-        rule: str,
         expr: "Expr",
     ) -> None:
         self.rule = rule
