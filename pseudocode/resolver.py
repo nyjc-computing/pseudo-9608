@@ -8,6 +8,9 @@ from . import builtin, lang
 
 # Resolver helper functions
 
+def isReturn(stmt: lang.Stmt) -> bool:
+    return isinstance(stmt, lang.Return)
+
 def isProcedure(callable: lang.PseudoValue) -> bool:
     return isinstance(callable, lang.Procedure)
 
@@ -347,7 +350,7 @@ def resolveExprs(
 def verifyStmts(frame: lang.Frame, stmts: Iterable[lang.Stmt]) -> None:
     for stmt in stmts:
         stmtType = verify(frame, stmt)
-        if isinstance(stmt, lang.Return):
+        if isReturn(stmt):
             expectTypeElseError(
                 stmtType, stmt.returnType, token=stmt.name.token()
             )
@@ -404,7 +407,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, params, stmt.stmts
     ))
     for stmt in callable.stmts:
-        if isinstance(stmt, lang.Return):
+        if isReturn(stmt):
             raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
     verifyStmts(local, stmt.stmts)
 
@@ -417,7 +420,7 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, params, stmt.stmts
     ))
     # Check for return statements
-    if not any([isinstance(stmt, lang.Return) for stmt in stmt.stmts]):
+    if not any([isReturn(stmt) for stmt in stmt.stmts]):
         raise builtin.LogicError("No RETURN in function", stmt.name.token())
     verifyStmts(local, stmt.stmts)
 
