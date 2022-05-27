@@ -1,45 +1,43 @@
-from typing import Iterable, Tuple, Mapping
-Code = Mapping
+from typing import Any
+from typing import List, Tuple
 
-from . import builtin
-from .lang import Token, Type, Lit
+from . import builtin, lang
 
 
 
 # Helper functions
 
-def atEnd(code: Code) -> bool:
-    return code['cursor'] >= code['length']
+def atEnd(code: "Code") -> bool:
+    return code.cursor >= code.length
 
-def check(code: Code) -> str:
-    return code['src'][code['cursor']]
+def check(code: "Code") -> str:
+    return code.src[code.cursor]
 
-def consume(code: Code) -> str:
+def consume(code: "Code") -> str:
     char = check(code)
-    code['cursor'] += 1
+    code.cursor += 1
     return char
 
 def makeToken(
-    code: Code,
-    type: Type,
+    code: "Code",
+    type: lang.Type,
     word: str,
-    value: Lit,
-) -> Token:
-    line = code['line']
-    column = code['cursor'] - code['lineStart'] - len(word)
-    return Token(line, column, type, word, value)
+    value: Any,
+) -> lang.Token:
+    column = code.cursor - code.lineStart - len(word)
+    return lang.Token(code.line, column, type, word, value)
 
 
-    
+
 # Scanning functions
 
-def word(code: Code) -> str:
+def word(code: "Code") -> str:
     token = consume(code)
     while not atEnd(code) and (check(code).isalpha() or check(code).isdigit()):
         token += consume(code)
     return token
 
-def number(code: Code) -> str:
+def number(code: "Code") -> str:
     token = consume(code)
     while not atEnd(code) and check(code).isdigit():
         token += consume(code)
@@ -51,7 +49,7 @@ def number(code: Code) -> str:
         token += consume(code)
     return token
 
-def string(code: Code) -> str:
+def string(code: "Code") -> str:
     token = consume(code)
     while not atEnd(code) and check(code) != '"':
         token += consume(code)
@@ -59,7 +57,7 @@ def string(code: Code) -> str:
         token += consume(code)
     return token
 
-def symbol(code: Code) -> str:
+def symbol(code: "Code") -> str:
     token = consume(code)
     if token in builtin.SYM_SINGLE:
         return token
@@ -69,19 +67,41 @@ def symbol(code: Code) -> str:
 
 
 
+class Code:
+    """
+    Encapsulates the source code and its properties.
+
+    Used by the scanner.
+    """
+    def __init__(
+        self,
+        src: str,
+    ):
+        self.src = src
+        self.cursor: int = 0
+        self.line: int = 1
+        self.lineStart: int = 0
+        self.lines: List[str] = []
+
+    @property
+    def length(self):
+        return len(self.src)
+
+    def nextLine(self):
+        start, end = self.lineStart, self.cursor - 1
+        self.lines += [self.src[start:end]]
+        self.line += 1
+        self.lineStart = self.cursor
+        
+    
+
+    
 # Main scanning loop
 
-def scan(src: str) -> Tuple[Iterable]:
+def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
     if not src.endswith('\n'):
         src = src + '\n'
-    code = {
-        'src': src,
-        'length': len(src),
-        'cursor': 0,
-        'line': 1,
-        'lineStart': 0,
-        'lines': [],
-    }
+    code = Code(src)
     tokens = []
     while not atEnd(code):
         char = check(code)
@@ -91,10 +111,7 @@ def scan(src: str) -> Tuple[Iterable]:
         elif char == '\n':
             text = consume(code)
             token = makeToken(code, 'keyword', text, None)
-            start, end = code['lineStart'], code['cursor'] - 1
-            code['lines'] += [code['src'][start:end]]
-            code['line'] += 1
-            code['lineStart'] = code['cursor']
+            code.nextLine()
         elif char.isalpha():
             text = word(code)
             if text in builtin.KEYWORDS:
@@ -130,7 +147,7 @@ def scan(src: str) -> Tuple[Iterable]:
             raise builtin.ParseError(
                 f"Unrecognised character",
                 token=char,
-                line=code['line'],
+                line=code.line,
             )
         tokens += [token]
-    return tokens, code['lines']
+    return tokens, code.lines

@@ -1,4 +1,4 @@
-from typing import Optional, Union, Protocol
+from typing import Any, Optional, Union, Protocol
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Tuple, List
 from typing import Callable as function, TextIO
@@ -19,6 +19,12 @@ ParamDecl = "Declare"  # ProcFunc params (in statement)
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
+# NameExprs are GetExprs that use a NameKey
+NameKeyExpr = Union["UnresolvedName", "GetName"]
+# GetExprs hold Exprs that evaluate to a KeyMap and a Key
+GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
+# NameExprs start with a name
+NameExpr = Union[GetExpr, "Call"]
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
 
@@ -33,7 +39,7 @@ class Token:
         column: int,
         type: Type,
         word: str,
-        value: PyLiteral,
+        value: Any,
     ) -> None:
         self.line = line
         self.col = column
@@ -525,7 +531,7 @@ class Expr:
     - token() -> Token
         Returns the token asociated with the expr
     """
-    __slots__: Iterable[str] = NotImplemented
+    __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -578,7 +584,7 @@ class Assign(Expr):
     __slots__ = ('assignee', 'expr')
     def __init__(
         self,
-        assignee: Union["GetName", "GetIndex", "GetAttr"],
+        assignee: GetExpr,
         expr: "Expr",
     ) -> None:
         self.assignee = assignee
@@ -627,6 +633,19 @@ class Binary(Expr):
 
 
 
+class UnresolvedName(Expr):
+    __slots__ = ('name',)
+    def __init__(
+        self,
+        name: Name,
+    ) -> None:
+        self.name = name
+
+    def token(self):
+        return self.name.token()
+
+
+
 class GetName(Expr):
     __slots__ = ('frame', 'name')
     def __init__(
@@ -646,7 +665,7 @@ class GetIndex(Expr):
     __slots__ = ('array', 'index')
     def __init__(
         self,
-        array: "Array",
+        array: NameExpr,
         index: IndexExpr,
     ) -> None:
         self.array = array
@@ -661,7 +680,7 @@ class GetAttr(Expr):
     __slots__ = ('object', 'name')
     def __init__(
         self,
-        object: "Object",
+        object: NameExpr,
         name: Name,
     ) -> None:
         self.object = object
@@ -676,7 +695,7 @@ class Call(Expr):
     __slots__ = ('callable', 'args')
     def __init__(
         self,
-        callable: "GetName",
+        callable: NameKeyExpr,
         args: Args,
     ) -> None:
         self.callable = callable
@@ -688,8 +707,7 @@ class Call(Expr):
 
 
 class Stmt:
-    rule: str = NotImplemented
-    __slots__: Iterable[str] = NotImplemented
+    __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
             repr(getattr(self, attr)) for attr in self.__slots__
@@ -699,7 +717,7 @@ class Stmt:
 
 
 class ExprStmt(Stmt):
-    __slots__ = ('rule', 'expr')
+    __slots__ = ('expr',)
     def __init__(
         self,
         rule: str,
@@ -708,140 +726,140 @@ class ExprStmt(Stmt):
         self.rule = rule
         self.expr = expr
 
+class AssignStmt(ExprStmt): ...
+
+class DeclareStmt(ExprStmt): ...
+
+class CallStmt(ExprStmt): ...
+
+class Return(ExprStmt): ...
+
 
 
 class Output(Stmt):
-    __slots__ = ('rule', 'exprs')
+    __slots__ = ('exprs',)
     def __init__(
         self,
-        rule: str,
         exprs: Iterable["Expr"],
     ) -> None:
-        self.rule = rule
         self.exprs = exprs
 
 
 
 class Input(Stmt):
-    __slots__ = ('rule', 'name')
+    __slots__ = ('keyExpr',)
     def __init__(
         self,
-        rule: str,
-        name: "Name",
+        key: GetExpr,
     ) -> None:
-        self.rule = rule
-        self.name = name
+        self.key = key
 
 
 
 class Conditional(Stmt):
-    __slots__ = ('rule', 'cond', 'stmtMap', 'fallback')
+    __slots__ = ('cond', 'stmtMap', 'fallback')
     def __init__(
         self,
-        rule: str,
         cond: "Expr",
         stmtMap: Mapping[PyLiteral, Iterable["Stmt"]],
         fallback: Optional[Iterable["Stmt"]],
     ) -> None:
-        self.rule = rule
         self.cond = cond
         self.stmtMap = stmtMap
         self.fallback = fallback
 
+class Case(Conditional): ...
+
+class If(Conditional): ...
+
 
 
 class Loop(Stmt):
-    __slots__ = ('rule', 'init', 'cond', 'stmts')
+    __slots__ = ('init', 'cond', 'stmts')
     def __init__(
         self,
-        rule: str,
         init: Optional["Stmt"],
         cond: "Expr",
         stmts: Iterable["Stmt"],
     ) -> None:
-        self.rule = rule
         self.init = init
         self.cond = cond
         self.stmts = stmts
 
+class While(Loop): ...
+
+class Repeat(Loop): ...
+
 
 
 class ProcFunc(Stmt):
-    __slots__ = ('rule', 'name', 'passby', 'params', 'stmts', 'returnType')
+    __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
-        rule: str,
-        name: Name,
+        name: GetExpr,
         passby: str,
-        params: Iterable[Param],
+        params: Iterable[Declare],
         stmts: Iterable["Stmt"],
         returnType: Type,
     ) -> None:
-        self.rule = rule
         self.name = name
         self.passby = passby
         self.params = params
         self.stmts = stmts
         self.returnType = returnType
 
+class ProcedureStmt(ProcFunc): ...
+
+class FunctionStmt(ProcFunc): ...
+
 
 
 class TypeStmt(Stmt):
-    __slots__ = ('rule', 'name', 'exprs')
+    __slots__ = ('name', 'exprs')
     def __init__(
         self,
-        rule: str,
-        name: Name,
+        name: NameExpr,
         exprs: Iterable["Expr"],
     ) -> None:
-        self.rule = rule
         self.name = name
         self.exprs = exprs
 
 
 
 class OpenFile(Stmt):
-    __slots__ = ('rule', 'filename', 'mode')
+    __slots__ = ('filename', 'mode')
     def __init__(
         self,
-        rule: str,
-        filename: "Expr",
+        filename: "Expr",  # TODO: Support other Exprs
         mode: str,
     ) -> None:
-        self.rule = rule
         self.filename = filename
         self.mode = mode
 
 class ReadFile(Stmt):
-    __slots__ = ('rule', 'filename', 'target')
+    __slots__ = ('filename', 'target')
     def __init__(
         self,
-        rule: str,
-        filename: "Expr",
-        target: Name,  # TODO: Support other Gets
+        filename: "Expr",  # TODO: Support other Exprs
+        target: GetExpr,
     ) -> None:
-        self.rule = rule
         self.filename = filename
         self.target = target
 
 class WriteFile(Stmt):
-    __slots__ = ('rule', 'filename', 'data')
+    __slots__ = ('filename', 'data')
     def __init__(
         self,
-        rule: str,
-        filename: "Expr",
-        data: "Expr",  # TODO: Support other Gets
+        filename: "Expr",  # TODO: Support other Exprs
+        data: "Expr",
     ) -> None:
-        self.rule = rule
         self.filename = filename
         self.data = data
 
 class CloseFile(Stmt):
-    __slots__ = ('rule', 'filename')
+    __slots__ = ('filename')
     def __init__(
         self,
-        rule: str,
-        filename: "Expr",
+        filename: "Expr",  # TODO: Support other Exprs
     ) -> None:
-        self.rule = rule
         self.filename = filename

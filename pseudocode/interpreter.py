@@ -319,25 +319,34 @@ def execute(
     *args,
     **kwargs,
 ) -> Optional[lang.Value]:
-    if stmt.rule == 'output':
+    if isinstance(stmt, lang.Output):
         execOutput(frame, stmt, **kwargs)
-    if stmt.rule == 'input':
+    if isinstance(stmt, lang.Input):
         execInput(frame, stmt, **kwargs)
-    if stmt.rule == 'case':
+    if isinstance(stmt, lang.Case):
         execCase(frame, stmt, **kwargs)
-    if stmt.rule == 'if':
+    if isinstance(stmt, lang.If):
         execIf(frame, stmt, **kwargs)
-    if stmt.rule == 'while':
+    if isinstance(stmt, lang.While):
         execWhile(frame, stmt, **kwargs)
-    if stmt.rule == 'repeat':
+    if isinstance(stmt, lang.Repeat):
         execRepeat(frame, stmt, **kwargs)
-    if stmt.rule == 'file':
+    if (
+        isinstance(stmt, lang.OpenFile)
+        or isinstance(stmt, lang.ReadFile)
+        or isinstance(stmt, lang.WriteFile)
+        or isinstance(stmt, lang.CloseFile)
+    ):
         execFile(frame, stmt, **kwargs)
-    if stmt.rule == 'call':
+    if isinstance(stmt, lang.CallStmt):
         execCall(frame, stmt, **kwargs)
-    if stmt.rule == 'assign':
+    if isinstance(stmt, lang.AssignStmt):
         execAssign(frame, stmt, **kwargs)
-    if stmt.rule == 'return':
+    if isinstance(stmt, lang.Return):
         return execReturn(frame, stmt, **kwargs)
-    if stmt.rule in ('declare', 'procedure', 'function'):
+    if (
+        isinstance(stmt, lang.DeclareStmt)
+        or isinstance(stmt, lang.ProcedureStmt)
+        or isinstance(stmt, lang.FunctionStmt)
+    ):
         pass

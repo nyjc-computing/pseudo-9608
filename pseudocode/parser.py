@@ -1,4 +1,5 @@
-from typing import Optional, Iterable, Tuple, List, Dict
+from typing import Optional, Union, Iterable, Tuple, List
+from typing import Callable as function
 
 from . import builtin, lang
 
@@ -77,87 +78,94 @@ def matchTypeElseError(
 # 5. <> | =
 # 6. AND | OR
 
-def identifier(tokens: Tokens) -> lang.Name:
+def identifier(tokens: Tokens) -> lang.UnresolvedName:
     if expectType(tokens, 'name'):
         token = consume(tokens)
-        return lang.Name(token.word, token=token)
+        name = lang.Name(token.word, token=token)
+        return lang.UnresolvedName(name)
     raise builtin.ParseError(f"Expected variable name", consume(tokens))
 
 def literal(tokens: Tokens) -> lang.Literal:
-    token = consume(tokens)
+    token = matchTypeElseError(tokens, *builtin.LITERAL, msg="index")
     return lang.Literal(token.type, token.value, token=token)
 
 def unary(tokens: Tokens) -> lang.Unary:
     oper = consume(tokens)
-    right = value(tokens)
+    parse = parser(tokens)
+    right: lang.Expr = parse(tokens)
     return lang.Unary(oper.value, right, token=oper)
 
-def name(tokens: Tokens) -> lang.Get:
-    iden = identifier(tokens)
-    return lang.Get(builtin.NULL, str(iden), token=iden.token())
-
-def callExpr(tokens: Tokens, callable: lang.Get) -> lang.Call:
-    args = []
-    argcount = 0
-    while not expectWord(tokens, ')'):
-        if argcount > 0:
-            matchWordElseError(tokens, ',')
-        arg = expression(tokens)
-        args += [arg]
-        argcount += 1
+def grouping(tokens: Tokens) -> lang.Expr:
+    matchWord(tokens, '(')
+    expr = expression(tokens)
     matchWordElseError(tokens, ')', msg="after '('")
-    return lang.Call(callable, args)
+    return expr
 
-def attrExpr(tokens: Tokens, objGet: lang.Get) -> lang.Get:
+def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
+    args: Tuple[lang.Expr, ...] = tuple()
+    while not expectWord(tokens, ')'):
+        if len(args) > 0:
+            matchWordElseError(tokens, ',')
+        args += (expression(tokens)),
+    matchWordElseError(tokens, ')', msg="after '('")
+    return lang.Call(callableExpr, args)
+
+def attrExpr(tokens: Tokens, objExpr: lang.NameExpr) -> lang.GetAttr:
     name = identifier(tokens)
-    return lang.Get(objGet, str(name), token=name.token())
+    return lang.GetAttr(objExpr, name.name)
 
-def arrayExpr(tokens: Tokens, objGet: lang.Expr) -> lang.Get:
-    index: List[lang.Expr] = [expression(tokens)]
+def indexExpr(tokens: Tokens, arrayExpr: lang.NameExpr) -> lang.GetIndex:
+    indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
-        index += [expression(tokens)]
+        indexes += (literal(tokens),)
     matchWordElseError(tokens, ']')
-    return lang.Get(objGet, tuple(index), token=objGet.token())
+    return lang.GetIndex(arrayExpr, indexes)
 
-def value(tokens: Tokens) -> lang.Expr:
+def name(tokens: Tokens) -> lang.NameExpr:
+    unresolvedName = identifier(tokens)
+    # After Call Expr, we expect to have any Value except Callable
+    unresolvedNameOrCall: Union[lang.UnresolvedName, lang.Call] = unresolvedName
+    # Function call
+    if matchWord(tokens, '('):
+       unresolvedNameOrCall = callExpr(tokens, unresolvedName)
+    nameExpr: lang.NameExpr = unresolvedNameOrCall
+    while expectWord(tokens, '[', '.'):
+        # Array get
+        if matchWord(tokens, '['):
+            nameExpr = indexExpr(tokens, nameExpr)
+        # Attribute get
+        if matchWord(tokens, '.'):
+            nameExpr = attrExpr(tokens, nameExpr)
+    return nameExpr
+
+def parser(tokens: Tokens) -> function[[Tokens], lang.Expr]:
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
-        return unary(tokens)
+        return unary
     #  A grouping
-    if matchWord(tokens, '('):
-        expr = expression(tokens)
-        matchWordElseError(tokens, ')', msg="after '('")
-        return expr
+    if expectWord(tokens, '('):
+        return grouping
     # A single value
     if expectType(tokens, *builtin.TYPES):
-        return literal(tokens)
+        return literal
     # A name or call or attribute
     if expectType(tokens, 'name'):
-        getExpr = name(tokens)
-        while expectWord(tokens, '[', '(', '.'):
-            # Array get
-            if matchWord(tokens, '['):
-                getExpr = arrayExpr(tokens, getExpr)
-            # Function call
-            elif matchWord(tokens, '('):
-                getExpr = callExpr(tokens, getExpr)
-            # Attribute get
-            elif matchWord(tokens, '.'):
-                getExpr = attrExpr(tokens, getExpr)
-        return getExpr
+        return name
     else:
         raise builtin.ParseError("Unexpected token", check(tokens))
 
-def muldiv(tokens: Tokens) -> lang.Binary:
+def muldiv(tokens: Tokens) -> lang.Expr:
     # *, /
-    expr = value(tokens)
+    parse = parser(tokens)
+    expr: lang.Expr = parse(tokens)
     while expectWord(tokens, '*', '/'):
         oper = consume(tokens)
-        right = value(tokens)
+        parse = parser(tokens)
+        right: lang.Expr = parse(tokens)
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def addsub(tokens: Tokens) -> lang.Binary:
+def addsub(tokens: Tokens) -> lang.Expr:
     expr = muldiv(tokens)
     while expectWord(tokens, '+', '-'):
         oper = consume(tokens)
@@ -165,7 +173,7 @@ def addsub(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def comparison(tokens: Tokens) -> lang.Binary:
+def comparison(tokens: Tokens) -> lang.Expr:
     # <, <=, >, >=
     expr = addsub(tokens)
     while expectWord(tokens, '<', '<=', '>', '>='):
@@ -174,7 +182,7 @@ def comparison(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def equality(tokens: Tokens) -> lang.Binary:
+def equality(tokens: Tokens) -> lang.Expr:
     # <>, =
     expr = comparison(tokens)
     while expectWord(tokens, '<>', '='):
@@ -183,7 +191,7 @@ def equality(tokens: Tokens) -> lang.Binary:
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
-def logical(tokens: Tokens) -> lang.Binary:
+def logical(tokens: Tokens) -> lang.Expr:
     # AND, OR
     expr = equality(tokens)
     while expectWord(tokens, 'AND', 'OR'):
@@ -197,11 +205,11 @@ def expression(tokens: Tokens) -> lang.Expr:
     return expr
 
 def assignment(tokens: Tokens) -> lang.Assign:
-    assignee = name(tokens)  # Get Expr
+    assignee: lang.GetExpr = identifier(tokens)
     while expectWord(tokens, '[', '.'):
         # Array get
         if matchWord(tokens, '['):
-            assignee = arrayExpr(tokens, assignee)
+            assignee = indexExpr(tokens, assignee)
         # Attribute get
         elif matchWord(tokens, '.'):
             assignee = attrExpr(tokens, assignee)
@@ -216,12 +224,12 @@ def outputStmt(tokens: Tokens) -> lang.Output:
     while matchWord(tokens, ','):
         exprs += [expression(tokens)]
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Output('output', exprs)
+    return lang.Output(exprs)
 
 def inputStmt(tokens: Tokens) -> lang.Input:
     name = identifier(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Input('input', name)
+    return lang.Input(name)
 
 def colonRange(tokens: Tokens) -> Tuple:
     """Parse and return a start:end range as a tuple"""
@@ -251,10 +259,10 @@ def declare(tokens: Tokens) -> lang.Declare:
         metadata['type'] = consume(tokens).word
     return lang.Declare(str(name), typetoken.word, metadata, token=name.token())
     
-def declareStmt(tokens: Tokens) -> lang.ExprStmt:
+def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     expr = declare(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.ExprStmt('declare', expr)
+    return lang.DeclareStmt(expr)
 
 def typeStmt(tokens: Tokens) -> lang.TypeStmt:
     name = identifier(tokens)
@@ -266,16 +274,17 @@ def typeStmt(tokens: Tokens) -> lang.TypeStmt:
         matchWordElseError(tokens, '\n')
     matchWordElseError(tokens, 'ENDTYPE')
     matchWordElseError(tokens, '\n')
-    return lang.TypeStmt('declaretype', str(name), exprs)
+    return lang.TypeStmt(name, exprs)
 
-def assignStmt(tokens: Tokens) -> lang.ExprStmt:
+def assignStmt(tokens: Tokens) -> lang.AssignStmt:
     expr = assignment(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.ExprStmt('assign', expr)
+    return lang.AssignStmt(expr)
 
-def caseStmt(tokens: Tokens) -> lang.Conditional:
+def caseStmt(tokens: Tokens) -> lang.Case:
     matchWordElseError(tokens, 'OF', msg="after CASE")
-    cond = value(tokens)
+    parse = parser(tokens)
+    cond: lang.Expr = parse(tokens)
     matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts: lang.Cases = {}
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
@@ -287,9 +296,9 @@ def caseStmt(tokens: Tokens) -> lang.Conditional:
         fallback = [statement6(tokens)]
     matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
     matchWordElseError(tokens, '\n', msg="after ENDCASE")
-    return lang.Conditional('case', cond, stmts, fallback)
+    return lang.Case(cond, stmts, fallback)
 
-def ifStmt(tokens: Tokens) -> lang.Conditional:
+def ifStmt(tokens: Tokens) -> lang.If:
     cond = expression(tokens)
     matchWord(tokens, '\n')  # optional line break
     matchWordElseError(tokens, 'THEN')
@@ -306,9 +315,9 @@ def ifStmt(tokens: Tokens) -> lang.Conditional:
         fallback = false
     matchWordElseError(tokens, 'ENDIF', msg="at end of IF")
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Conditional('if', cond, stmts, fallback)
+    return lang.If(cond, stmts, fallback)
 
-def whileStmt(tokens: Tokens) -> lang.Loop:
+def whileStmt(tokens: Tokens) -> lang.While:
     cond = expression(tokens)
     matchWordElseError(tokens, 'DO', msg="after WHILE condition")
     matchWordElseError(tokens, '\n', msg="after DO")
@@ -316,44 +325,45 @@ def whileStmt(tokens: Tokens) -> lang.Loop:
     while not matchWord(tokens, 'ENDWHILE'):
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDWHILE")
-    return lang.Loop('while', None, cond, stmts)
+    return lang.While(None, cond, stmts)
 
-def repeatStmt(tokens: Tokens) -> lang.Loop:
+def repeatStmt(tokens: Tokens) -> lang.Repeat:
     matchWordElseError(tokens, '\n', msg="after REPEAT")
     stmts = []
     while not matchWord(tokens, 'UNTIL'):
         stmts += [statement5(tokens)]
     cond = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
-    return lang.Loop('repeat', None, cond, stmts)
+    return lang.Repeat(None, cond, stmts)
 
 def forStmt(tokens: Tokens) -> lang.Loop:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
-    end = value(tokens)
+    parse = parser(tokens)
+    end: lang.Expr = parse(tokens)
     step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token())
     if matchWord(tokens, 'STEP'):
-        step = value(tokens)
+        parse = parser(tokens)
+        step = parse(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
     stmts = []
     while not matchWord(tokens, 'ENDFOR'):
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
-    getCounter = lang.Get(builtin.NULL, init.assignee.name, token=init.token())
-    cond = lang.Binary(getCounter, builtin.lte, end, token=init.token())
+    cond = lang.Binary(init.assignee, builtin.lte, end, token=init.token())
     # Add increment statement
     incr = lang.Assign(
         init.assignee,
-        lang.Binary(getCounter, builtin.add, step, token=step.token()),
+        lang.Binary(init.assignee, builtin.add, step, token=step.token()),
     )
-    initStmt = lang.ExprStmt('assign', init)
-    incrStmt = lang.ExprStmt('assign', incr)
-    return lang.Loop('while', initStmt, cond, stmts + [incrStmt])
+    initStmt = lang.AssignStmt(init)
+    incrStmt = lang.AssignStmt(incr)
+    return lang.Loop(initStmt, cond, stmts + [incrStmt])
 
-def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
+def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     name = identifier(tokens)
-    params = []
+    params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
@@ -371,16 +381,17 @@ def procedureStmt(tokens: Tokens) -> lang.ProcFunc:
     while not matchWord(tokens, 'ENDPROCEDURE'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDPROCEDURE")
-    return lang.ProcFunc('procedure', str(name), passby, params, stmts, 'NULL')
+    return lang.ProcedureStmt(name, passby, params, stmts, 'NULL')
 
-def callStmt(tokens: Tokens) -> lang.ExprStmt:
-    callable: lang.Call = value(tokens)
+def callStmt(tokens: Tokens) -> lang.CallStmt:
+    parse = parser(tokens)
+    callable: lang.Expr = parse(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.ExprStmt('call', callable)
+    return lang.CallStmt(callable)
 
-def functionStmt(tokens: Tokens) -> lang.ProcFunc:
+def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     name = identifier(tokens)
-    params = []
+    params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: str = 'BYVALUE'
         var = declare(tokens)
@@ -396,42 +407,46 @@ def functionStmt(tokens: Tokens) -> lang.ProcFunc:
     while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
-    return lang.ProcFunc(
-        'function', str(name), passby, params, stmts, typetoken.word
+    return lang.FunctionStmt(
+        'function', name, passby, params, stmts, typetoken.word
     )
 
-def returnStmt(tokens: Tokens) -> lang.ExprStmt:
+def returnStmt(tokens: Tokens) -> lang.Return:
     expr = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of RETURN")
-    return lang.ExprStmt('return', expr)
+    return lang.Return(expr)
 
-def openfileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def openfileStmt(tokens: Tokens) -> lang.OpenFile:
+    parse = parser(tokens)
+    filename: lang.Expr = parse(tokens)
     matchWordElseError(tokens, 'FOR', msg="after file identifier")
     mode = matchWordElseError(
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
     )
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'open', name, mode.word, None)
+    return lang.OpenFile(filename, mode.word)
 
-def readfileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def readfileStmt(tokens: Tokens) -> lang.ReadFile:
+    parse = parser(tokens)
+    filename: lang.Expr = parse(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
-    varname = identifier(tokens)
+    varname = identifier(tokens)  # TODO: support other kinds of Gets
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'read', name, None, str(varname))
+    return lang.ReadFile(filename, varname)
 
-def writefileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def writefileStmt(tokens: Tokens) -> lang.WriteFile:
+    parse = parser(tokens)
+    filename: lang.Expr = parse(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     data = expression(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'write', name, None, data)
+    return lang.WriteFile(filename, data)
 
-def closefileStmt(tokens: Tokens) -> lang.FileAction:
-    name = value(tokens)
+def closefileStmt(tokens: Tokens) -> lang.CloseFile:
+    parse = parser(tokens)
+    filename: lang.Expr = parse(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.FileAction('file', 'close', name, None, None)
+    return lang.CloseFile(filename)
 
 # Statement hierarchy
 # Statements are parsed in this order (most to least restrictive):
