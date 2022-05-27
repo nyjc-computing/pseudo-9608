@@ -270,7 +270,7 @@ def resolveProcCall(
     callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
-    resolveArgsParams(frame, callable)
+    resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
 def resolveFuncCall(
@@ -289,30 +289,28 @@ def resolveFuncCall(
     callable = callFrame.getValue(expr.callable.name)
     if not isFunction(callable):
         raise builtin.LogicError("Not FUNCTION", token=expr.callable.token())
-    resolveArgsParams(frame, callable)
+    resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
 def resolveArgsParams(
     frame: lang.Frame,
-    expr: lang.Call,
+    args: lang.Args,
+    params: Iterable[lang.Param],
+    *,
+    token: lang.Token,
 ) -> None:
     """
-    resolveCall() only type-checks the args and stmts of the call.
+    resolveArgsParams() only type-checks the args and stmts of the call.
     It does not resolve the callable. This should be carried out first (e.g. in
-    a wrapper function) before resolveCall() is invoked.
+    a wrapper function) before resolveArgsParams() is invoked.
     """
-    callable = expr.callable.frame.getValue(expr.callable.name)
-    numArgs, numParams = len(expr.args), len(callable.params)
-    if numArgs != numParams:
+    if len(args) != len(params):
         raise builtin.LogicError(
-            f"Expected {numParams} args, got {numArgs}",
-            token=expr.token(),
+            f"Expected {len(params)} args, got {len(args)}", token=token(),
         )
-    # Type-check arguments
-    for arg, param in zip(expr.args, callable.params):
+    for arg, param in zip(args, params):
         # param is a slot from either local or frame
-        argtype = resolve(frame, arg)
-        expectTypeElseError(argtype, param.type, token=arg.token())
+        expectTypeElseError(resolve(frame, arg), param.type, token=arg.token())
 
 def resolve(
     frame: lang.Frame,
