@@ -1,4 +1,5 @@
 from typing import Any, Optional, Union, Literal, Iterable, Iterator
+from typing import Tuple
 from itertools import product
 
 from . import builtin, lang
@@ -112,7 +113,7 @@ def resolveLiteral(
 def resolveDeclare(
     frame: lang.Frame,
     expr: lang.Declare,
-    passby: str='BYVALUE',
+    passby: Literal['BYVALUE', 'BYREF']='BYVALUE',
 ) -> lang.Type:
     """Declare variable in frame"""
     if passby == 'BYVALUE':
@@ -127,7 +128,6 @@ def resolveDeclare(
                 array.declare(index, elemType)
             frame.setValue(expr.name, array)
         return expr.type
-    assert passby == 'BYREF', f"Invalid passby {repr(passby)}"
     # BYREF -- TODO: resolveByref() as a separate function
     expectTypeElseError(
         expr.type, frame.outer.getType(expr.name), token=expr.token()
@@ -393,20 +393,21 @@ def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
 
-def verifyParams(frame: lang.Frame, params: Iterable[lang.Param], passby: str) -> None:
-    for i, expr in enumerate(params):
+def transformDeclares(frame: lang.Frame, declares: Iterable[lang.Declare], passby: str) -> Tuple[lang.TypedValue]:
+    params = tuple()
+    for expr in enumerate(declares):
         resolveDeclare(frame, expr, passby=passby)
-        # params: replace Declare Expr with slot
-        params[i] = frame.get(expr.name)
+        params += (frame.get(expr.name),)
+    return params
 
 def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     local = lang.Frame(typesys=frame.types, outer=frame)
+    params = transformDeclares(local, stmt.params, stmt.passby)
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(stmt.name, 'NULL')
     frame.setValue(stmt.name, lang.Procedure(
-        local, stmt.params, stmt.stmts
+        local, params, stmt.stmts
     ))
-    verifyParams(local, stmt.params, stmt.passby)
     for stmt in callable.stmts:
         if stmt.rule == 'return':
             raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
@@ -414,12 +415,12 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
 
 def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     local = lang.Frame(typesys=frame.types, outer=frame)
+    params = transformDeclares(local, stmt.params, stmt.passby)
     # Assign function in frame first, to make recursive calls work
     frame.declare(stmt.name, stmt.returnType)
     frame.setValue(stmt.name, lang.Function(
-        local, stmt.params, stmt.stmts
+        local, params, stmt.stmts
     ))
-    verifyParams(local, stmt.params, stmt.passby)
     # Check for return statements
     if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
         raise builtin.LogicError("No RETURN in function", stmt.name.token())
