@@ -61,6 +61,20 @@ def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     ]
     return product(*ranges)
 
+def resolveName(frame, expr: lang.UnresolvedName) -> lang.GetName:
+    """
+    Takes in an UnresolvedName, and returns a GetName with an
+    appropriate frame.
+
+    Raises
+    ------
+    LogicError if name is undeclared.
+    """
+    exprFrame = frame.lookup(expr.name)
+    if exprFrame is None:
+        raise builtin.LogicError("Undeclared", expr.token())
+    return lang.GetName(exprFrame, expr.name)
+
 
 
 class Resolver:
@@ -314,22 +328,6 @@ def resolve(
         return resolveFuncCall(frame, expr)
 
 
-
-# Verifier helper functions
-
-def resolveName(frame, expr: lang.UnresolvedName) -> lang.GetName:
-    """
-    Takes in an UnresolvedName, and returns a GetName with an
-    appropriate frame.
-
-    Raises
-    ------
-    LogicError if name is undeclared.
-    """
-    exprFrame = frame.lookup(expr.name)
-    if exprFrame is None:
-        raise builtin.LogicError("Undeclared", expr.token())
-    return lang.GetName(exprFrame, expr.name)
 
 def resolveExprs(
     frame: lang.Frame,
