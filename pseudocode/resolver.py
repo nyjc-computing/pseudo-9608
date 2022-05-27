@@ -347,7 +347,7 @@ def resolveExprs(
 def verifyStmts(frame: lang.Frame, stmts: Iterable[lang.Stmt]) -> None:
     for stmt in stmts:
         stmtType = verify(frame, stmt)
-        if stmt.rule == 'return':
+        if isinstance(stmt, lang.Return):
             expectTypeElseError(
                 stmtType, stmt.returnType, token=stmt.name.token()
             )
@@ -404,7 +404,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, params, stmt.stmts
     ))
     for stmt in callable.stmts:
-        if stmt.rule == 'return':
+        if isinstance(stmt, lang.Return):
             raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
     verifyStmts(local, stmt.stmts)
 
@@ -417,7 +417,7 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, params, stmt.stmts
     ))
     # Check for return statements
-    if not any([stmt.rule == 'return' for stmt in stmt.stmts]):
+    if not any([isinstance(stmt, lang.Return) for stmt in stmt.stmts]):
         raise builtin.LogicError("No RETURN in function", stmt.name.token())
     verifyStmts(local, stmt.stmts)
 
@@ -433,42 +433,59 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
         verifyOutput(frame, stmt)
     elif isinstance(stmt, lang.Input):
         verifyInput(frame, stmt)
-    elif isinstance(stmt, lang.Conditional):
-        if stmt.rule == 'case':
+    elif isinstance(stmt, lang.Case):
             verifyCase(frame, stmt)
-        elif stmt.rule == 'if':
+    elif isinstance(stmt, lang.If):
             verifyIf(frame, stmt)
     elif isinstance(stmt, lang.Loop):
         verifyLoop(frame, stmt)
-    elif isinstance(stmt, lang.ProcFunc):
-        if stmt.rule == 'procedure':
-            verifyProcedure(frame, stmt)
-        elif stmt.rule == 'function':
-            verifyFunction(frame, stmt)
-    elif stmt.rule == 'file':
+    elif isinstance(stmt, lang.ProcedureStmt):
+        verifyProcedure(frame, stmt)
+    elif isinstance(stmt, lang.FunctionStmt):
+        verifyFunction(frame, stmt)
+    elif isinstance(stmt, lang.OpenFile):
         if isinstance(stmt.filename, lang.UnresolvedName):
             stmt.target = resolveName(frame, stmt.filename)
         else:
             resolve(stmt.filename)
-        if isinstance(stmt, lang.OpenFile):
-            pass
-        if isinstance(stmt, lang.ReadFile):
-            if isinstance(stmt.target, lang.UnresolvedName):
-                stmt.target = resolveName(frame, stmt.target)
-            else:
-                resolveGet(stmt.target)
-        if isinstance(stmt, lang.WriteFile):
-            if isinstance(stmt.data, lang.UnresolvedName):
-                stmt.data = resolveName(frame, stmt.data)
-            else:
-                resolveGet(stmt.data)
-        if isinstance(stmt, lang.CloseFile):
-            pass
+    elif isinstance(stmt, lang.ReadFile):
+        if isinstance(stmt.filename, lang.UnresolvedName):
+            stmt.target = resolveName(frame, stmt.filename)
+        else:
+            resolve(stmt.filename)
+        if isinstance(stmt.target, lang.UnresolvedName):
+            stmt.target = resolveName(frame, stmt.target)
+        else:
+            resolveGet(stmt.target)
+    elif isinstance(stmt, lang.WriteFile):
+        if isinstance(stmt.filename, lang.UnresolvedName):
+            stmt.target = resolveName(frame, stmt.filename)
+        else:
+            resolve(stmt.filename)
+        if isinstance(stmt.data, lang.UnresolvedName):
+            stmt.data = resolveName(frame, stmt.data)
+        else:
+            resolveGet(stmt.data)
+    elif isinstance(stmt, lang.CloseFile):
+        if isinstance(stmt.filename, lang.UnresolvedName):
+            stmt.target = resolveName(frame, stmt.filename)
+        else:
+            resolve(stmt.filename)
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
-    elif isinstance(stmt, lang.ExprStmt):
-        if stmt.rule == 'call':
-            return resolveProcCall(frame, stmt.expr)
+    elif isinstance(stmt, lang.CallStmt):
+        if isinstance(stmt.expr, lang.UnresolvedName):
+            stmt.expr = resolveName(frame, stmt.expr)
+        return resolveProcCall(frame, stmt.expr)
+    elif isinstance(stmt, lang.AssignStmt):
+        if isinstance(stmt.expr, lang.UnresolvedName):
+            stmt.expr = resolveName(frame, stmt.expr)
+        return resolve(frame, stmt.expr)
+    elif isinstance(stmt, lang.DeclareStmt):
+        if isinstance(stmt.expr, lang.UnresolvedName):
+            stmt.expr = resolveName(frame, stmt.expr)
+        return resolve(frame, stmt.expr)
+    elif isinstance(stmt, lang.Return):
         if isinstance(stmt.expr, lang.UnresolvedName):
             stmt.expr = resolveName(frame, stmt.expr)
         return resolve(frame, stmt.expr)
