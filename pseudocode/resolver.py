@@ -270,7 +270,7 @@ def resolveProcCall(
     callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
-    resolveCall(frame, callable, callableType)
+    resolveArgsParams(frame, callable)
     return callableType
 
 def resolveFuncCall(
@@ -289,13 +289,12 @@ def resolveFuncCall(
     callable = callFrame.getValue(expr.callable.name)
     if not isFunction(callable):
         raise builtin.LogicError("Not FUNCTION", token=expr.callable.token())
-    resolveCall(frame, callable, callableType)
+    resolveArgsParams(frame, callable)
     return callableType
 
-def resolveCall(
+def resolveArgsParams(
     frame: lang.Frame,
     expr: lang.Call,
-    callableType: Union[Literal['NULL'], lang.Type],
 ) -> None:
     """
     resolveCall() only type-checks the args and stmts of the call.
