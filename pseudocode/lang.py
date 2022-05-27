@@ -775,6 +775,10 @@ class Conditional(Stmt):
         self.stmtMap = stmtMap
         self.fallback = fallback
 
+class Case(Conditional): ...
+
+class If(Conditional): ...
+
 
 
 class Loop(Stmt):
@@ -810,6 +814,10 @@ class ProcFunc(Stmt):
         self.params = params
         self.stmts = stmts
         self.returnType = returnType
+
+class ProcedureStmt(ProcFunc): ...
+
+class FunctionStmt(ProcFunc): ...
 
 
 
