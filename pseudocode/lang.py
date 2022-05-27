@@ -786,6 +786,10 @@ class Loop(Stmt):
         self.cond = cond
         self.stmts = stmts
 
+class While(Loop): ...
+
+class Repeat(Loop): ...
+
 
 
 class ProcFunc(Stmt):

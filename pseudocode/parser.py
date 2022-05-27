@@ -317,7 +317,7 @@ def ifStmt(tokens: Tokens) -> lang.If:
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.If(cond, stmts, fallback)
 
-def whileStmt(tokens: Tokens) -> lang.Loop:
+def whileStmt(tokens: Tokens) -> lang.While:
     cond = expression(tokens)
     matchWordElseError(tokens, 'DO', msg="after WHILE condition")
     matchWordElseError(tokens, '\n', msg="after DO")
@@ -325,16 +325,16 @@ def whileStmt(tokens: Tokens) -> lang.Loop:
     while not matchWord(tokens, 'ENDWHILE'):
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDWHILE")
-    return lang.Loop(None, cond, stmts)
+    return lang.While(None, cond, stmts)
 
-def repeatStmt(tokens: Tokens) -> lang.Loop:
+def repeatStmt(tokens: Tokens) -> lang.Repeat:
     matchWordElseError(tokens, '\n', msg="after REPEAT")
     stmts = []
     while not matchWord(tokens, 'UNTIL'):
         stmts += [statement5(tokens)]
     cond = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
-    return lang.Loop(None, cond, stmts)
+    return lang.Repeat(None, cond, stmts)
 
 def forStmt(tokens: Tokens) -> lang.Loop:
     init = assignment(tokens)
