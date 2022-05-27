@@ -1,3 +1,4 @@
+from typing import overload
 from typing import Any, Optional, Union, Literal, Iterable, Iterator
 from typing import Tuple
 from itertools import product
@@ -432,7 +433,11 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
         resolveDeclare(obj, expr)
     frame.types.setTemplate(stmt.name, obj)
 
-def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
+@overload
+def verify(frame: lang.Frame, stmt: lang.ExprStmt) -> Optional[lang.Type]: ...
+@overload
+def verify(frame: lang.Frame, stmt: lang.Stmt) -> None: ...
+def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
     if isinstance(stmt, lang.Output):
         verifyOutput(frame, stmt)
     elif isinstance(stmt, lang.Input):
@@ -466,7 +471,6 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):
-        resolveName(frame, stmt, 'expr')
         return resolveProcCall(frame, stmt.expr)
     elif isinstance(stmt, lang.AssignStmt):
         resolveName(frame, stmt, 'expr')
