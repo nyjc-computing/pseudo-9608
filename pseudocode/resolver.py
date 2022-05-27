@@ -443,10 +443,6 @@ def verifyFile(
             resolveGet(stmt.data)
     if isinstance(stmt, lang.CloseFile):
         pass
-    if stmt.action == 'open':
-        pass
-    if isinstance(stmt.data, lang.UnresolvedName):
-        stmt.data = resolveName(stmt.data)
 
 def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.declare(stmt.name)
