@@ -198,16 +198,15 @@ def resolveAssign(
     )
 
 def resolveAttr(
-    frameExpr: lang.NameExpr,
-    expr: lang.UnresolvedName,  # evaluates to Object
+    frame: lang.Frame,
+    expr: lang.GetAttr,
     *,
     token: lang.Token,
 ) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
-    if isinstance(frameExpr.object, lang.UnresolvedName):
-        frameExpr.object = resolveName(frame, frameExpr.object)
-
-    objType = resolveGetName(expr.frame, expr.name)
+    if isinstance(expr.object, lang.UnresolvedName):
+        expr.object = resolveName(frame, expr.object)
+    objType = resolveGetName(expr.object, expr.name)
     # Check objType existence in typesystem
     declaredElseError(
         frame.types, objType,
@@ -222,8 +221,8 @@ def resolveAttr(
     return objTemplate.getType(expr.name)
 
 def resolveIndex(
-    frame: lang.NameExpr,
-    expr: lang.GetIndex,  # evaluates to Array
+    frame: lang.Frame,
+    expr: lang.GetIndex,
 ) -> lang.Type:
     """Resolves a GetIndex Expr to return an array element's type"""
     def intsElseError(frame, *indexes):
