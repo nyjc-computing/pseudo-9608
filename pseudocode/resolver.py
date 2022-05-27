@@ -421,29 +421,6 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         raise builtin.LogicError("No RETURN in function", stmt.name.token())
     verifyStmts(local, stmt.stmts)
 
-def verifyFile(
-    frame: lang.Frame,
-    stmt: Union[lang.OpenFile, lang.ReadFile, lang.WriteFile, lang.CloseFile],
-) -> None:
-    if isinstance(stmt.filename, lang.UnresolvedName):
-        stmt.target = resolveName(frame, stmt.filename)
-    else:
-        resolve(stmt.filename)
-    if isinstance(stmt, lang.OpenFile):
-        pass
-    if isinstance(stmt, lang.ReadFile):
-        if isinstance(stmt.target, lang.UnresolvedName):
-            stmt.target = resolveName(frame, stmt.target)
-        else:
-            resolveGet(stmt.target)
-    if isinstance(stmt, lang.WriteFile):
-        if isinstance(stmt.data, lang.UnresolvedName):
-            stmt.data = resolveName(frame, stmt.data)
-        else:
-            resolveGet(stmt.data)
-    if isinstance(stmt, lang.CloseFile):
-        pass
-
 def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.declare(stmt.name)
     obj = lang.Object(typesys=frame.types)
@@ -451,33 +428,47 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
         resolveDeclare(obj, expr)
     frame.types.setTemplate(stmt.name, obj)
 
-def verifyExprStmt(frame: lang.Frame, stmt: lang.ExprStmt) -> Optional[lang.Value]:
-    if stmt.rule == 'call':
-        return resolveProcCall(frame, stmt.expr)
-    if isinstance(stmt.expr, lang.UnresolvedName):
-        stmt.expr = resolveName(frame, stmt.expr)
-    return resolve(frame, stmt.expr)
-
-
-
 def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
-    if stmt.rule == 'output':
+    if isinstance(stmt, lang.Output):
         verifyOutput(frame, stmt)
-    if stmt.rule == 'input':
+    elif isinstance(stmt, lang.Input):
         verifyInput(frame, stmt)
-    elif stmt.rule == 'case':
-        verifyCase(frame, stmt)
-    elif stmt.rule == 'if':
-        verifyIf(frame, stmt)
-    elif stmt.rule in ('while', 'repeat', 'for'):
+    elif isinstance(stmt, lang.Conditional):
+        if stmt.rule == 'case':
+            verifyCase(frame, stmt)
+        elif stmt.rule == 'if':
+            verifyIf(frame, stmt)
+    elif isinstance(stmt, lang.Loop):
         verifyLoop(frame, stmt)
-    elif stmt.rule == 'procedure':
-        verifyProcedure(frame, stmt)
-    elif stmt.rule == 'function':
-        verifyFunction(frame, stmt)
+    elif isinstance(stmt, lang.ProcFunc):
+        if stmt.rule == 'procedure':
+            verifyProcedure(frame, stmt)
+        elif stmt.rule == 'function':
+            verifyFunction(frame, stmt)
     elif stmt.rule == 'file':
-        verifyFile(frame, stmt)
-    elif stmt.rule == 'declaretype':
+        if isinstance(stmt.filename, lang.UnresolvedName):
+            stmt.target = resolveName(frame, stmt.filename)
+        else:
+            resolve(stmt.filename)
+        if isinstance(stmt, lang.OpenFile):
+            pass
+        if isinstance(stmt, lang.ReadFile):
+            if isinstance(stmt.target, lang.UnresolvedName):
+                stmt.target = resolveName(frame, stmt.target)
+            else:
+                resolveGet(stmt.target)
+        if isinstance(stmt, lang.WriteFile):
+            if isinstance(stmt.data, lang.UnresolvedName):
+                stmt.data = resolveName(frame, stmt.data)
+            else:
+                resolveGet(stmt.data)
+        if isinstance(stmt, lang.CloseFile):
+            pass
+    elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
-    elif stmt.rule in ('assign', 'declare', 'return', 'call'):
-        verifyExprStmt(frame, stmt)
+    elif isinstance(stmt, lang.ExprStmt):
+        if stmt.rule == 'call':
+            return resolveProcCall(frame, stmt.expr)
+        if isinstance(stmt.expr, lang.UnresolvedName):
+            stmt.expr = resolveName(frame, stmt.expr)
+        return resolve(frame, stmt.expr)
