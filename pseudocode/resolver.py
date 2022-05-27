@@ -189,6 +189,8 @@ def resolveAssign(
     expr: lang.Assign,
 ) -> lang.Type:
     # assignee frame might be a Frame or Get(Object)
+    if isinstance(expr.assignee, lang.UnresolvedName):
+        expr.callable = resolveName(keymap, expr.assignee)
     assnType = resolveGetName(keymap, expr.assignee)
     exprType = resolve(keymap, expr.expr)
     expectTypeElseError(
@@ -196,12 +198,15 @@ def resolveAssign(
     )
 
 def resolveAttr(
-    frame: lang.Frame,
-    expr: lang.NameExpr,  # evaluates to Object
+    frameExpr: lang.NameExpr,
+    expr: lang.UnresolvedName,  # evaluates to Object
     *,
     token: lang.Token,
 ) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
+    if isinstance(frameExpr.object, lang.UnresolvedName):
+        frameExpr.object = resolveName(frame, frameExpr.object)
+
     objType = resolveGetName(expr.frame, expr.name)
     # Check objType existence in typesystem
     declaredElseError(
@@ -217,7 +222,7 @@ def resolveAttr(
     return objTemplate.getType(expr.name)
 
 def resolveIndex(
-    frame: lang.Frame,
+    frame: lang.NameExpr,
     expr: lang.GetIndex,  # evaluates to Array
 ) -> lang.Type:
     """Resolves a GetIndex Expr to return an array element's type"""
@@ -256,7 +261,9 @@ def resolveProcCall(
     expr: lang.Call,
 ) -> Literal['NULL']:
     # Resolve global frame where procedure is declared
-    callableType = resolveGet(frame, expr.callable)
+    if isinstance(expr.callable, lang.UnresolvedName):
+        expr.callable = resolveName(frame, expr.callable)
+    callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
@@ -269,7 +276,9 @@ def resolveFuncCall(
     expr: lang.Call,
 ) -> lang.Type:
     # Resolve global frame where function is declared
-    callableType = resolveGet(frame, expr.callable)
+    if isinstance(expr.callable, lang.UnresolvedName):
+        expr.callable = resolveName(frame, expr.callable)
+    callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
     if not isFunction(callable):
@@ -418,8 +427,28 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     # Resolve procedure statements using local
     verifyStmts(local, stmt.stmts)
 
-def verifyFile(frame: lang.Frame, stmt: lang.FileAction) -> None:
-    resolve(frame, stmt.name)
+def verifyFile(
+    frame: lang.Frame,
+    stmt: Union[lang.OpenFile, lang.ReadFile, lang.WriteFile, lang.CloseFile],
+) -> None:
+    if isinstance(stmt.filename, lang.UnresolvedName):
+        stmt.target = resolveName(frame, stmt.filename)
+    else:
+        resolve(stmt.filename)
+    if isinstance(stmt, lang.OpenFile):
+        pass
+    if isinstance(stmt, lang.ReadFile):
+        if isinstance(stmt.target, lang.UnresolvedName):
+            stmt.target = resolveName(frame, stmt.target)
+        else:
+            resolveGet(stmt.target)
+    if isinstance(stmt, lang.WriteFile):
+        if isinstance(stmt.data, lang.UnresolvedName):
+            stmt.data = resolveName(frame, stmt.data)
+        else:
+            resolveGet(stmt.data)
+    if isinstance(stmt, lang.CloseFile):
+        pass
     if stmt.action == 'open':
         pass
     if isinstance(stmt.data, lang.UnresolvedName):
