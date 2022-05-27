@@ -270,9 +270,6 @@ def resolveProcCall(
     callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
-    for stmt in callable.stmts:
-        if stmt.rule == 'return':
-            raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
     resolveCall(frame, callable, callableType, token=expr.callable.token())
     return callableType
 
@@ -410,6 +407,9 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, stmt.params, stmt.stmts
     ))
     verifyParams(local, stmt.params, stmt.passby)
+    for stmt in callable.stmts:
+        if stmt.rule == 'return':
+            raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
     verifyStmts(local, stmt.stmts)
 
 def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
