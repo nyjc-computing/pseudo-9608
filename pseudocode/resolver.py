@@ -65,7 +65,11 @@ def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     ]
     return product(*ranges)
 
-def resolveName(frame, expr: lang.UnresolvedName) -> lang.GetName:
+def resolveName(
+    frame: lang.Frame,
+    exprOrStmt: Union[lang.Expr, lang.Stmt],
+    attr: Optional[str]=None,
+) -> None:
     """
     Takes in an UnresolvedName, and returns a GetName with an
     appropriate frame.
@@ -74,10 +78,15 @@ def resolveName(frame, expr: lang.UnresolvedName) -> lang.GetName:
     ------
     LogicError if name is undeclared.
     """
-    exprFrame = frame.lookup(expr.name)
+    name: lang.Expr = getattr(exprOrStmt, attr)
+    if not isinstance(name, lang.UnresolvedName):
+        return
+    exprFrame = frame.lookup(name)
     if exprFrame is None:
-        raise builtin.LogicError("Undeclared", expr.token())
-    return lang.GetName(exprFrame, expr.name)
+        raise builtin.LogicError("Undeclared", name.token())
+    if attr:
+        return lang.GetName(exprFrame, name)
+    setattr(exprOrStmt, attr, lang.GetName(exprFrame, name))
 
 
 
@@ -191,8 +200,7 @@ def resolveAssign(
     keymap: lang.PseudoMap,
     expr: lang.Assign,
 ) -> lang.Type:
-    if isinstance(expr.assignee, lang.UnresolvedName):
-        expr.callable = resolveName(keymap, expr.assignee)
+    resolveName(keymap, expr, 'assignee')
     assnType = resolveGetName(keymap, expr.assignee)
     exprType = resolve(keymap, expr.expr)
     expectTypeElseError(
@@ -206,8 +214,7 @@ def resolveAttr(
     token: lang.Token,
 ) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
-    if isinstance(expr.object, lang.UnresolvedName):
-        expr.object = resolveName(frame, expr.object)
+    resolveName(frame, expr, 'object')
     objType = resolveGetName(expr.object, expr.name)
     # Check objType existence in typesystem
     declaredElseError(
@@ -266,8 +273,7 @@ def resolveProcCall(
     Statement verification is done in verifyProcedure, not here.
     Delegate argument checking to resolveCall.
     """
-    if isinstance(expr.callable, lang.UnresolvedName):
-        expr.callable = resolveName(frame, expr.callable)
+    resolveName(frame, expr, 'callable')
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
@@ -285,8 +291,7 @@ def resolveFuncCall(
     Statement verification is done in verifyFunction, not here.
     Delegate argument checking to resolveCall.
     """
-    if isinstance(expr.callable, lang.UnresolvedName):
-        expr.callable: lang.GetName = resolveName(frame, expr.callable)
+    resolveName(frame, expr, 'callable')
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
@@ -359,13 +364,11 @@ def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
-    if isinstance(stmt.name, lang.UnresolvedName):
-        stmt.name = resolveName(frame, stmt.name)
+    resolveName(frame, stmt, 'name')
     declaredElseError(frame, stmt.name, token=stmt.name.token())
 
 def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
-    if isinstance(stmt.cond, lang.UnresolvedName):
-        stmt.cond = resolveName(frame, stmt.cond)
+    resolveName(frame, stmt, 'cond')
     resolve(frame, stmt.cond)
     for statements in stmt.stmtMap.values():
         verifyStmts(frame, statements)
@@ -373,8 +376,7 @@ def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
         verifyStmts(frame, stmt.fallback)
 
 def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
-    if isinstance(stmt.cond, lang.UnresolvedName):
-        stmt.cond = resolveName(frame, stmt.cond)
+    resolveName(frame, stmt, 'cond')
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     for statements in stmt.stmtMap.values():
@@ -385,8 +387,7 @@ def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
 def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
     if stmt.init:
         verify(frame, stmt.init)
-    if isinstance(stmt.cond, lang.UnresolvedName):
-        stmt.cond = resolveName(frame, stmt.cond)
+    resolveName(frame, stmt, 'cond')
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
     verifyStmts(frame, stmt.stmts)
@@ -437,9 +438,9 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
     elif isinstance(stmt, lang.Input):
         verifyInput(frame, stmt)
     elif isinstance(stmt, lang.Case):
-            verifyCase(frame, stmt)
+        verifyCase(frame, stmt)
     elif isinstance(stmt, lang.If):
-            verifyIf(frame, stmt)
+        verifyIf(frame, stmt)
     elif isinstance(stmt, lang.Loop):
         verifyLoop(frame, stmt)
     elif isinstance(stmt, lang.ProcedureStmt):
@@ -447,48 +448,32 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> Optional[lang.Type]:
     elif isinstance(stmt, lang.FunctionStmt):
         verifyFunction(frame, stmt)
     elif isinstance(stmt, lang.OpenFile):
-        if isinstance(stmt.filename, lang.UnresolvedName):
-            stmt.target = resolveName(frame, stmt.filename)
-        else:
-            resolve(stmt.filename)
+        resolveName(frame, stmt, 'filename')
+        resolve(stmt.filename)
     elif isinstance(stmt, lang.ReadFile):
-        if isinstance(stmt.filename, lang.UnresolvedName):
-            stmt.target = resolveName(frame, stmt.filename)
-        else:
-            resolve(stmt.filename)
-        if isinstance(stmt.target, lang.UnresolvedName):
-            stmt.target = resolveName(frame, stmt.target)
-        else:
-            resolveGet(stmt.target)
+        resolveName(frame, stmt, 'filename')
+        resolveName(frame, stmt, 'target')
+        resolve(stmt.filename)
+        resolve(stmt.target)
     elif isinstance(stmt, lang.WriteFile):
-        if isinstance(stmt.filename, lang.UnresolvedName):
-            stmt.target = resolveName(frame, stmt.filename)
-        else:
-            resolve(stmt.filename)
-        if isinstance(stmt.data, lang.UnresolvedName):
-            stmt.data = resolveName(frame, stmt.data)
-        else:
-            resolveGet(stmt.data)
+        resolveName(frame, stmt, 'filename')
+        resolveName(frame, stmt, 'data')
+        resolve(stmt.filename)
+        resolve(stmt.data)
     elif isinstance(stmt, lang.CloseFile):
-        if isinstance(stmt.filename, lang.UnresolvedName):
-            stmt.target = resolveName(frame, stmt.filename)
-        else:
-            resolve(stmt.filename)
+        resolveName(frame, stmt, 'filename')
+        resolve(stmt.filename)
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):
-        if isinstance(stmt.expr, lang.UnresolvedName):
-            stmt.expr = resolveName(frame, stmt.expr)
+        resolveName(frame, stmt, 'expr')
         return resolveProcCall(frame, stmt.expr)
     elif isinstance(stmt, lang.AssignStmt):
-        if isinstance(stmt.expr, lang.UnresolvedName):
-            stmt.expr = resolveName(frame, stmt.expr)
+        resolveName(frame, stmt, 'expr')
         return resolve(frame, stmt.expr)
     elif isinstance(stmt, lang.DeclareStmt):
-        if isinstance(stmt.expr, lang.UnresolvedName):
-            stmt.expr = resolveName(frame, stmt.expr)
+        resolveName(frame, stmt, 'expr')
         return resolve(frame, stmt.expr)
     elif isinstance(stmt, lang.Return):
-        if isinstance(stmt.expr, lang.UnresolvedName):
-            stmt.expr = resolveName(frame, stmt.expr)
+        resolveName(frame, stmt, 'expr')
         return resolve(frame, stmt.expr)
