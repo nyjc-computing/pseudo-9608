@@ -258,7 +258,11 @@ def resolveProcCall(
     frame: lang.Frame,
     expr: lang.Call,
 ) -> Literal['NULL']:
-    # Resolve global frame where procedure is declared
+    """
+    Resolve a procedure call.
+    Statement verification is done in verifyProcedure, not here.
+    Delegate argument checking to resolveCall.
+    """
     if isinstance(expr.callable, lang.UnresolvedName):
         expr.callable = resolveName(frame, expr.callable)
     callableType = resolveGetName(frame, expr.callable)
@@ -266,6 +270,9 @@ def resolveProcCall(
     callable = callFrame.getValue(expr.callable.name)
     if not isProcedure(callable):
         raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
+    for stmt in callable.stmts:
+        if stmt.rule == 'return':
+            raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
     resolveCall(frame, callable, callableType, token=expr.callable.token())
     return callableType
 
@@ -273,8 +280,13 @@ def resolveFuncCall(
     frame: lang.Frame,
     expr: lang.Call,
 ) -> lang.Type:
+    """
+    Resolve a function call.
+    Statement verification is done in verifyFunction, not here.
+    Delegate argument checking to resolveCall.
+    """
     if isinstance(expr.callable, lang.UnresolvedName):
-        expr.callable = resolveName(frame, expr.callable)
+        expr.callable: lang.GetName = resolveName(frame, expr.callable)
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
@@ -282,7 +294,7 @@ def resolveFuncCall(
         raise builtin.LogicError("Not FUNCTION", token=expr.callable.token())
     resolveCall(frame, callable, callableType, token=expr.callable.token())
     return callableType
-    
+
 def resolveCall(
     frame: lang.Frame,
     expr: lang.Call,
@@ -291,9 +303,9 @@ def resolveCall(
     token: lang.Token,
 ) -> None:
     """
-    resolveCall() does not carry out any frame insertion or
-    type-checking. These should be carried out first (e.g. in a wrapper
-    function) before resolveCall() is invoked.
+    resolveCall() only type-checks the args and stmts of the call.
+    It does not resolve the callable. This should be carried out first (e.g. in
+    a wrapper function) before resolveCall() is invoked.
     """
     callable = expr.callable.frame.getValue(expr.callable.name)
     numArgs, numParams = len(expr.args), len(callable.params)
@@ -307,12 +319,6 @@ def resolveCall(
         # param is a slot from either local or frame
         argtype = resolve(frame, arg)
         expectTypeElseError(argtype, param.type, token=arg.token())
-    for stmt in callable.stmts:
-        if isProcedure(callable) and stmt.rule == 'return':
-            raise builtin.LogicError("Unexpected RETURN", token)
-        returnType = verify(frame, stmt)
-        if isFunction(callable) and stmt.rule == 'return':
-            expectTypeElseError(returnType, callableType, token=token)
 
 def resolve(
     frame: lang.Frame,
