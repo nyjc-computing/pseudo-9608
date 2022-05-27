@@ -407,9 +407,7 @@ def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
-    return lang.FunctionStmt(
-        'function', name, passby, params, stmts, typetoken.word
-    )
+    return lang.FunctionStmt(name, passby, params, stmts, typetoken.word)
 
 def returnStmt(tokens: Tokens) -> lang.Return:
     expr = expression(tokens)
