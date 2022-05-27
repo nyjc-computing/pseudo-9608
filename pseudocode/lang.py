@@ -722,16 +722,31 @@ class ExprStmt(Stmt):
         self,
         expr: "Expr",
     ) -> None:
-        self.rule = rule
         self.expr = expr
 
-class AssignStmt(ExprStmt): ...
-
-class DeclareStmt(ExprStmt): ...
-
-class CallStmt(ExprStmt): ...
-
 class Return(ExprStmt): ...
+
+class AssignStmt(ExprStmt):
+    def __init__(
+        self,
+        expr: "Assign",
+    ) -> None:
+        self.expr = expr
+
+
+class DeclareStmt(ExprStmt):
+    def __init__(
+        self,
+        expr: "Declare",
+    ) -> None:
+        self.expr = expr
+
+class CallStmt(ExprStmt):
+    def __init__(
+        self,
+        expr: "Call",
+    ) -> None:
+        self.expr = expr
 
 
 
