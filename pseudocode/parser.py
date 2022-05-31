@@ -362,7 +362,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     return lang.Loop(initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'
@@ -389,7 +389,7 @@ def callStmt(tokens: Tokens) -> lang.CallStmt:
     return lang.CallStmt(callable)
 
 def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'

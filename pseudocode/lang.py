@@ -829,7 +829,7 @@ class ProcFunc(Stmt):
     __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
-        name: GetExpr,
+        name: Name,
         passby: LiteralType['BYVALUE', 'BYREF'],
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
