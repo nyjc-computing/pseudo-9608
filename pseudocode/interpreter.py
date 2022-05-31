@@ -120,12 +120,9 @@ def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> Optional[lang.Valu
         for arg, slot in zip(expr.args, callable.params):
             argval = evaluate(frame, arg)
             slot.value = argval
-        for stmt in callable.stmts:
-            returnval = execute(callable.frame, stmt, **kwargs)
-            if returnval is not None:
-                return returnval
+        return executeStmts(frame, callable.stmts)
 
-def evalAssign(frame: lang.Frame, expr: lang.Assign) -> None:
+def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
     value = evaluate(frame, expr.expr)
     obj = expr.assignee.frame
     if type(obj) in (lang.Get, lang.Call):
@@ -164,9 +161,10 @@ def executeStmts(
     **kwargs,
 ) -> Optional[lang.Value]:
     for stmt in stmts:
-        returnval = execute(frame, stmt, **kwargs)
-        if returnval is not None:
-            return returnval
+        if isinstance(stmt, lang.Return):
+            return execReturn(frame, stmt, **kwargs)
+        else:
+            execute(frame, stmt, **kwargs)
 
 def execOutput(
     frame: lang.Frame,
@@ -343,10 +341,11 @@ def execute(
     if isinstance(stmt, lang.AssignStmt):
         execAssign(frame, stmt, **kwargs)
     if isinstance(stmt, lang.Return):
-        return execReturn(frame, stmt, **kwargs)
+        execReturn(frame, stmt, **kwargs)
     if (
         isinstance(stmt, lang.DeclareStmt)
         or isinstance(stmt, lang.ProcedureStmt)
         or isinstance(stmt, lang.FunctionStmt)
     ):
         pass
+    raise ValueError(f"Invalid Stmt {stmt}")
