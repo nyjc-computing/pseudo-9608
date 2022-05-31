@@ -713,34 +713,21 @@ class Stmt:
 
 class ExprStmt(Stmt):
     __slots__ = ('expr',)
-    def __init__(
-        self,
-        expr: "Expr",
-    ) -> None:
-        self.expr = expr
 
-class Return(ExprStmt): ...
+class Return(ExprStmt):
+    def __init__(self, expr: "Expr") -> None:
+        self.expr = expr
 
 class AssignStmt(ExprStmt):
-    def __init__(
-        self,
-        expr: "Assign",
-    ) -> None:
+    def __init__(self, expr: "Assign") -> None:
         self.expr = expr
 
-
 class DeclareStmt(ExprStmt):
-    def __init__(
-        self,
-        expr: "Declare",
-    ) -> None:
+    def __init__(self, expr: "Declare") -> None:
         self.expr = expr
 
 class CallStmt(ExprStmt):
-    def __init__(
-        self,
-        expr: "Call",
-    ) -> None:
+    def __init__(self, expr: "Call") -> None:
         self.expr = expr
 
 

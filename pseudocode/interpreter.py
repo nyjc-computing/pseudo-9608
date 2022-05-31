@@ -290,21 +290,21 @@ def execFile(
 
 def execCall(
     frame: lang.Frame,
-    stmt: lang.ExprStmt,
+    stmt: lang.CallStmt,
     **kwargs,
 ) -> None:
     evalCall(frame, stmt.expr, **kwargs)
 
 def execAssign(
     frame: lang.Frame,
-    stmt: lang.ExprStmt,
+    stmt: lang.AssignStmt,
     **kwargs,
 ) -> None:
     evaluate(frame, stmt.expr, **kwargs)
 
 def execReturn(
     frame: lang.Frame,
-    stmt: lang.ExprStmt,
+    stmt: lang.Return,
     **kwargs,
 ) -> lang.Value:
     return evaluate(frame, stmt.expr, **kwargs)
