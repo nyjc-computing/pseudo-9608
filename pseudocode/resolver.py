@@ -442,8 +442,8 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     local = lang.Frame(typesys=frame.types, outer=frame)
     params = transformDeclares(local, stmt.params, stmt.passby)
     # Assign procedure in frame first, to make recursive calls work
-    frame.declare(stmt.name, 'NULL')
-    frame.setValue(stmt.name, lang.Procedure(
+    frame.declare(str(stmt.name), 'NULL')
+    frame.setValue(str(stmt.name), lang.Procedure(
         local, params, stmt.stmts
     ))
     for procstmt in callable.stmts:
@@ -459,8 +459,8 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     local = lang.Frame(typesys=frame.types, outer=frame)
     params = transformDeclares(local, stmt.params, stmt.passby)
     # Assign function in frame first, to make recursive calls work
-    frame.declare(stmt.name, stmt.returnType)
-    frame.setValue(stmt.name, lang.Function(
+    frame.declare(str(stmt.name), stmt.returnType)
+    frame.setValue(str(stmt.name), lang.Function(
         local, params, stmt.stmts
     ))
     # Check for return statements
