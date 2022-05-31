@@ -840,7 +840,9 @@ class TypeStmt(Stmt):
 
 
 
-class OpenFile(Stmt):
+class FileStmt(Stmt): ...
+
+class OpenFile(FileStmt):
     __slots__ = ('filename', 'mode')
     def __init__(
         self,
@@ -850,7 +852,7 @@ class OpenFile(Stmt):
         self.filename = filename
         self.mode = mode
 
-class ReadFile(Stmt):
+class ReadFile(FileStmt):
     __slots__ = ('filename', 'target')
     def __init__(
         self,
@@ -860,7 +862,7 @@ class ReadFile(Stmt):
         self.filename = filename
         self.target = target
 
-class WriteFile(Stmt):
+class WriteFile(FileStmt):
     __slots__ = ('filename', 'data')
     def __init__(
         self,
@@ -870,7 +872,7 @@ class WriteFile(Stmt):
         self.filename = filename
         self.data = data
 
-class CloseFile(Stmt):
+class CloseFile(FileStmt):
     __slots__ = ('filename',)
     def __init__(
         self,

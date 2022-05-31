@@ -4,6 +4,8 @@ from . import builtin, lang, system
 
 
 
+# ----------------------------------------------------------------------
+
 # Helper functions
 
 def expectTypeElseError(
@@ -228,65 +230,108 @@ def execRepeat(
     while evaluate(frame, stmt.cond) is False:
         executeStmts(frame, stmt.stmts)
 
-def execFile(
+def execOpenFile(
     frame: lang.Frame,
-    stmt: lang.FileAction,
+    stmt: lang.OpenFile,
     **kwargs,
 ) -> None:
-    name: str = evaluate(frame, stmt.name)
-    if stmt.action == 'open':
-        undeclaredElseError(
-            frame, name, "File already opened", stmt.name.token()
-        )
-        frame.declare(name, 'FILE')
-        file = lang.File(name, stmt.mode, open(name, stmt.mode[0].lower()))
-        frame.setValue(name, file)
-    elif stmt.action == 'read':
-        declaredElseError(
-            frame, name, "File not open", stmt.name.token()
-        )
-        file = frame.getValue(name)
-        expectTypeElseError(
-            frame.getType(name), 'FILE', token=stmt.name.token()
-        )
-        expectTypeElseError(file.mode, 'READ', token=stmt.name.token())
-        varname = evaluate(frame, stmt.data)
-        declaredElseError(frame, varname, stmt.data.token())
-        # TODO: Catch and handle Python file io errors
-        line = file.iohandler.readline().rstrip()
-        # TODO: Type conversion
-        frame.setValue(varname, line)
-    elif stmt.action == 'write':
-        declaredElseError(
-            frame, name, "File not open", token=stmt.name.token()
-        )
-        file = frame.getValue(name)
-        expectTypeElseError(
-            frame.getType(name), 'FILE', token=stmt.name.token()
-        )
-        expectTypeElseError(
-            file.mode, 'WRITE', 'APPEND', token=stmt.name.token()
-        )
-        writedata = evaluate(frame, stmt.data)
-        if type(writedata) is bool:
-            writedata = str(writedata).upper()
-        else:
-            writedata = str(writedata)
-        # Move pointer to next line after writing
-        if not writedata.endswith('\n'):
-            writedata += '\n'
-        # TODO: Catch and handle Python file io errors
-        file.iohandler.write(writedata)
-    elif stmt.action == 'close':
-        declaredElseError(
-            frame, name, "File not open", stmt.name.token()
-        )
-        file = frame.getValue(name)
-        expectTypeElseError(
-            frame.getType(name), 'FILE', stmt.name.token()
-        )
-        file.iohandler.close()
-        frame.delete(name)
+    filename: str = evaluate(frame, stmt.filename)
+    undeclaredElseError(
+        frame, filename, "File already opened", stmt.filename.token()
+    )
+    frame.declare(filename, 'FILE')
+    frame.setValue(
+        filename,
+        lang.File(
+            filename,
+            stmt.mode,
+            open(filename, stmt.mode[0].lower())
+        ),
+    )
+
+def execReadFile(
+    frame: lang.Frame,
+    stmt: lang.ReadFile,
+    **kwargs,
+) -> None:
+    filename = evaluate(frame, stmt.filename)
+    assert isinstance(filename, str), f"Invalid filename {filename}"
+    declaredElseError(
+        frame, filename, "File not open", stmt.filename.token()
+    )
+    file = frame.getValue(filename)
+    assert isinstance(file, lang.File), f"Invalid file {file}"
+    expectTypeElseError(
+        frame.getType(filename), 'FILE', token=stmt.filename.token()
+    )
+    expectTypeElseError(file.mode, 'READ', token=stmt.filename.token())
+    varname = evaluate(frame, stmt.target)
+    declaredElseError(frame, varname, token=stmt.target.token())
+    # TODO: Catch and handle Python file io errors
+    line = file.iohandler.readline().rstrip()
+    # TODO: Type conversion
+    frame.setValue(varname, line)
+
+def execWriteFile(
+    frame: lang.Frame,
+    stmt: lang.WriteFile,
+    **kwargs,
+) -> None:
+    filename = evaluate(frame, stmt.filename)
+    assert isinstance(filename, str), f"Invalid filename {filename}"
+    declaredElseError(
+        frame, filename, "File not open", token=stmt.filename.token()
+    )
+    file = frame.getValue(filename)
+    assert isinstance(file, lang.File), f"Invalid file {file}"
+    expectTypeElseError(
+        frame.getType(filename), 'FILE', token=stmt.filename.token()
+    )
+    expectTypeElseError(
+        file.mode, 'WRITE', 'APPEND', token=stmt.filename.token()
+    )
+    writedata = evaluate(frame, stmt.data)
+    if type(writedata) is bool:
+        writedata = str(writedata).upper()
+    else:
+        writedata = str(writedata)
+    # Move pointer to next line after writing
+    if not writedata.endswith('\n'):
+        writedata += '\n'
+    # TODO: Catch and handle Python file io errors
+    file.iohandler.write(writedata)
+
+def execCloseFile(
+    frame: lang.Frame,
+    stmt: lang.CloseFile,
+    **kwargs,
+) -> None:
+    filename = evaluate(frame, stmt.filename)
+    assert isinstance(filename, str), f"Invalid filename {filename}"
+    declaredElseError(
+        frame, filename, "File not open", token=stmt.filename.token()
+    )
+    file = frame.getValue(filename)
+    assert isinstance(file, lang.File), f"Invalid file {file}"
+    expectTypeElseError(
+        frame.getType(filename), 'FILE', token=stmt.filename.token()
+    )
+    file.iohandler.close()
+    frame.delete(filename)
+
+def execFile(
+    frame: lang.Frame,
+    stmt: lang.FileStmt,
+    **kwargs,
+) -> None:
+    if isinstance(stmt, lang.OpenFile):
+        execOpenFile(frame, stmt)
+    elif isinstance(stmt, lang.ReadFile):
+        execReadFile(frame, stmt)
+    elif isinstance(stmt, lang.WriteFile):
+        execWriteFile(frame, stmt)
+    elif isinstance(stmt, lang.CloseFile):
+        execCloseFile(frame, stmt)
 
 def execCall(
     frame: lang.Frame,
