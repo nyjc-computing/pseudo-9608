@@ -7,6 +7,8 @@ from . import builtin, lang
 
 
 
+# **********************************************************************
+
 # Resolver helper functions
 
 def expectTypeElseError(
@@ -438,11 +440,11 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     verifyStmts(local, stmt.stmts)
 
 def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
-    frame.types.declare(stmt.name)
-    obj = lang.Object(typesys=frame.types)
+    frame.types.declare(str(stmt.name))
+    objTemplate = lang.ObjectTemplate(typesys=frame.types)
     for expr in stmt.exprs:
-        resolveDeclare(obj, expr)
-    frame.types.setTemplate(stmt.name, obj)
+        resolveDeclare(objTemplate, expr)
+    frame.types.setTemplate(str(stmt.name), objTemplate)
 
 @overload
 def verify(frame: lang.Frame, stmt: lang.ExprStmt) -> lang.Type: ...
