@@ -9,15 +9,6 @@ from . import builtin, lang
 
 # Resolver helper functions
 
-def isReturn(stmt: lang.Stmt) -> bool:
-    return isinstance(stmt, lang.Return)
-
-def isProcedure(callable: lang.PseudoValue) -> bool:
-    return isinstance(callable, lang.Procedure)
-
-def isFunction(callable: lang.PseudoValue) -> bool:
-    return type(callable) in (lang.Builtin, lang.Function)
-
 def expectTypeElseError(
     exprtype: lang.Type,
     *expected: lang.Type,
@@ -278,8 +269,10 @@ def resolveProcCall(
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
-    if not isProcedure(callable):
-        raise builtin.LogicError("Not PROCEDURE", token=expr.callable.token())
+    if not isinstance(callable, lang.Procedure):
+        raise builtin.LogicError(
+            "Not PROCEDURE", token=expr.callable.token()
+        )
     resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
@@ -296,8 +289,13 @@ def resolveFuncCall(
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(expr.callable.name)
-    if not isFunction(callable):
-        raise builtin.LogicError("Not FUNCTION", token=expr.callable.token())
+    if not (
+        isinstance(callable, lang.Function)
+        or isinstance(callable, lang.Builtin)
+    ):
+        raise builtin.LogicError(
+            "Not FUNCTION", token=expr.callable.token()
+        )
     resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
@@ -353,12 +351,17 @@ def resolveExprs(
 
 # Verifiers
 
-def verifyStmts(frame: lang.Frame, stmts: Iterable[lang.Stmt]) -> None:
+def verifyStmts(
+    frame: lang.Frame,
+    stmts: Iterable[lang.Stmt],
+    returnType: Optional[lang.Type]=None,
+) -> None:
     for stmt in stmts:
         stmtType = verify(frame, stmt)
-        if isReturn(stmt):
+        if returnType and isinstance(stmt, lang.Return):
             expectTypeElseError(
-                stmtType, stmt.returnType, token=stmt.name.token()
+                stmtType, returnType,
+                token=stmt.expr.token()
             )
 
 def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
@@ -408,9 +411,12 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     frame.setValue(stmt.name, lang.Procedure(
         local, params, stmt.stmts
     ))
-    for stmt in callable.stmts:
-        if isReturn(stmt):
-            raise builtin.LogicError("Unexpected RETURN", stmt.expr.token())
+    for procstmt in callable.stmts:
+        if isinstance(procstmt, lang.Return):
+            raise builtin.LogicError(
+                "Unexpected RETURN in PROCEDURE",
+                procstmt.expr.token()
+            )
     verifyStmts(local, stmt.stmts)
 
 def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
@@ -422,8 +428,13 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         local, params, stmt.stmts
     ))
     # Check for return statements
-    if not any([isReturn(stmt) for stmt in stmt.stmts]):
-        raise builtin.LogicError("No RETURN in function", stmt.name.token())
+    if not any([
+        isinstance(stmt, lang.Return)
+        for stmt in stmt.stmts
+    ]):
+        raise builtin.LogicError(
+            "No RETURN in function", stmt.name.token()
+        )
     verifyStmts(local, stmt.stmts)
 
 def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
