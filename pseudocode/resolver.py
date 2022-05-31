@@ -333,6 +333,7 @@ def resolveProcCall(
         raise builtin.LogicError(
             "Not PROCEDURE", token=expr.callable.token()
         )
+    expr.args = resolveExprs(frame, expr.args)
     resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
@@ -358,6 +359,7 @@ def resolveFuncCall(
         raise builtin.LogicError(
             "Not FUNCTION", token=expr.callable.token()
         )
+    expr.args = resolveExprs(frame, expr.args)
     resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
