@@ -68,7 +68,7 @@ def resolveNamesInExpr(
 def resolveExprs(
     frame: lang.Frame,
     exprs: Iterable[lang.Expr],
-) -> Tuple[lang.Expr]:
+) -> Tuple[lang.Expr, ...]:
     """
     Resolve an iterable of Exprs.
     UnresolvedNames are resolved into GetNames.
@@ -166,6 +166,7 @@ def declareByval(
             ranges=declare.metadata['size'],
             type=declare.metadata['type'],
         )
+        assert isinstance(frame, lang.Frame), "Frame expected"
         frame.setValue(declare.name, array)
 
 def resolveDeclare(
@@ -310,7 +311,7 @@ def resolveProcCall(
         "Callable unresolved"
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
-    callable = callFrame.getValue(expr.callable.name)
+    callable = callFrame.getValue(str(expr.callable.name))
     if not isinstance(callable, lang.Procedure):
         raise builtin.LogicError(
             "Not PROCEDURE", token=expr.callable.token()
@@ -335,7 +336,7 @@ def resolveFuncCall(
         "Callable unresolved"
     callableType = resolveGetName(frame, expr.callable)
     callFrame = expr.callable.frame
-    callable = callFrame.getValue(expr.callable.name)
+    callable = callFrame.getValue(str(expr.callable.name))
     if not (
         isinstance(callable, lang.Function)
         or isinstance(callable, lang.Builtin)
@@ -444,7 +445,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     frame.setValue(str(stmt.name), lang.Procedure(
         local, params, stmt.stmts
     ))
-    for procstmt in callable.stmts:
+    for procstmt in stmt.stmts:
         if isinstance(procstmt, lang.Return):
             raise builtin.LogicError(
                 "Unexpected RETURN in PROCEDURE",
@@ -516,6 +517,7 @@ def verify(frame: lang.Frame, stmt: lang.Stmt):
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):
+        assert isinstance(stmt.expr, lang.Call), "Invalid Call"
         return resolveProcCall(frame, stmt.expr)
     elif isinstance(stmt, lang.ExprStmt):
         return resolve(frame, stmt.expr)
