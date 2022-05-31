@@ -118,29 +118,29 @@ def resolveLiteral(
 
 def resolveDeclare(
     frame: lang.Frame,
-    expr: lang.Declare,
+    declare: lang.Declare,
     passby: Literal['BYVALUE', 'BYREF']='BYVALUE',
 ) -> lang.Type:
     """Declare variable in frame"""
     if passby == 'BYVALUE':
         try:
-            frame.declare(expr.name, expr.type)
+            frame.declare(declare.name, declare.type)
         except AttributeError:  # Array.clone() not supported
-            raise builtin.LogicError("TYPE does not support attribute of type ARRAY", expr.token())
-        if expr.type == 'ARRAY':
+            raise builtin.LogicError("TYPE does not support attribute of type ARRAY", declare.token())
+        if declare.type == 'ARRAY':
             array = lang.Array(typesys=frame.types)
-            elemType = expr.metadata['type']
-            for index in rangeProduct(expr.metadata['size']):
+            elemType = declare.metadata['type']
+            for index in rangeProduct(declare.metadata['size']):
                 array.declare(index, elemType)
-            frame.setValue(expr.name, array)
-        return expr.type
+            frame.setValue(declare.name, array)
+        return declare.type
     # BYREF -- TODO: resolveByref() as a separate function
     expectTypeElseError(
-        expr.type, frame.outer.getType(expr.name), token=expr.token()
+        declare.type, frame.outer.getType(declare.name), token=declare.token()
     )
     # Reference frame vars in local
-    frame.set(expr.name, frame.outer.get(expr.name))
-    return expr.type
+    frame.set(declare.name, frame.outer.get(declare.name))
+    return declare.type
 
 def resolveUnary(
     frame: lang.Frame,
