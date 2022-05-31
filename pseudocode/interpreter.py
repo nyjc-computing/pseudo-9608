@@ -159,11 +159,10 @@ def evaluate(
 def executeStmts(
     frame: lang.Frame,
     stmts: Iterable[lang.Stmt],
-    *args,
     **kwargs,
 ) -> Optional[lang.Value]:
     for stmt in stmts:
-        returnval = execute(frame, stmt, *args, **kwargs)
+        returnval = execute(frame, stmt, **kwargs)
         if returnval is not None:
             return returnval
 
@@ -316,7 +315,6 @@ def execReturn(
 def execute(
     frame: lang.Frame,
     stmt: lang.Stmt,
-    *args,
     **kwargs,
 ) -> Optional[lang.Value]:
     if isinstance(stmt, lang.Output):
