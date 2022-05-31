@@ -22,21 +22,6 @@ def expectTypeElseError(
         typesStr = f"({', '.join(expected)})"
         raise builtin.LogicError(f"Expected {typesStr}, is {exprtype}", token)
 
-def lookupElseError(
-    frame: lang.Frame,
-    name: lang.NameKey,
-    errmsg: str="Undeclared",
-    *,
-    token: lang.Token,
-) -> lang.Frame:
-    if frame.has(name):
-        return frame
-    if isinstance(frame, lang.Frame):
-        frame: Optional[lang.Frame] = frame.lookup(name)
-        if frame:
-            return frame
-    raise builtin.LogicError(errmsg, name, token)
-
 def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     ranges = [
         range(start, end + 1)
