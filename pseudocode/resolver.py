@@ -47,24 +47,36 @@ def resolveName(
     frame: lang.Frame,
     exprOrStmt: Union[lang.Expr, lang.Stmt],
     attr: Optional[str]=None,
-) -> None:
+) -> lang.GetName:
     """
     Takes in an UnresolvedName, and returns a GetName with an
     appropriate frame.
-
-    Raises
-    ------
-    LogicError if name is undeclared.
     """
-    name: lang.Expr = getattr(exprOrStmt, attr)
-    if not isinstance(name, lang.UnresolvedName):
-        return
-    exprFrame = frame.lookup(name)
+    if isinstance(exprOrStmt, lang.Stmt) and not attr:
+        raise TypeError("attr required for Stmt argument")
+    expr: lang.Expr = getattr(exprOrStmt, attr) if attr else exprOrStmt
+    if not isinstance(expr, lang.UnresolvedName):
+        raise TypeError('Attempted to resolve invalid UnresolvedName')
+    unresolved: lang.UnresolvedName = expr
+    exprFrame = frame.lookup(str(unresolved.name))
     if exprFrame is None:
-        raise builtin.LogicError("Undeclared", name.token())
+        raise builtin.LogicError("Undeclared", unresolved.token())
+    getNameExpr = lang.GetName(exprFrame, unresolved.name)
     if attr:
-        return lang.GetName(exprFrame, name)
-    setattr(exprOrStmt, attr, lang.GetName(exprFrame, name))
+        setattr(exprOrStmt, attr, getNameExpr)
+    return getNameExpr
+
+def resolveNamesInExpr(
+    frame: lang.Frame,
+    exprOrStmt: Union[lang.Expr, lang.Stmt],
+) -> None:
+    """
+    Checks the exprOrstmt's slots for UnresolvedName, and replaces them
+    with GetNames.
+    """
+    for attr in exprOrStmt.__slots__:
+        if isinstance(getattr(exprOrStmt, attr), lang.UnresolvedName):
+            resolveName(frame, exprOrStmt, attr)
 
 
 
