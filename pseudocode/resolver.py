@@ -104,7 +104,7 @@ def resolveExprs(
 def resolveArgsParams(
     frame: lang.Frame,
     args: lang.Args,
-    params: Iterable[lang.Param],
+    params: Collection[lang.Param],
     *,
     token: lang.Token,
 ) -> None:
@@ -116,10 +116,10 @@ def resolveArgsParams(
     if len(args) != len(params):
         raise builtin.LogicError(
             f"Expected {len(params)} args, got {len(args)}",
-            token=token(),
+            token=token,
         )
     for arg, param in zip(args, params):
-        # param is a slot from either local or frame
+        # param is a TypedValue slot from either local or frame
         expectTypeElseError(
             resolve(frame, arg), param.type, token=arg.token()
         )
