@@ -666,7 +666,7 @@ class GetIndex(Expr):
     __slots__ = ('array', 'index')
     def __init__(
         self,
-        array: NameKeyExpr,
+        array: NameExpr,
         index: IndexExpr,
     ) -> None:
         self.array = array
