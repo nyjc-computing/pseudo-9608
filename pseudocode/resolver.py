@@ -387,10 +387,11 @@ def verifyStmts(
     returnType: Optional[lang.Type]=None,
 ) -> None:
     for stmt in stmts:
-        stmtType = verify(frame, stmt)
+        verify(frame, stmt)
         if returnType and isinstance(stmt, lang.Return):
             expectTypeElseError(
-                stmtType, returnType, token=stmt.expr.token()
+                resolve(frame, stmt.expr), returnType,
+                token=stmt.expr.token()
             )
 
 def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
@@ -479,11 +480,7 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
         resolveDeclare(objTemplate, expr)
     frame.types.setTemplate(str(stmt.name), objTemplate)
 
-@overload
-def verify(frame: lang.Frame, stmt: lang.ExprStmt) -> lang.Type: ...
-@overload
-def verify(frame: lang.Frame, stmt: lang.Stmt) -> None: ...
-def verify(frame: lang.Frame, stmt: lang.Stmt):
+def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
     if isinstance(stmt, lang.Output):
         verifyOutput(frame, stmt)
     elif isinstance(stmt, lang.Input):
@@ -518,6 +515,7 @@ def verify(frame: lang.Frame, stmt: lang.Stmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):
         assert isinstance(stmt.expr, lang.Call), "Invalid Call"
-        return resolveProcCall(frame, stmt.expr)
+        resolveProcCall(frame, stmt.expr)
     elif isinstance(stmt, lang.ExprStmt):
-        return resolve(frame, stmt.expr)
+        resolve(frame, stmt.expr)
+    raise ValueError("Invalid Stmt {stmt}")
