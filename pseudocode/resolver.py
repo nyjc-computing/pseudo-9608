@@ -117,30 +117,40 @@ def resolveLiteral(
     return literal.type
 
 def resolveDeclare(
-    frame: lang.Frame,
+    frame: Union[lang.Frame, lang.ObjectTemplate],
     declare: lang.Declare,
     passby: Literal['BYVALUE', 'BYREF']='BYVALUE',
 ) -> lang.Type:
     """Declare variable in frame"""
     if passby == 'BYVALUE':
-        try:
-            frame.declare(declare.name, declare.type)
-        except AttributeError:  # Array.clone() not supported
-            raise builtin.LogicError("TYPE does not support attribute of type ARRAY", declare.token())
+        if (
+            isinstance(frame, lang.ObjectTemplate)
+            and declare.type == 'ARRAY'
+        ):
+            raise builtin.LogicError(
+                "ARRAY in TYPE not supported", declare.token()
+            )
+        frame.declare(declare.name, declare.type)
         if declare.type == 'ARRAY':
-            array = lang.Array(typesys=frame.types)
-            elemType = declare.metadata['type']
-            for index in rangeProduct(declare.metadata['size']):
-                array.declare(index, elemType)
+            array = lang.Array(
+                typesys=frame.types,
+                ranges=declare.metadata['size'],
+                type=declare.metadata['type'],                
+            )
             frame.setValue(declare.name, array)
         return declare.type
-    # BYREF -- TODO: resolveByref() as a separate function
-    expectTypeElseError(
-        declare.type, frame.outer.getType(declare.name), token=declare.token()
-    )
-    # Reference frame vars in local
-    frame.set(declare.name, frame.outer.get(declare.name))
-    return declare.type
+    else:
+        # BYREF -- TODO: resolveByref() as a separate function
+        if isinstance(frame, lang.ObjectTemplate):
+            raise ValueError("Declared BYREF in an ObjectTemplate")
+        assert frame.outer, "Declared name in a frame with no outer"
+        expectTypeElseError(
+            declare.type, frame.outer.getType(declare.name),
+            token=declare.token()
+        )
+        # Reference frame vars in local
+        frame.set(declare.name, frame.outer.get(declare.name))
+        return declare.type
 
 def resolveUnary(
     frame: lang.Frame,
