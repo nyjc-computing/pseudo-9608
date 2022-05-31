@@ -317,11 +317,10 @@ def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
 def resolveProcCall(
     frame: lang.Frame,
     expr: lang.Call,
-) -> Literal['NULL']:
+) -> lang.Type:
     """
     Resolve a procedure call.
     Statement verification is done in verifyProcedure, not here.
-    Delegate argument checking to resolveCall.
     """
     resolveNamesInExpr(frame, expr)
     assert isinstance(expr.callable, lang.GetName), \
@@ -334,7 +333,10 @@ def resolveProcCall(
             "Not PROCEDURE", token=expr.callable.token()
         )
     expr.args = resolveExprs(frame, expr.args)
-    resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
+    resolveArgsParams(
+        frame, expr.args, callable.params,
+        token=expr.token()
+    )
     return callableType
 
 def resolveFuncCall(
@@ -344,7 +346,6 @@ def resolveFuncCall(
     """
     Resolve a function call.
     Statement verification is done in verifyFunction, not here.
-    Delegate argument checking to resolveCall.
     """
     resolveNamesInExpr(frame, expr)
     assert isinstance(expr.callable, lang.GetName), \
@@ -360,7 +361,10 @@ def resolveFuncCall(
             "Not FUNCTION", token=expr.callable.token()
         )
     expr.args = resolveExprs(frame, expr.args)
-    resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
+    resolveArgsParams(
+        frame, expr.args, callable.params,
+        token=expr.token()
+    )
     return callableType
 
 def resolve(
