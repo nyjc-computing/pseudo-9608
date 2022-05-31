@@ -242,7 +242,7 @@ def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
     """
     Returns the type of value that name is mapped to in frame.
     """
-    return frame.getType(expr.name)
+    return frame.getType(str(expr.name))
 
 def resolveGet(frame, expr: lang.NameExpr) -> lang.Type:
     if isinstance(expr, lang.GetIndex):
