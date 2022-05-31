@@ -80,3 +80,8 @@ This project is also an attempt to write a programming book in a new style. Each
 - [23a Object: Scopes](https://github.com/nyjc-computing/pseudo-9608/pull/58)
 - [23b Object: Attributes](https://github.com/nyjc-computing/pseudo-9608/pull/59)
 - [23c Object: ARRAY](https://github.com/nyjc-computing/pseudo-9608/pull/60)
+- [24a Improvements: type annotation](https://github.com/nyjc-computing/pseudo-9608/pull/61)
+- [24b Improvements: Decoupling](https://github.com/nyjc-computing/pseudo-9608/pull/64)
+- [24c Improvements: Type Relationship](https://github.com/nyjc-computing/pseudo-9608/pull/65)
+- [24d Improvements: Parser](https://github.com/nyjc-computing/pseudo-9608/pull/67)
+- [24e Improvements: Resolver](https://github.com/nyjc-computing/pseudo-9608/pull/69)
