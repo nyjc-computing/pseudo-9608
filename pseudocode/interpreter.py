@@ -1,5 +1,4 @@
 from typing import Optional, Iterable, Tuple, Callable as function
-from typing import NoReturn
 
 from . import builtin, lang, system
 
@@ -12,7 +11,7 @@ def expectTypeElseError(
     *expected: str,
     errmsg: str="Expected",
     token: lang.Token=None,
-) -> NoReturn:
+) -> None:
     if not exprmode in expected:
         if not token: token = exprmode
         raise builtin.RuntimeError(f"{errmsg} {expected}", token)
@@ -22,7 +21,7 @@ def declaredElseError(
     name: lang.Varname,
     errmsg: str="Undeclared",
     token: lang.Token=None,
-) -> NoReturn:
+) -> None:
     if not frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
@@ -31,7 +30,7 @@ def undeclaredElseError(
     name: lang.Varname,
     errmsg="Already declared",
     token: lang.Token=None,
-) -> NoReturn:
+) -> None:
     if frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
@@ -58,7 +57,7 @@ class Interpreter:
         """
         self.outputHandler = handler
 
-    def interpret(self) -> NoReturn:
+    def interpret(self) -> None:
         executeStmts(
             self.frame,
             self.statements,
@@ -172,7 +171,7 @@ def execOutput(
     *,
     output: function,
     **kwargs,
-) -> NoReturn:
+) -> None:
     for expr in stmt.exprs:
         value = evaluate(frame, expr)
         if type(value) is bool:
@@ -184,7 +183,7 @@ def execInput(
     frame: lang.Frame,
     stmt: lang.Input,
     **kwargs,
-) -> NoReturn:
+) -> None:
     name = stmt.name.name
     frame.setValue(name, input())
 
@@ -192,7 +191,7 @@ def execCase(
     frame: lang.Frame,
     stmt: lang.Conditional,
     **kwargs,
-) -> NoReturn:
+) -> None:
     cond = evaluate(frame, stmt.cond)
     if cond in stmt.stmtMap:
         executeStmts(frame, stmt.stmtMap[cond], **kwargs)
@@ -203,7 +202,7 @@ def execIf(
     frame: lang.Frame,
     stmt: lang.Conditional,
     **kwargs,
-) -> NoReturn:
+) -> None:
     cond = evaluate(frame, stmt.cond)
     if cond in stmt.stmtMap:
         executeStmts(frame, stmt.stmtMap[True], **kwargs)
@@ -214,7 +213,7 @@ def execWhile(
     frame: lang.Frame,
     stmt: lang.Loop,
     **kwargs,
-) -> NoReturn:
+) -> None:
     if stmt.init:
         execute(frame, stmt.init, **kwargs)
     while evaluate(frame, stmt.cond) is True:
@@ -224,7 +223,7 @@ def execRepeat(
     frame: lang.Frame,
     stmt: lang.Loop,
     **kwargs,
-) -> NoReturn:
+) -> None:
     executeStmts(frame, stmt.stmts)
     while evaluate(frame, stmt.cond) is False:
         executeStmts(frame, stmt.stmts)
@@ -233,7 +232,7 @@ def execFile(
     frame: lang.Frame,
     stmt: lang.FileAction,
     **kwargs,
-) -> NoReturn:
+) -> None:
     name: str = evaluate(frame, stmt.name)
     if stmt.action == 'open':
         undeclaredElseError(
@@ -293,14 +292,14 @@ def execCall(
     frame: lang.Frame,
     stmt: lang.ExprStmt,
     **kwargs,
-) -> NoReturn:
+) -> None:
     evalCall(frame, stmt.expr, **kwargs)
 
 def execAssign(
     frame: lang.Frame,
     stmt: lang.ExprStmt,
     **kwargs,
-) -> NoReturn:
+) -> None:
     evaluate(frame, stmt.expr, **kwargs)
 
 def execReturn(
@@ -316,7 +315,7 @@ def execute(
     frame: lang.Frame,
     stmt: lang.Stmt,
     **kwargs,
-) -> NoReturn:
+) -> None:
     if isinstance(stmt, lang.Output):
         execOutput(frame, stmt, **kwargs)
     if isinstance(stmt, lang.Input):
