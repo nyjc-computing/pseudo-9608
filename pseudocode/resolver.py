@@ -404,7 +404,7 @@ def verifyStmts(
             )
 
 def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
-    resolveExprs(frame, stmt.exprs)
+    stmt.exprs = resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
     resolveNamesInExpr(frame, stmt)
