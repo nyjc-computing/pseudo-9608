@@ -1,5 +1,5 @@
-from typing import overload
-from typing import Any, Optional, Union, Literal
+from typing import NoReturn
+from typing import Optional, Union, Literal
 from typing import Iterable, Iterator, Collection
 from typing import Tuple
 from itertools import product
@@ -16,7 +16,7 @@ def expectTypeElseError(
     exprtype: lang.Type,
     *expected: lang.Type,
     token: lang.Token,
-) -> None:
+) -> NoReturn:
     if exprtype not in expected:
         # Stringify expected types
         typesStr = f"({', '.join(expected)})"
@@ -58,7 +58,7 @@ def resolveName(
 def resolveNamesInExpr(
     frame: lang.Frame,
     exprOrStmt: Union[lang.Expr, lang.Stmt],
-) -> None:
+) -> NoReturn:
     """
     Checks the exprOrstmt's slots for UnresolvedName, and replaces them
     with GetNames.
@@ -94,7 +94,7 @@ def resolveArgsParams(
     params: Collection[lang.Param],
     *,
     token: lang.Token,
-) -> None:
+) -> NoReturn:
     """
     resolveArgsParams() only type-checks the args and stmts of the call.
     It does not resolve the callable. This should be carried out first
@@ -125,7 +125,7 @@ class Resolver:
         self.frame = frame
         self.statements = statements
 
-    def inspect(self) -> None:
+    def inspect(self) -> NoReturn:
         verifyStmts(self.frame, self.statements)
 
 
@@ -141,7 +141,7 @@ def resolveLiteral(
 def declareByref(
     frame: lang.Frame,
     declare: lang.Declare,
-) -> None:
+) -> NoReturn:
     assert frame.outer, "Declared name in a frame with no outer"
     expectTypeElseError(
         declare.type, frame.outer.getType(declare.name),
@@ -153,7 +153,7 @@ def declareByref(
 def declareByval(
     frame: Union[lang.Frame, lang.ObjectTemplate],
     declare: lang.Declare,
-) -> None:
+) -> NoReturn:
     if (
         isinstance(frame, lang.ObjectTemplate)
         and declare.type == 'ARRAY'
@@ -404,7 +404,7 @@ def verifyStmts(
     frame: lang.Frame,
     stmts: Iterable[lang.Stmt],
     returnType: Optional[lang.Type]=None,
-) -> None:
+) -> NoReturn:
     for stmt in stmts:
         verify(frame, stmt)
         if returnType and isinstance(stmt, lang.Return):
@@ -413,14 +413,14 @@ def verifyStmts(
                 token=stmt.expr.token()
             )
 
-def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
+def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> NoReturn:
     stmt.exprs = resolveExprs(frame, stmt.exprs)
 
-def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
+def verifyInput(frame: lang.Frame, stmt: lang.Input) -> NoReturn:
     resolveNamesInExpr(frame, stmt)
     resolve(frame, stmt.key)
 
-def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
+def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> NoReturn:
     resolveNamesInExpr(frame, stmt)
     resolve(frame, stmt.cond)
     for statements in stmt.stmtMap.values():
@@ -428,7 +428,7 @@ def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
 
-def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
+def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> NoReturn:
     resolveNamesInExpr(frame, stmt)
     condType = resolve(frame, stmt.cond)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
@@ -437,7 +437,7 @@ def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
     if stmt.fallback:
         verifyStmts(frame, stmt.fallback)
 
-def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
+def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> NoReturn:
     resolveNamesInExpr(frame, stmt)
     if stmt.init:
         verify(frame, stmt.init)
@@ -456,7 +456,7 @@ def transformDeclares(
         params += (frame.get(declaration.name),)
     return params
 
-def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> NoReturn:
     resolveNamesInExpr(frame, stmt)
     local = lang.Frame(typesys=frame.types, outer=frame)
     params = transformDeclares(local, stmt.params, stmt.passby)
@@ -473,7 +473,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
             )
     verifyStmts(local, stmt.stmts)
 
-def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> NoReturn:
     resolveNamesInExpr(frame, stmt)
     local = lang.Frame(typesys=frame.types, outer=frame)
     params = transformDeclares(local, stmt.params, stmt.passby)
@@ -492,14 +492,17 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         )
     verifyStmts(local, stmt.stmts, stmt.returnType)
 
-def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
+def verifyDeclareType(
+    frame: lang.Frame,
+    stmt: lang.TypeStmt,
+) -> NoReturn:
     frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=frame.types)
     for expr in stmt.exprs:
         resolveDeclare(objTemplate, expr)
     frame.types.setTemplate(str(stmt.name), objTemplate)
 
-def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verify(frame: lang.Frame, stmt: lang.Stmt) -> NoReturn:
     if isinstance(stmt, lang.Output):
         verifyOutput(frame, stmt)
     elif isinstance(stmt, lang.Input):
@@ -537,4 +540,4 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
         resolveProcCall(frame, stmt.expr)
     elif isinstance(stmt, lang.ExprStmt):
         resolve(frame, stmt.expr)
-    raise ValueError("Invalid Stmt {stmt}")
+    raise ValueError(f"Invalid Stmt {stmt}")
