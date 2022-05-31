@@ -1,4 +1,4 @@
-from typing import Optional, Union, Iterable, Tuple, List
+from typing import Any, Optional, Union, Iterable, Tuple, List, Literal
 from typing import Callable as function
 
 from . import builtin, lang
@@ -138,7 +138,7 @@ def name(tokens: Tokens) -> lang.NameExpr:
             nameExpr = attrExpr(tokens, nameExpr)
     return nameExpr
 
-def parser(tokens: Tokens) -> function[[Tokens], lang.Expr]:
+def parser(tokens: Tokens) -> function[[Tokens], Any]:
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary
@@ -231,7 +231,7 @@ def inputStmt(tokens: Tokens) -> lang.Input:
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.Input(name)
 
-def colonRange(tokens: Tokens) -> Tuple:
+def colonRange(tokens: Tokens) -> lang.IndexRange:
     """Parse and return a start:end range as a tuple"""
     range_start = matchTypeElseError(tokens, 'INTEGER')
     matchWordElseError(tokens, ':', msg="in range")
@@ -246,13 +246,13 @@ def declare(tokens: Tokens) -> lang.Declare:
     name = identifier(tokens)
     matchWordElseError(tokens, ':', msg="after name")
     expectTypeToken(tokens)
-    metadata = None
+    metadata: lang.TypeMetadata = {}
     typetoken = consume(tokens)
     if typetoken.word == 'ARRAY':
         matchWordElseError(tokens, '[')
-        metadata = {'size': [colonRange(tokens)]}
+        metadata['size'] = (colonRange(tokens),)
         while matchWord(tokens, ','):
-            metadata['size'] += [colonRange(tokens)]
+            metadata['size'] += (colonRange(tokens),)
         matchWordElseError(tokens, ']')
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
@@ -265,7 +265,7 @@ def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     return lang.DeclareStmt(expr)
 
 def typeStmt(tokens: Tokens) -> lang.TypeStmt:
-    name = identifier(tokens)
+    name = identifier(tokens).name
     matchWordElseError(tokens, '\n')
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):
@@ -362,14 +362,13 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     return lang.Loop(initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
+        passby: lang.Passby = 'BYVALUE'
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
             passby = passbyToken.word
-        else:
-            passby = 'BYVALUE'
         expr = declare(tokens)
         params += [expr]
         while matchWord(tokens, ','):
@@ -385,15 +384,15 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
 
 def callStmt(tokens: Tokens) -> lang.CallStmt:
     parse = parser(tokens)
-    callable: lang.Expr = parse(tokens)
+    callable: lang.Call = parse(tokens)
     matchWordElseError(tokens, '\n')
     return lang.CallStmt(callable)
 
 def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
-    name = identifier(tokens)
+    name = identifier(tokens).name
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
-        passby: str = 'BYVALUE'
+        passby: lang.Passby = 'BYVALUE'
         var = declare(tokens)
         params += [var]
         while matchWord(tokens, ','):
@@ -407,9 +406,7 @@ def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
-    return lang.FunctionStmt(
-        'function', name, passby, params, stmts, typetoken.word
-    )
+    return lang.FunctionStmt(name, passby, params, stmts, typetoken.word)
 
 def returnStmt(tokens: Tokens) -> lang.Return:
     expr = expression(tokens)

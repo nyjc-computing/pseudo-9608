@@ -1,6 +1,6 @@
-from typing import Any, Optional, Union, Protocol
+from typing import Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
-from typing import Tuple, List
+from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, TextIO
 from abc import abstractmethod
 from itertools import product
@@ -12,8 +12,9 @@ Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Literal", ...]  # Array indexes
-IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
-Args = Iterable["Expr"]  # Callable args
+IndexRange = Tuple[int, int]  # Array ranges (declared)
+Passby = LiteralType['BYREF', 'BYVALUE']
+Args = Collection["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
@@ -25,8 +26,11 @@ NameKeyExpr = Union["UnresolvedName", "GetName"]
 GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
 # NameExprs start with a name
 NameExpr = Union[GetExpr, "Call"]
-# Rule = str  # Stmt rules
-# FileData = Optional[Union["Expr", str]]
+class TypeMetadata(TypedDict, total=False):
+    """The metadata dict passed to an Array declaration"""
+    size: Tuple[IndexRange, ...]
+    type: Type
+    
 
 # ----------------------------------------------------------------------
 class Token:
@@ -38,8 +42,8 @@ class Token:
         line: int,
         column: int,
         type: Type,
-        word: str,
-        value: Any,
+        word,
+        value,
     ) -> None:
         self.line = line
         self.col = column
@@ -69,21 +73,6 @@ class Name:
 
     def token(self) -> "Token":
         return self._token
-
-
-
-class PseudoMap(Protocol):
-    """
-    Represents a mapping of keys to values used in pseudo.
-
-    Methods
-    -------
-    has(key)
-        returns True if the key exists in the map
-    """
-    @abstractmethod
-    def has(self, key) -> bool:
-        raise NotImplementedError
 
 
 
@@ -356,7 +345,7 @@ class Array(PseudoValue):
     def __init__(
         self,
         typesys: "TypeSystem",
-        ranges: Collection[Tuple[int, int]],
+        ranges: Collection[IndexRange],
         type: Type,
     ) -> None:
         self.types = typesys
@@ -432,7 +421,7 @@ class Builtin(PseudoValue):
     __slots__ = ('params', 'func')
     def __init__(
         self,
-        params: Iterable,
+        params: Collection[Param],
         func: function,
     ) -> None:
         self.params = params
@@ -464,7 +453,7 @@ class Callable(PseudoValue):
     def __init__(
         self,
         frame: "Frame",
-        params: Iterable[Param],
+        params: Collection[Param],
         stmts: Iterable["Stmt"],
     ) -> None:
         self.frame = frame
@@ -566,7 +555,7 @@ class Declare(Expr):
         self,
         name: NameKey,
         type: Type,
-        metadata: Mapping=None,
+        metadata: Mapping,
         *,
         token: "Token",
     ) -> None:
@@ -720,19 +709,33 @@ class ExprStmt(Stmt):
     __slots__ = ('expr',)
     def __init__(
         self,
-        rule: str,
         expr: "Expr",
     ) -> None:
-        self.rule = rule
         self.expr = expr
 
-class AssignStmt(ExprStmt): ...
-
-class DeclareStmt(ExprStmt): ...
-
-class CallStmt(ExprStmt): ...
-
 class Return(ExprStmt): ...
+
+class AssignStmt(ExprStmt):
+    def __init__(
+        self,
+        expr: "Assign",
+    ) -> None:
+        self.expr = expr
+
+
+class DeclareStmt(ExprStmt):
+    def __init__(
+        self,
+        expr: "Declare",
+    ) -> None:
+        self.expr = expr
+
+class CallStmt(ExprStmt):
+    def __init__(
+        self,
+        expr: "Call",
+    ) -> None:
+        self.expr = expr
 
 
 
@@ -786,9 +789,27 @@ class Loop(Stmt):
         self.cond = cond
         self.stmts = stmts
 
-class While(Loop): ...
+class While(Loop):
+    def __init__(
+        self,
+        init: Optional["Stmt"],
+        cond: "Expr",
+        stmts: Iterable["Stmt"],
+    ) -> None:
+        self.init = init
+        self.cond = cond
+        self.stmts = stmts
 
-class Repeat(Loop): ...
+class Repeat(Loop):
+    def __init__(
+        self,
+        init: None,
+        cond: "Expr",
+        stmts: Iterable["Stmt"],
+    ) -> None:
+        self.init = init
+        self.cond = cond
+        self.stmts = stmts
 
 
 
@@ -796,8 +817,8 @@ class ProcFunc(Stmt):
     __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
-        name: GetExpr,
-        passby: str,
+        name: Name,
+        passby: LiteralType['BYVALUE', 'BYREF'],
         params: Iterable[Declare],
         stmts: Iterable["Stmt"],
         returnType: Type,
@@ -818,8 +839,8 @@ class TypeStmt(Stmt):
     __slots__ = ('name', 'exprs')
     def __init__(
         self,
-        name: NameExpr,
-        exprs: Iterable["Expr"],
+        name: Name,
+        exprs: Iterable["Declare"],
     ) -> None:
         self.name = name
         self.exprs = exprs
@@ -857,7 +878,7 @@ class WriteFile(Stmt):
         self.data = data
 
 class CloseFile(Stmt):
-    __slots__ = ('filename')
+    __slots__ = ('filename',)
     def __init__(
         self,
         filename: "Expr",  # TODO: Support other Exprs
