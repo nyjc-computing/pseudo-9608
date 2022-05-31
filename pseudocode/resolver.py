@@ -80,6 +80,50 @@ def resolveNamesInExpr(
         if isinstance(getattr(exprOrStmt, attr), lang.UnresolvedName):
             resolveName(frame, exprOrStmt, attr)
 
+def resolveExprs(
+    frame: lang.Frame,
+    exprs: Iterable[lang.Expr],
+) -> Tuple[lang.Expr]:
+    """
+    Resolve an iterable of Exprs.
+    UnresolvedNames are resolved into GetNames.
+
+    Return
+    ------
+    Tuple[Expr, ...]
+        A tuple of Exprs
+    """
+    newexprs: Tuple[lang.Expr, ...] = tuple()
+    for expr in exprs:
+        if isinstance(expr, lang.UnresolvedName):
+            expr = resolveName(frame, expr)
+        resolve(frame, expr)
+        newexprs += (expr,)
+    return newexprs
+
+def resolveArgsParams(
+    frame: lang.Frame,
+    args: lang.Args,
+    params: Iterable[lang.Param],
+    *,
+    token: lang.Token,
+) -> None:
+    """
+    resolveArgsParams() only type-checks the args and stmts of the call.
+    It does not resolve the callable. This should be carried out first
+    (e.g. in a wrapper function) before resolveArgsParams() is invoked.
+    """
+    if len(args) != len(params):
+        raise builtin.LogicError(
+            f"Expected {len(params)} args, got {len(args)}",
+            token=token(),
+        )
+    for arg, param in zip(args, params):
+        # param is a slot from either local or frame
+        expectTypeElseError(
+            resolve(frame, arg), param.type, token=arg.token()
+        )
+
 
 
 class Resolver:
@@ -317,29 +361,6 @@ def resolveFuncCall(
     resolveArgsParams(frame, expr.args, callable.params, token=expr.token())
     return callableType
 
-def resolveArgsParams(
-    frame: lang.Frame,
-    args: lang.Args,
-    params: Iterable[lang.Param],
-    *,
-    token: lang.Token,
-) -> None:
-    """
-    resolveArgsParams() only type-checks the args and stmts of the call.
-    It does not resolve the callable. This should be carried out first
-    (e.g. in a wrapper function) before resolveArgsParams() is invoked.
-    """
-    if len(args) != len(params):
-        raise builtin.LogicError(
-            f"Expected {len(params)} args, got {len(args)}",
-            token=token(),
-        )
-    for arg, param in zip(args, params):
-        # param is a slot from either local or frame
-        expectTypeElseError(
-            resolve(frame, arg), param.type, token=arg.token()
-        )
-
 def resolve(
     frame: lang.Frame,
     expr: lang.Expr,
@@ -367,27 +388,6 @@ def resolve(
     raise ValueError(f"Unresolvable {expr}")
 
 
-
-def resolveExprs(
-    frame: lang.Frame,
-    exprs: Iterable[lang.Expr],
-) -> Tuple[lang.Expr]:
-    """
-    Resolve an iterable of Exprs.
-    UnresolvedNames are resolved into GetNames.
-
-    Return
-    ------
-    Tuple[Expr, ...]
-        A tuple of Exprs
-    """
-    newexprs: Tuple[lang.Expr, ...] = tuple()
-    for expr in exprs:
-        if isinstance(expr, lang.UnresolvedName):
-            expr = resolveName(frame, expr)
-        resolve(frame, expr)
-        newexprs += (expr,)
-    return newexprs
 
 # Verifiers
 
