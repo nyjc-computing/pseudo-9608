@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Protocol
+from typing import Optional, Union, Protocol
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, TextIO
@@ -890,7 +890,7 @@ class WriteFile(Stmt):
         self.data = data
 
 class CloseFile(Stmt):
-    __slots__ = ('filename')
+    __slots__ = ('filename',)
     def __init__(
         self,
         filename: "Expr",  # TODO: Support other Exprs
