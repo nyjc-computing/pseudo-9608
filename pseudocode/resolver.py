@@ -209,17 +209,12 @@ def resolveAttr(
     objType = resolve(frame, expr.object)
     # Check objType existence in typesystem
     if not frame.types.has(objType):
-        raise builtin.LogicError(
-            "Undeclared type", objType, expr.token()
-        )
+        raise builtin.LogicError("Undeclared type", expr.token())
     # Check attribute existence in object template
     obj = frame.types.cloneType(objType).value
-    assert isinstance(obj, lang.Object), \
-        "Invalid Object"
+    assert isinstance(obj, lang.Object), "Invalid Object"
     if not obj.has(str(expr.name)):
-        raise builtin.LogicError(
-            "Undeclared attribute", expr.token()
-        )
+        raise builtin.LogicError("Undeclared attribute", expr.token())
     return obj.getType(str(expr.name))
 
 def resolveIndex(
