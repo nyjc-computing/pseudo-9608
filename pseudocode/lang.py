@@ -1,4 +1,4 @@
-from typing import Optional, Union, Protocol, TypedDict
+from typing import Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, TextIO
@@ -26,8 +26,6 @@ NameKeyExpr = Union["UnresolvedName", "GetName"]
 GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
 # NameExprs start with a name
 NameExpr = Union[GetExpr, "Call"]
-# Rule = str  # Stmt rules
-# FileData = Optional[Union["Expr", str]]
 class TypeMetadata(TypedDict, total=False):
     """The metadata dict passed to an Array declaration"""
     size: Tuple[IndexRange, ...]
@@ -75,21 +73,6 @@ class Name:
 
     def token(self) -> "Token":
         return self._token
-
-
-
-class PseudoMap(Protocol):
-    """
-    Represents a mapping of keys to values used in pseudo.
-
-    Methods
-    -------
-    has(key)
-        returns True if the key exists in the map
-    """
-    @abstractmethod
-    def has(self, key) -> bool:
-        raise NotImplementedError
 
 
 
