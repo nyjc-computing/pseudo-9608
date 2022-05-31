@@ -231,7 +231,7 @@ def inputStmt(tokens: Tokens) -> lang.Input:
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.Input(name)
 
-def colonRange(tokens: Tokens) -> Tuple:
+def colonRange(tokens: Tokens) -> lang.IndexRange:
     """Parse and return a start:end range as a tuple"""
     range_start = matchTypeElseError(tokens, 'INTEGER')
     matchWordElseError(tokens, ':', msg="in range")
@@ -246,13 +246,13 @@ def declare(tokens: Tokens) -> lang.Declare:
     name = identifier(tokens)
     matchWordElseError(tokens, ':', msg="after name")
     expectTypeToken(tokens)
-    metadata = None
+    metadata: lang.TypeMetadata = {}
     typetoken = consume(tokens)
     if typetoken.word == 'ARRAY':
         matchWordElseError(tokens, '[')
-        metadata = {'size': [colonRange(tokens)]}
+        metadata['size'] = (colonRange(tokens),)
         while matchWord(tokens, ','):
-            metadata['size'] += [colonRange(tokens)]
+            metadata['size'] += (colonRange(tokens),)
         matchWordElseError(tokens, ']')
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
@@ -265,7 +265,7 @@ def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     return lang.DeclareStmt(expr)
 
 def typeStmt(tokens: Tokens) -> lang.TypeStmt:
-    name = identifier(tokens)
+    name = identifier(tokens).name
     matchWordElseError(tokens, '\n')
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):

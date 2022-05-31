@@ -1,4 +1,4 @@
-from typing import Optional, Union, Protocol
+from typing import Optional, Union, Protocol, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, TextIO
@@ -12,7 +12,7 @@ Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Literal", ...]  # Array indexes
-IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
+IndexRange = Tuple[int, int]  # Array ranges (declared)
 Passby = LiteralType['BYREF', 'BYVALUE']
 Args = Collection["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
@@ -28,6 +28,11 @@ GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
 NameExpr = Union[GetExpr, "Call"]
 # Rule = str  # Stmt rules
 # FileData = Optional[Union["Expr", str]]
+class TypeMetadata(TypedDict, total=False):
+    """The metadata dict passed to an Array declaration"""
+    size: Tuple[IndexRange, ...]
+    type: Type
+    
 
 # ----------------------------------------------------------------------
 class Token:
@@ -357,7 +362,7 @@ class Array(PseudoValue):
     def __init__(
         self,
         typesys: "TypeSystem",
-        ranges: Collection[Tuple[int, int]],
+        ranges: Collection[IndexRange],
         type: Type,
     ) -> None:
         self.types = typesys
