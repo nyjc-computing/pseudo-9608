@@ -64,6 +64,7 @@ def resolveName(
     getNameExpr = lang.GetName(exprFrame, unresolved.name)
     if attr:
         setattr(exprOrStmt, attr, getNameExpr)
+    # Return value needed by resolveExprs()
     return getNameExpr
 
 def resolveNamesInExpr(
