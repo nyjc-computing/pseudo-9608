@@ -434,10 +434,10 @@ def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.setTemplate(stmt.name, obj)
 
 @overload
-def verify(frame: lang.Frame, stmt: lang.ExprStmt) -> Optional[lang.Type]: ...
+def verify(frame: lang.Frame, stmt: lang.ExprStmt) -> lang.Type: ...
 @overload
 def verify(frame: lang.Frame, stmt: lang.Stmt) -> None: ...
-def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
+def verify(frame: lang.Frame, stmt: lang.Stmt):
     if isinstance(stmt, lang.Output):
         verifyOutput(frame, stmt)
     elif isinstance(stmt, lang.Input):
@@ -454,30 +454,23 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
         verifyFunction(frame, stmt)
     elif isinstance(stmt, lang.OpenFile):
         resolveName(frame, stmt, 'filename')
-        resolve(stmt.filename)
+        resolve(frame, stmt.filename)
     elif isinstance(stmt, lang.ReadFile):
         resolveName(frame, stmt, 'filename')
         resolveName(frame, stmt, 'target')
-        resolve(stmt.filename)
-        resolve(stmt.target)
+        resolve(frame, stmt.filename)
+        resolve(frame, stmt.target)
     elif isinstance(stmt, lang.WriteFile):
         resolveName(frame, stmt, 'filename')
         resolveName(frame, stmt, 'data')
-        resolve(stmt.filename)
-        resolve(stmt.data)
+        resolve(frame, stmt.filename)
+        resolve(frame, stmt.data)
     elif isinstance(stmt, lang.CloseFile):
         resolveName(frame, stmt, 'filename')
-        resolve(stmt.filename)
+        resolve(frame, stmt.filename)
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):
         return resolveProcCall(frame, stmt.expr)
-    elif isinstance(stmt, lang.AssignStmt):
-        resolveName(frame, stmt, 'expr')
-        return resolve(frame, stmt.expr)
-    elif isinstance(stmt, lang.DeclareStmt):
-        resolveName(frame, stmt, 'expr')
-        return resolve(frame, stmt.expr)
-    elif isinstance(stmt, lang.Return):
-        resolveName(frame, stmt, 'expr')
+    elif isinstance(stmt, lang.ExprStmt):
         return resolve(frame, stmt.expr)
