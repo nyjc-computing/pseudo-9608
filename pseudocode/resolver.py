@@ -1,5 +1,6 @@
 from typing import overload
-from typing import Any, Optional, Union, Literal, Iterable, Iterator
+from typing import Any, Optional, Union, Literal
+from typing import Iterable, Iterator, Collection
 from typing import Tuple
 from itertools import product
 
@@ -370,11 +371,23 @@ def resolve(
 def resolveExprs(
     frame: lang.Frame,
     exprs: Iterable[lang.Expr],
-) -> None:
-    for i in range(len(exprs)):
-        if isinstance(exprs[i], lang.UnresolvedName):
-            exprs[i] = resolveName(frame, exprs[i])
-        resolve(frame, exprs[i])
+) -> Tuple[lang.Expr]:
+    """
+    Resolve an iterable of Exprs.
+    UnresolvedNames are resolved into GetNames.
+
+    Return
+    ------
+    Tuple[Expr, ...]
+        A tuple of Exprs
+    """
+    newexprs: Tuple[lang.Expr, ...] = tuple()
+    for expr in exprs:
+        if isinstance(expr, lang.UnresolvedName):
+            expr = resolveName(frame, expr)
+        resolve(frame, expr)
+        newexprs += (expr,)
+    return newexprs
 
 # Verifiers
 
