@@ -116,6 +116,38 @@ def resolveLiteral(
 ) -> lang.Type:
     return literal.type
 
+def declareByref(
+    frame: lang.Frame,
+    declare: lang.Declare,
+) -> None:
+    assert frame.outer, "Declared name in a frame with no outer"
+    expectTypeElseError(
+        declare.type, frame.outer.getType(declare.name),
+        token=declare.token()
+    )
+    # Reference frame vars in local
+    frame.set(declare.name, frame.outer.get(declare.name))
+
+def declareByval(
+    frame: Union[lang.Frame, lang.ObjectTemplate],
+    declare: lang.Declare,
+) -> None:
+    if (
+        isinstance(frame, lang.ObjectTemplate)
+        and declare.type == 'ARRAY'
+    ):
+        raise builtin.LogicError(
+            "ARRAY in TYPE not supported", declare.token()
+        )
+    frame.declare(declare.name, declare.type)
+    if declare.type == 'ARRAY':
+        array = lang.Array(
+            typesys=frame.types,
+            ranges=declare.metadata['size'],
+            type=declare.metadata['type'],
+        )
+        frame.setValue(declare.name, array)
+
 def resolveDeclare(
     frame: Union[lang.Frame, lang.ObjectTemplate],
     declare: lang.Declare,
@@ -123,34 +155,12 @@ def resolveDeclare(
 ) -> lang.Type:
     """Declare variable in frame"""
     if passby == 'BYVALUE':
-        if (
-            isinstance(frame, lang.ObjectTemplate)
-            and declare.type == 'ARRAY'
-        ):
-            raise builtin.LogicError(
-                "ARRAY in TYPE not supported", declare.token()
-            )
-        frame.declare(declare.name, declare.type)
-        if declare.type == 'ARRAY':
-            array = lang.Array(
-                typesys=frame.types,
-                ranges=declare.metadata['size'],
-                type=declare.metadata['type'],                
-            )
-            frame.setValue(declare.name, array)
-        return declare.type
+        declareByval(frame, declare)
     else:
-        # BYREF -- TODO: resolveByref() as a separate function
-        if isinstance(frame, lang.ObjectTemplate):
-            raise ValueError("Declared BYREF in an ObjectTemplate")
-        assert frame.outer, "Declared name in a frame with no outer"
-        expectTypeElseError(
-            declare.type, frame.outer.getType(declare.name),
-            token=declare.token()
-        )
-        # Reference frame vars in local
-        frame.set(declare.name, frame.outer.get(declare.name))
-        return declare.type
+        assert isinstance(frame, lang.Frame), \
+            "Declared BYREF in invalid Frame"
+        declareByref(frame, declare)
+    return declare.type
 
 def resolveUnary(
     frame: lang.Frame,
