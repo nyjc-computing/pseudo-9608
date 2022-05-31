@@ -251,8 +251,6 @@ def resolveAssign(
 def resolveAttr(
     frame: lang.Frame,
     expr: lang.GetAttr,
-    *,
-    token: lang.Token,
 ) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
     resolveNamesInExpr(frame, expr)
