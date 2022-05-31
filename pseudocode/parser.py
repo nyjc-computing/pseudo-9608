@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Iterable, Tuple, List, Literal
+from typing import Any, Optional, Union, Iterable, Tuple, List
 from typing import Callable as function
 
 from . import builtin, lang
@@ -29,7 +29,10 @@ def expectWord(tokens: Tokens, *words: str) -> Optional[lang.Token]:
     atEndThenError(tokens)
     return None
 
-def expectType(tokens: Tokens, *types: lang.Type) -> Optional[lang.Token]:
+def expectType(
+    tokens: Tokens,
+    *types: lang.Type,
+) -> Optional[lang.Token]:
     if check(tokens).type in types:
         return check(tokens)
     atEndThenError(tokens)
@@ -41,7 +44,10 @@ def matchWord(tokens: Tokens, *words: str) -> Optional[lang.Token]:
     atEndThenError(tokens)
     return None
 
-def matchType(tokens: Tokens, *types: lang.Type) -> Optional[lang.Token]:
+def matchType(
+    tokens: Tokens,
+    *types: lang.Type,
+) -> Optional[lang.Token]:
     if check(tokens).type in types:
         return consume(tokens)
     atEndThenError(tokens)
@@ -101,7 +107,10 @@ def grouping(tokens: Tokens) -> lang.Expr:
     matchWordElseError(tokens, ')', msg="after '('")
     return expr
 
-def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
+def callExpr(
+    tokens: Tokens,
+    callableExpr: lang.NameKeyExpr,
+) -> lang.Call:
     args: Tuple[lang.Expr, ...] = tuple()
     while not expectWord(tokens, ')'):
         if len(args) > 0:
@@ -114,7 +123,10 @@ def attrExpr(tokens: Tokens, objExpr: lang.NameExpr) -> lang.GetAttr:
     name = identifier(tokens)
     return lang.GetAttr(objExpr, name.name)
 
-def indexExpr(tokens: Tokens, arrayExpr: lang.NameExpr) -> lang.GetIndex:
+def indexExpr(
+    tokens: Tokens,
+    arrayExpr: lang.NameExpr,
+) -> lang.GetIndex:
     indexes: lang.IndexExpr = (literal(tokens),)
     while matchWord(tokens, ','):
         indexes += (literal(tokens),)
@@ -240,7 +252,10 @@ def colonRange(tokens: Tokens) -> lang.IndexRange:
 
 def declare(tokens: Tokens) -> lang.Declare:
     def expectTypeToken(tokens: Tokens):
-        if not (expectWord(tokens, *builtin.TYPES) or expectType(tokens, 'name')):
+        if not (
+            expectWord(tokens, *builtin.TYPES)
+            or expectType(tokens, 'name')
+        ):
             raise builtin.ParseError("Invalid type", check(tokens))
         
     name = identifier(tokens)
@@ -257,7 +272,12 @@ def declare(tokens: Tokens) -> lang.Declare:
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
-    return lang.Declare(str(name), typetoken.word, metadata, token=name.token())
+    return lang.Declare(
+        str(name),
+        typetoken.word,
+        metadata,
+        token=name.token(),
+    )
     
 def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     expr = declare(tokens)
@@ -355,7 +375,12 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     # Add increment statement
     incr = lang.Assign(
         init.assignee,
-        lang.Binary(init.assignee, builtin.add, step, token=step.token()),
+        lang.Binary(
+            init.assignee,
+            builtin.add,
+            step,
+            token=step.token(),
+        ),
     )
     initStmt = lang.AssignStmt(init)
     incrStmt = lang.AssignStmt(incr)
@@ -406,7 +431,13 @@ def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     while not matchWord(tokens, 'ENDFUNCTION'):
         stmts += [statement3(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
-    return lang.FunctionStmt(name, passby, params, stmts, typetoken.word)
+    return lang.FunctionStmt(
+        name,
+        passby,
+        params,
+        stmts,
+        typetoken.word,
+    )
 
 def returnStmt(tokens: Tokens) -> lang.Return:
     expr = expression(tokens)

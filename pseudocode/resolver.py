@@ -20,7 +20,9 @@ def expectTypeElseError(
     if exprtype not in expected:
         # Stringify expected types
         typesStr = f"({', '.join(expected)})"
-        raise builtin.LogicError(f"Expected {typesStr}, is {exprtype}", token)
+        raise builtin.LogicError(
+            f"Expected {typesStr}, is {exprtype}", token
+        )
 
 def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     ranges = [
@@ -213,8 +215,12 @@ def resolveBinary(
         expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token())
         return 'BOOLEAN'
     if expr.oper in (builtin.ne, builtin.eq):
-        expectTypeElseError(lType, *builtin.EQUATABLE, token=expr.left.token())
-        expectTypeElseError(rType, *builtin.EQUATABLE, token=expr.right.token())
+        expectTypeElseError(
+            lType, *builtin.EQUATABLE, token=expr.left.token()
+        )
+        expectTypeElseError(
+            rType, *builtin.EQUATABLE, token=expr.right.token()
+        )
         if not (
             (lType == 'BOOLEAN' and rType == 'BOOLEAN')
             or (lType in builtin.NUMERIC and rType in builtin.NUMERIC)
@@ -225,13 +231,26 @@ def resolveBinary(
             )
         return 'BOOLEAN'
     if expr.oper in (builtin.gt, builtin.gte, builtin.lt, builtin.lte):
-        expectTypeElseError(lType, *builtin.NUMERIC, token=expr.left.token())
-        expectTypeElseError(rType, *builtin.NUMERIC, token=expr.left.token())
+        expectTypeElseError(
+            lType, *builtin.NUMERIC, token=expr.left.token()
+        )
+        expectTypeElseError(
+            rType, *builtin.NUMERIC, token=expr.right.token()
+        )
         return 'BOOLEAN'
-    if expr.oper in (builtin.add, builtin.sub, builtin.mul, builtin.div):
-        expectTypeElseError(lType, *builtin.NUMERIC, token=expr.left.token())
-        expectTypeElseError(rType, *builtin.NUMERIC, token=expr.left.token())
-        if (expr.oper is not builtin.div) and (lType == rType == 'INTEGER'):
+    if expr.oper in (
+        builtin.add, builtin.sub, builtin.mul, builtin.div
+    ):
+        expectTypeElseError(
+            lType, *builtin.NUMERIC, token=expr.left.token()
+        )
+        expectTypeElseError(
+            rType, *builtin.NUMERIC, token=expr.right.token()
+        )
+        if (
+            (expr.oper is not builtin.div)
+            and (lType == rType == 'INTEGER')
+        ):
             return 'INTEGER'
         return 'REAL'
     raise ValueError("No return for Binary")

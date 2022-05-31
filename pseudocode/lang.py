@@ -168,13 +168,14 @@ class TypeSystem:
     A space that maps Types to TypeTemplates.
     Handles registration of types in 9608 pseudocode.
     Each type is registered with a name, and an optional template.
-    Existence checks should be carried out (using has()) before using the
-    methods here.
+    Existence checks should be carried out (using has()) before using
+    the methods here.
 
     Methods
     -------
     has(type)
-        returns True if the type has been registered, otherwise returns False
+        returns True if the type has been registered,
+        otherwise returns False
     register(type)
         declares the existence of a type
     setTemplate(type, template)
@@ -199,7 +200,11 @@ class TypeSystem:
     def declare(self, type: Type) -> None:
         self.data[type] = TypeTemplate(type, None)
 
-    def setTemplate(self, type: Type, template: "ObjectTemplate") -> None:
+    def setTemplate(
+        self,
+        type: Type,
+        template: "ObjectTemplate",
+    ) -> None:
         self.data[type].value = template
 
     def cloneType(self, type: Type) -> "TypedValue":
@@ -218,8 +223,8 @@ class PseudoValue:
 class Object(PseudoValue):
     """
     A space that maps NameKeys to TypedValues.
-    Existence checks should be carried out (using has()) before using the
-    methods here.
+    Existence checks should be carried out (using has()) before using
+    the methods here.
 
     Methods
     -------
@@ -274,11 +279,11 @@ class Object(PseudoValue):
 
 class Frame(Object):
     """
-    Frames differ from Objects in that they can be chained (with a reference to an
-    outer Frame, names can be reassigned to a different TypedValue, and slots can
-    be deleted after declaration.
-    Existence checks should be carried out (using has()) before using the
-    methods here.
+    Frames differ from Objects in that they can be chained (with a
+    reference to an outer Frame, names can be reassigned to a different
+    TypedValue, and slots can be deleted after declaration.
+    Existence checks should be carried out (using has()) before using
+    the methods here.
 
     Methods
     -------
@@ -315,15 +320,16 @@ class Frame(Object):
 class Array(PseudoValue):
     """
     A space that maps IndexKeys to TypedValues.
-    Arrays differ from Objects in the use of IndexKey instead of NameKey,
-    and in being statically allocated at init.
+    Arrays differ from Objects in the use of IndexKey instead of
+    NameKey, and in being statically allocated at init.
 
     Attributes
     ----------
     dim: int
         integer representing the number of dimensions of the array
     ranges: Iterable[Tuple[int, int]]
-        an interable containing (start, end) tuple pairs of the array indexes
+        an interable containing (start, end) tuple pairs of the
+        array indexes
     elementType: Type
         The type of each array element
 
@@ -511,13 +517,13 @@ class File(PseudoValue):
 class Expr:
     """
     Represents an expression in 9608 pseudocode.
-    An expression can be resolved to a Type,
-    and evaluated to a Value.
-    An Expr must return an associated token for error-reporting purposes.
+    An expression can be resolved to a Type, and evaluated to a Value.
+    An Expr must return an associated token for error-reporting
+    purposes.
 
     Methods
     -------
-    - token() -> Token
+    token() -> Token
         Returns the token asociated with the expr
     """
     __slots__: Iterable[str] = tuple()
