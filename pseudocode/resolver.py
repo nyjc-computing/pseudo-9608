@@ -429,9 +429,9 @@ def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
 def transformDeclares(
     frame: lang.Frame,
     declares: Iterable[lang.Declare],
-    passby: str,
-) -> Tuple[lang.TypedValue]:
-    params = tuple()
+    passby: lang.Passby,
+) -> Tuple[lang.TypedValue, ...]:
+    params: Tuple[lang.TypedValue, ...] = tuple()
     for expr in enumerate(declares):
         resolveDeclare(frame, expr, passby=passby)
         params += (frame.get(expr.name),)
@@ -471,7 +471,7 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         raise builtin.LogicError(
             "No RETURN in function", stmt.name.token()
         )
-    verifyStmts(local, stmt.stmts)
+    verifyStmts(local, stmt.stmts, stmt.returnType)
 
 def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
     frame.types.declare(str(stmt.name))
