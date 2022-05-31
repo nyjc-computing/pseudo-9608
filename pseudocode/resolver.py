@@ -103,13 +103,6 @@ class Resolver:
     
 # Resolvers
 
-def evalLiteral(
-    frame: lang.Frame,
-    expr: lang.Literal,
-) -> lang.PyLiteral:
-    """Return the value of a Literal"""
-    return expr.value
-    
 def resolveLiteral(
     frame: lang.Frame,
     literal: lang.Literal,
