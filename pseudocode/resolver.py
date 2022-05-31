@@ -244,16 +244,6 @@ def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
     """
     return frame.getType(str(expr.name))
 
-def resolveGet(frame, expr: lang.NameExpr) -> lang.Type:
-    if isinstance(expr, lang.GetIndex):
-        return resolveIndex(frame, expr)
-    if isinstance(expr, lang.GetAttr):
-        return resolveAttr(frame, expr)
-    if isinstance(expr, lang.GetName):
-        return resolveGetName(frame, expr)
-    assert not isinstance(expr, lang.UnresolvedName), \
-        "Encountered UnresolvedName in resolveGet"
-
 def resolveProcCall(
     frame: lang.Frame,
     expr: lang.Call,
@@ -325,16 +315,23 @@ def resolve(
         return resolveLiteral(frame, expr)
     if isinstance(expr, lang.Declare):
         return resolveDeclare(frame, expr)
-    elif isinstance(expr, lang.Unary):
+    if isinstance(expr, lang.Unary):
         return resolveUnary(frame, expr)
-    elif isinstance(expr, lang.Binary):
+    if isinstance(expr, lang.Binary):
         return resolveBinary(frame, expr)
-    elif isinstance(expr, lang.Assign):
+    if isinstance(expr, lang.Assign):
         return resolveAssign(frame, expr)
-    elif isinstance(expr, lang.Get):
-        return resolveGet(frame, expr)
-    elif isinstance(expr, lang.Call):
+    if isinstance(expr, lang.Call):
         return resolveFuncCall(frame, expr)
+    if isinstance(expr, lang.GetIndex):
+        return resolveIndex(frame, expr)
+    if isinstance(expr, lang.GetAttr):
+        return resolveAttr(frame, expr)
+    if isinstance(expr, lang.GetName):
+        return resolveGetName(frame, expr)
+    if isinstance(expr, lang.UnresolvedName):
+        raise TypeError(f"Encountered {expr} in resolve()")
+    raise ValueError(f"Unresolvable {expr}")
 
 
 
