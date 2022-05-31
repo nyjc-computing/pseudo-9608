@@ -14,7 +14,7 @@ IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Literal", ...]  # Array indexes
 IndexRange = Tuple["Literal", "Literal"]  # Array ranges (declared)
 Passby = LiteralType['BYREF', 'BYVALUE']
-Args = Iterable["Expr"]  # Callable args
+Args = Collection["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
@@ -433,7 +433,7 @@ class Builtin(PseudoValue):
     __slots__ = ('params', 'func')
     def __init__(
         self,
-        params: Iterable,
+        params: Collection[Param],
         func: function,
     ) -> None:
         self.params = params
@@ -465,7 +465,7 @@ class Callable(PseudoValue):
     def __init__(
         self,
         frame: "Frame",
-        params: Iterable[Param],
+        params: Collection[Param],
         stmts: Iterable["Stmt"],
     ) -> None:
         self.frame = frame
@@ -567,7 +567,7 @@ class Declare(Expr):
         self,
         name: NameKey,
         type: Type,
-        metadata: Mapping=None,
+        metadata: Mapping,
         *,
         token: "Token",
     ) -> None:
@@ -666,7 +666,7 @@ class GetIndex(Expr):
     __slots__ = ('array', 'index')
     def __init__(
         self,
-        array: NameExpr,
+        array: NameKeyExpr,
         index: IndexExpr,
     ) -> None:
         self.array = array
@@ -851,8 +851,8 @@ class TypeStmt(Stmt):
     __slots__ = ('name', 'exprs')
     def __init__(
         self,
-        name: NameExpr,
-        exprs: Iterable["Expr"],
+        name: Name,
+        exprs: Iterable["Declare"],
     ) -> None:
         self.name = name
         self.exprs = exprs
