@@ -21,22 +21,6 @@ def expectTypeElseError(
         typesStr = f"({', '.join(expected)})"
         raise builtin.LogicError(f"Expected {typesStr}, is {exprtype}", token)
 
-def declaredElseError(
-    frame: Union[lang.Object, lang.TypeSystem],
-    name: lang.Name,
-    errmsg: str="Undeclared",
-    declaredType: lang.Type=None,
-    *,
-    token: lang.Token,
-) -> None:
-    nameStr = str(name)
-    if not frame.has(nameStr):
-        raise builtin.LogicError(errmsg, nameStr, token)
-    if declaredType:
-        expectTypeElseError(
-            frame.getType(nameStr), declaredType, token=token
-        )
-
 def lookupElseError(
     frame: lang.Frame,
     name: lang.NameKey,
@@ -222,19 +206,21 @@ def resolveAttr(
 ) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
     resolveName(frame, expr, 'object')
-    objType = resolveGetName(expr.object, expr.name)
+    objType = resolve(frame, expr.object)
     # Check objType existence in typesystem
-    declaredElseError(
-        frame.types, objType,
-        errmsg="Undeclared type", token=token
-    )
+    if not frame.types.has(objType):
+        raise builtin.LogicError(
+            "Undeclared type", objType, expr.token()
+        )
     # Check attribute existence in object template
-    objTemplate = frame.types.clone(objType)
-    declaredElseError(
-        objTemplate, expr.name,
-        errmsg="Undeclared attribute", token=token
-    )
-    return objTemplate.getType(expr.name)
+    obj = frame.types.cloneType(objType).value
+    assert isinstance(obj, lang.Object), \
+        "Invalid Object"
+    if not obj.has(str(expr.name)):
+        raise builtin.LogicError(
+            "Undeclared attribute", expr.token()
+        )
+    return obj.getType(str(expr.name))
 
 def resolveIndex(
     frame: lang.Frame,
@@ -383,8 +369,8 @@ def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
     resolveExprs(frame, stmt.exprs)
 
 def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
-    resolveName(frame, stmt, 'name')
-    declaredElseError(frame, stmt.name, token=stmt.name.token())
+    resolveName(frame, stmt, 'key')
+    resolve(frame, stmt.key)
 
 def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolveName(frame, stmt, 'cond')
