@@ -232,8 +232,10 @@ def resolveIndex(
     intsElseError(frame, *expr.index)
     expectTypeElseError(
         ## Expect array
-        resolve(frame, expr.arrayExpr), 'ARRAY', token=expr.arrayExpr.token())
-    array: lang.Array = frame.getValue(expr.frame.name)
+        resolve(frame, expr.array), 'ARRAY', token=expr.token())
+    array = expr.array.frame.getValue(str(expr.array.name))
+    # For mypy type-checking
+    assert (isinstance(array, lang.Array)), "Invalid ARRAY"
     return array.elementType
 
 def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
