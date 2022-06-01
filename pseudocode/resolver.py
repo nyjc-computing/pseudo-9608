@@ -520,21 +520,29 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
     elif isinstance(stmt, lang.FunctionStmt):
         verifyFunction(frame, stmt)
     elif isinstance(stmt, lang.OpenFile):
-        resolveName(frame, stmt, 'filename')
-        resolve(frame, stmt.filename)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.ReadFile):
-        resolveName(frame, stmt, 'filename')
-        resolveName(frame, stmt, 'target')
-        resolve(frame, stmt.filename)
-        resolve(frame, stmt.target)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.WriteFile):
-        resolveName(frame, stmt, 'filename')
-        resolveName(frame, stmt, 'data')
-        resolve(frame, stmt.filename)
-        resolve(frame, stmt.data)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.CloseFile):
-        resolveName(frame, stmt, 'filename')
-        resolve(frame, stmt.filename)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):
