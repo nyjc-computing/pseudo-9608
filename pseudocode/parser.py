@@ -120,8 +120,8 @@ def callExpr(
     return lang.Call(callableExpr, args)
 
 def attrExpr(tokens: Tokens, objExpr: lang.NameExpr) -> lang.GetAttr:
-    name = identifier(tokens)
-    return lang.GetAttr(objExpr, name.name)
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
+    return lang.GetAttr(objExpr, name)
 
 def indexExpr(
     tokens: Tokens,
@@ -260,7 +260,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         ):
             raise builtin.ParseError("Invalid type", check(tokens))
         
-    name = identifier(tokens)
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     matchWordElseError(tokens, ':', msg="after name")
     expectTypeToken(tokens)
     metadata: lang.TypeMetadata = {}
@@ -287,7 +287,7 @@ def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     return lang.DeclareStmt(expr)
 
 def typeStmt(tokens: Tokens) -> lang.TypeStmt:
-    name = identifier(tokens).name
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     matchWordElseError(tokens, '\n')
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):
@@ -389,7 +389,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     return lang.Loop(initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
-    name = identifier(tokens).name
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'
@@ -416,7 +416,7 @@ def callStmt(tokens: Tokens) -> lang.CallStmt:
     return lang.CallStmt(callable)
 
 def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
-    name = identifier(tokens).name
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'
