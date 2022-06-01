@@ -426,33 +426,34 @@ def execute(
 ) -> None:
     if isinstance(stmt, lang.Output):
         execOutput(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Input):
+    elif isinstance(stmt, lang.Input):
         execInput(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Case):
+    elif isinstance(stmt, lang.Case):
         execCase(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.If):
+    elif isinstance(stmt, lang.If):
         execIf(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.While):
+    elif isinstance(stmt, lang.While):
         execWhile(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Repeat):
+    elif isinstance(stmt, lang.Repeat):
         execRepeat(frame, stmt, **kwargs)
-    if (
+    elif (
         isinstance(stmt, lang.OpenFile)
         or isinstance(stmt, lang.ReadFile)
         or isinstance(stmt, lang.WriteFile)
         or isinstance(stmt, lang.CloseFile)
     ):
         execFile(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.CallStmt):
+    elif isinstance(stmt, lang.CallStmt):
         execCall(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.AssignStmt):
+    elif isinstance(stmt, lang.AssignStmt):
         execAssign(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Return):
+    elif isinstance(stmt, lang.Return):
         execReturn(frame, stmt, **kwargs)
-    if (
+    elif (
         isinstance(stmt, lang.DeclareStmt)
         or isinstance(stmt, lang.ProcedureStmt)
         or isinstance(stmt, lang.FunctionStmt)
     ):
         pass
-    raise ValueError(f"Invalid Stmt {stmt}")
+    else:
+        raise ValueError(f"Invalid Stmt {stmt}")
