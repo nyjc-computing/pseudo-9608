@@ -329,8 +329,11 @@ def resolveProcCall(
     """
     resolveNamesInExpr(frame, expr)
     assert isinstance(expr.callable, lang.GetName), \
-        "Callable unresolved"
+        f"Callable {expr.callable} unresolved"
     callableType = resolveGetName(frame, expr.callable)
+    expectTypeElseError(
+        callableType, 'NULL', token=expr.callable.token()
+    )
     callFrame = expr.callable.frame
     callable = callFrame.getValue(str(expr.callable.name))
     if not isinstance(callable, lang.Procedure):
