@@ -128,15 +128,23 @@ def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Value:
     raise TypeError("Invalid Callable")
 
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
-    value = evaluate(frame, expr.expr)
-    obj = expr.assignee.frame
-    if type(obj) in (lang.Get, lang.Call):
-        obj = evaluate(frame, obj)
-    name = expr.assignee.name
-    if type(obj) in (lang.Array,):
-        name = evalIndex(frame, expr.assignee.name)
-    obj.setValue(name, value)
-    return value
+    if isinstance(expr.assignee, lang.GetName):
+        frameMap = expr.assignee.frame
+        name = str(expr.assignee.name)
+        frameMap.setValue(name, input())
+    elif isinstance(expr.assignee, lang.GetIndex):
+        array = evalGet(frame, expr.assignee.array)
+        assert isinstance(array, lang.Array), "Invalid Array"
+        index = evalIndex(frame, expr.assignee.index)
+        array.setValue(index, input())
+    elif isinstance(expr.assignee, lang.GetAttr):
+        obj = evalGet(frame, expr.assignee.object)
+        assert isinstance(obj, lang.Object), "Invalid Object"
+        name = str(expr.assignee.name)
+        obj.setValue(name, input())
+    raise builtin.RuntimeError(
+        "Invalid Input assignee", token=expr.assignee.token()
+    )
 
 def evaluate(
     frame: lang.Frame,
@@ -195,8 +203,21 @@ def execInput(
     stmt: lang.Input,
     **kwargs,
 ) -> None:
-    name = stmt.name.name
-    frame.setValue(name, input())
+    if isinstance(stmt.key, lang.GetName):
+        stmt.key.frame.setValue(str(stmt.key.name), input())
+    elif isinstance(stmt.key, lang.GetIndex):
+        array = evalGet(frame, stmt.key.array)
+        assert isinstance(array, lang.Array), "Invalid Array"
+        index = evalIndex(frame, stmt.key.index)
+        array.setValue(index, input())
+    elif isinstance(stmt.key, lang.GetAttr):
+        obj = evalGet(frame, stmt.key.object)
+        assert isinstance(obj, lang.Object), "Invalid Object"
+        name = str(stmt.key.name)
+        obj.setValue(name, input())
+    raise builtin.RuntimeError(
+        "Invalid Input assignee", token=stmt.key.token()
+    )
 
 def execCase(
     frame: lang.Frame,
