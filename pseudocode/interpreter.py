@@ -146,7 +146,11 @@ def evaluate(
         return evalBinary(frame, expr)
     if isinstance(expr, lang.Assign):
         return evalAssign(frame, expr)
-    if isinstance(expr, lang.Get):
+    if isinstance(expr, lang.GetName):
+        return evalGet(frame, expr)
+    if isinstance(expr, lang.GetIndex):
+        return evalGet(frame, expr)
+    if isinstance(expr, lang.GetAttr):
         return evalGet(frame, expr)
     if isinstance(expr, lang.Call):
         return evalCall(frame, expr)
