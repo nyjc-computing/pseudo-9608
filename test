@@ -1,0 +1,2 @@
+python -m mypy pseudocode
+python -m unittest
