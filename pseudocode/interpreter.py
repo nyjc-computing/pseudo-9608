@@ -12,15 +12,14 @@ def expectTypeElseError(
     exprmode: str,
     *expected: str,
     errmsg: str="Expected",
-    token: lang.Token=None,
+    token: lang.Token,
 ) -> None:
     if not exprmode in expected:
-        if not token: token = exprmode
-        raise builtin.RuntimeError(f"{errmsg} {expected}", token)
+        raise builtin.RuntimeError(f"{errmsg} {expected}", token=token)
 
 def declaredElseError(
     frame: lang.Frame,
-    name: lang.Varname,
+    name: lang.NameKey,
     errmsg: str="Undeclared",
     token: lang.Token=None,
 ) -> None:
@@ -29,7 +28,7 @@ def declaredElseError(
 
 def undeclaredElseError(
     frame: lang.Frame,
-    name: lang.Varname,
+    name: lang.NameKey,
     errmsg="Already declared",
     token: lang.Token=None,
 ) -> None:
