@@ -1,7 +1,7 @@
 from typing import Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
-from typing import Callable as function, TextIO
+from typing import Callable as function, IO
 from abc import abstractmethod
 from itertools import product
 
@@ -509,7 +509,7 @@ class File(PseudoValue):
         self,
         name: NameKey,
         mode: str,
-        iohandler: TextIO,
+        iohandler: IO,
     ) -> None:
         self.name = name
         self.mode = mode
