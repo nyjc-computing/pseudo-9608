@@ -455,7 +455,7 @@ def transformDeclares(
     params: Tuple[lang.TypedValue, ...] = tuple()
     for declaration in declares:
         resolveDeclare(frame, declaration, passby=passby)
-        params += (frame.get(declaration.name),)
+        params += (frame.get(str(declaration.name)),)
     return params
 
 def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
