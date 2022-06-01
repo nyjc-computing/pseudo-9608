@@ -10,6 +10,12 @@ from . import scanner, parser
 from .resolver import Resolver
 from .interpreter import Interpreter
 
+class Result(TypedDict, total=False):
+    """The metadata dict passed to an Array declaration"""
+    lines: List[str]
+    frame: Frame
+    error: Optional[builtin.PseudoError]
+
 
 
 __version__ = '0.2.1'
@@ -37,26 +43,26 @@ def error(lines: Iterable, err: builtin.PseudoError) -> None:
 class Pseudo:
     """A 9608 pseudocode interpreter"""
     def __init__(self) -> None:
-        self.handlers = {
+        self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
         }
 
-    def registerHandlers(self, **kwargs: Mapping[str, function]) -> None:
+    def registerHandlers(self, **kwargs: function) -> None:
         for key, handler in kwargs.items():
             if key not in self.handlers:
                 raise KeyError(f"Invalid handler key {repr(key)}")
             self.handlers[key] = handler
 
-    def runFile(self, srcfile: str) -> "Frame":
+    def runFile(self, srcfile: str) -> Result:
         with open(srcfile, 'r') as f:
             src = f.read()
         return self.run(src)
     
-    def run(self, src: str) -> "Frame":
+    def run(self, src: str) -> Result:
         globalFrame = Frame(typesys=system.types, outer=system)
-        result = {
-            'lines': None,
+        result: Result = {
+            'lines': [],
             'frame': globalFrame,
             'error': None,
         }
