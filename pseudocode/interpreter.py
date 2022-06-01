@@ -117,15 +117,16 @@ def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
         return evalCallable(frame, callable, expr.args)
 
 @overload
-def evalCallable(frame: lang.Frame, callable: lang.Builtin, args: lang.Args) -> lang.PyLiteral: ...
+def evalCallable(frame: lang.Frame, callable: lang.Builtin, args: lang.Args, **kwargs) -> lang.PyLiteral: ...
 @overload
-def evalCallable(frame: lang.Frame, callable: lang.Procedure, args: lang.Args) -> None: ...
+def evalCallable(frame: lang.Frame, callable: lang.Procedure, args: lang.Args, **kwargs) -> None: ...
 @overload
-def evalCallable(frame: lang.Frame, callable: lang.Function, args: lang.Args) -> lang.Value: ...
+def evalCallable(frame: lang.Frame, callable: lang.Function, args: lang.Args, **kwargs) -> lang.Value: ...
 def evalCallable(
     frame: lang.Frame,
     callable: Union[lang.Builtin, lang.Callable],
     args: lang.Args,
+    **kwargs,
 ):
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
@@ -141,7 +142,7 @@ def evalCallable(
         for arg, slot in zip(args, callable.params):
             argval = evaluate(frame, arg)
             slot.value = argval
-        returnval = executeStmts(frame, callable.stmts)
+        returnval = executeStmts(frame, callable.stmts, **kwargs)
         if isinstance(callable, lang.Function):
             assert returnval, f"None returned from {callable}"
             return returnval
@@ -386,13 +387,13 @@ def execFile(
     **kwargs,
 ) -> None:
     if isinstance(stmt, lang.OpenFile):
-        execOpenFile(frame, stmt)
+        execOpenFile(frame, stmt, **kwargs)
     elif isinstance(stmt, lang.ReadFile):
-        execReadFile(frame, stmt)
+        execReadFile(frame, stmt, **kwargs)
     elif isinstance(stmt, lang.WriteFile):
-        execWriteFile(frame, stmt)
+        execWriteFile(frame, stmt, **kwargs)
     elif isinstance(stmt, lang.CloseFile):
-        execCloseFile(frame, stmt)
+        execCloseFile(frame, stmt, **kwargs)
 
 def execCall(
     frame: lang.Frame,
@@ -402,7 +403,7 @@ def execCall(
     callable = evalGet(frame, stmt.expr.callable)
     assert isinstance(callable, lang.Procedure), \
         f"Invalid Procedure {callable}"
-    evalCallable(frame, callable, stmt.expr.args)
+    evalCallable(frame, callable, stmt.expr.args, **kwargs)
 
 def execAssign(
     frame: lang.Frame,
