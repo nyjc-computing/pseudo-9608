@@ -146,14 +146,6 @@ def evalCallable(
             assert returnval, f"None returned from {callable}"
             return returnval
 
-def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> Optional[lang.Value]:
-    callable = evalGet(frame, expr.callable)
-    assert (
-        isinstance(callable, lang.Builtin)
-        or isinstance(callable, lang.Callable)
-    ), f"Invalid Builtin/Callable {callable}"
-    return evalCallable(frame, callable, expr.args)
-
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
     if isinstance(expr.assignee, lang.GetName):
         frameMap = expr.assignee.frame
