@@ -266,8 +266,11 @@ class Object(PseudoValue):
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> Optional[Value]:
-        return self.data[name].value
+    def getValue(self, name: NameKey) -> Value:
+        returnval = self.data[name].value
+        if returnval is None:
+            raise ValueError(f"Accessed unassigned variable {name!r}")
+        return returnval
 
     def get(self, name: NameKey) -> "TypedValue":
         return self.data[name]
@@ -402,8 +405,11 @@ class Array(PseudoValue):
     def getType(self, index: IndexKey) -> Type:
         return self.data[index].type
 
-    def getValue(self, index: IndexKey) -> Optional[Value]:
-        return self.data[index].value
+    def getValue(self, index: IndexKey) -> Value:
+        returnval = self.data[index].value
+        if returnval is None:
+            raise ValueError(f"Accessed unassigned index {index!r}")
+        return returnval
 
     def get(self, index: IndexKey) -> "TypedValue":
         return self.data[index]
