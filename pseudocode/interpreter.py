@@ -71,11 +71,14 @@ class Interpreter:
 
 def evalIndex(
     frame: lang.Frame,
-    indexes: Iterable[tuple],
-) -> Tuple[int]:
-    return tuple((
-        evaluate(frame, expr) for expr in indexes
-    ))
+    indexExpr: lang.IndexExpr,
+) -> lang.IndexKey:
+    indexes: lang.IndexKey = tuple()
+    for expr in indexExpr:
+        index = evaluate(frame, expr)
+        assert isinstance(index, int), "Invalid index (must be int)"
+        indexes += (index,)
+    return indexes
 
 def evalLiteral(
     frame: lang.Frame,
