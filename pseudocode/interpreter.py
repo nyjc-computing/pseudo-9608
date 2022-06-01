@@ -111,7 +111,10 @@ def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
         assert isinstance(obj, lang.Object), "Invalid Object"
         return obj.getValue(str(expr.name))
     if isinstance(expr, lang.Call):
-        return evalCall(frame, expr)
+        callable = evalGet(frame, expr.callable)
+        assert isinstance(callable, lang.Function), \
+            f"Invalid Function {callable}"
+        return evalCallable(frame, callable, expr.args)
 
 @overload
 def evalCallable(frame: lang.Frame, callable: lang.Builtin, args: lang.Args) -> lang.PyLiteral: ...
@@ -190,7 +193,13 @@ def evaluate(
     if isinstance(expr, lang.GetAttr):
         return evalGet(frame, expr)
     if isinstance(expr, lang.Call):
-        return evalCall(frame, expr)
+        callable = evalGet(frame, expr.callable)
+        assert (
+            isinstance(callable, lang.Builtin)
+            or isinstance(callable, lang.Function)
+        ), \
+            f"Invalid Builtin/Function {callable}"
+        return evalCallable(frame, callable, expr.args)
     else:
         raise TypeError(f"Unexpected expr {expr}")
 
@@ -395,7 +404,10 @@ def execCall(
     stmt: lang.CallStmt,
     **kwargs,
 ) -> None:
-    evalCall(frame, stmt.expr, **kwargs)
+    callable = evalGet(frame, stmt.expr.callable)
+    assert isinstance(callable, lang.Procedure), \
+        f"Invalid Procedure {callable}"
+    evalCallable(frame, callable, stmt.expr.args)
 
 def execAssign(
     frame: lang.Frame,
