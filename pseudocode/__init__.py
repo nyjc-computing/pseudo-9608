@@ -26,7 +26,7 @@ def error(lines: Iterable, err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
     if err.line:
         lineinfo = f"[Line {err.line}]"
-        print(lineinfo, lines[err.line - 1])
+        print(lineinfo, lines[err.line - 1])  # type: ignore
     if err.col:
         leftmargin = len(lineinfo) + 1 + err.col
         print((' ' * leftmargin) + '^')
