@@ -6,7 +6,7 @@ from traceback import format_exception
 
 from . import builtin
 from .lang import Frame
-from .system import system
+from .system import system as sysFrame
 
 from . import scanner, parser
 from .resolver import Resolver
@@ -62,7 +62,7 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src: str) -> Result:
-        globalFrame = Frame(typesys=system.types, outer=system)
+        globalFrame = Frame(typesys=sysFrame.types, outer=sysFrame)
         result: Result = {
             'lines': [],
             'frame': globalFrame,
