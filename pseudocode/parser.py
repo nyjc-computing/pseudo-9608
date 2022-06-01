@@ -357,7 +357,7 @@ def repeatStmt(tokens: Tokens) -> lang.Repeat:
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
     return lang.Repeat(None, cond, stmts)
 
-def forStmt(tokens: Tokens) -> lang.Loop:
+def forStmt(tokens: Tokens) -> lang.While:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
     parse = parser(tokens)
@@ -385,7 +385,7 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     )
     initStmt = lang.AssignStmt(init)
     incrStmt = lang.AssignStmt(incr)
-    return lang.Loop(initStmt, cond, stmts + [incrStmt])
+    return lang.While(initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     name = identifier(tokens).name  # Extract Name from UnresolvedName
