@@ -68,6 +68,9 @@ class Name:
         self.name = name
         self._token = token
 
+    def __repr__(self) -> str:
+        return f'Name({self.name})'
+
     def __str__(self) -> NameKey:
         return self.name
 
