@@ -147,23 +147,25 @@ def evalCallable(
             return returnval
 
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
+    value = evaluate(frame, expr.expr)
     if isinstance(expr.assignee, lang.GetName):
         frameMap = expr.assignee.frame
         name = str(expr.assignee.name)
-        frameMap.setValue(name, input())
+        frameMap.setValue(name, value)
     elif isinstance(expr.assignee, lang.GetIndex):
         array = evalGet(frame, expr.assignee.array)
         assert isinstance(array, lang.Array), "Invalid Array"
         index = evalIndex(frame, expr.assignee.index)
-        array.setValue(index, input())
+        array.setValue(index, value)
     elif isinstance(expr.assignee, lang.GetAttr):
         obj = evalGet(frame, expr.assignee.object)
         assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(expr.assignee.name)
-        obj.setValue(name, input())
-    raise builtin.RuntimeError(
-        "Invalid Input assignee", token=expr.assignee.token()
-    )
+        obj.setValue(name, value)
+    else:
+        raise builtin.RuntimeError(
+            "Invalid Input assignee", token=expr.assignee.token()
+        )
 
 def evaluate(
     frame: lang.Frame,
