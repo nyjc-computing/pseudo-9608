@@ -58,7 +58,7 @@ class Interpreter:
         any output from the executed statements.
         The default handler is Python's print().
         """
-        self.outputHandler = handler
+        self.outputHandler = handler  # type: ignore
 
     def interpret(self) -> None:
         executeStmts(
@@ -129,7 +129,7 @@ def evalCallable(
 ):
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
-            name = evaluate(frame, args[0])
+            name = evaluate(frame, args[0])  # type: ignore
             assert isinstance(name, str), "Invalid name"
             file = frame.getValue(name)
             assert isinstance(file, lang.File), "Invalid File"
