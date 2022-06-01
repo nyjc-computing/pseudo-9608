@@ -10,7 +10,7 @@ from . import scanner, parser
 from .resolver import Resolver
 from .interpreter import Interpreter
 
-class Result(TypedDict, total=False):
+class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
     lines: List[str]
     frame: Frame
@@ -70,7 +70,7 @@ class Pseudo:
         # Parsing
         try:
             tokens, lines = scanner.scan(src)
-            result['lines'] = lines
+            result['lines'] += lines
             statements = parser.parse(tokens)
         except builtin.ParseError as err:
             result['error'] = err
