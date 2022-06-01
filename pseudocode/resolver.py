@@ -537,6 +537,12 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
     elif isinstance(stmt, lang.CallStmt):
         assert isinstance(stmt.expr, lang.Call), "Invalid Call"
         resolveProcCall(frame, stmt.expr)
-    elif isinstance(stmt, lang.ExprStmt):
-        resolve(frame, stmt.expr)
+    elif isinstance(stmt, lang.AssignStmt):
+        assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
+        resolveAssign(frame, stmt.expr)
+    elif isinstance(stmt, lang.DeclareStmt):
+        assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
+        resolveDeclare(frame, stmt.expr)
+    assert not isinstance(stmt, lang.Return), \
+        "Unhandled Return in verify()"
     raise ValueError(f"Invalid Stmt {stmt}")
