@@ -166,6 +166,7 @@ def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
         raise builtin.RuntimeError(
             "Invalid Input assignee", token=expr.assignee.token()
         )
+    return value
 
 def evaluate(
     frame: lang.Frame,
