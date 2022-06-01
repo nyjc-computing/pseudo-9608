@@ -93,24 +93,29 @@ def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.PyLiteral:
     return expr.oper(leftval, rightval)
 
 def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
+    assert not isinstance(expr, lang.UnresolvedName), "Unexpected UnresolvedName"
     if isinstance(expr, lang.GetName):
         return expr.frame.getValue(str(expr.name))
     if isinstance(expr, lang.GetIndex):
         array = evalGet(frame, expr.array)
+        assert isinstance(array, lang.Array), "Invalid Array"
         indexes = evalIndex(frame, expr.index)
         return array.getValue(indexes)
     if isinstance(expr, lang.GetAttr):
         obj = evalGet(frame, expr.object)
+        assert isinstance(obj, lang.Object), "Invalid Object"
         return obj.getValue(str(expr.name))
     if isinstance(expr, lang.Call):
         return evalCall(frame, expr)
 
-def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> Optional[lang.Value]:
+def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Value:
     callable = evalGet(frame, expr.callable)
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
             name = evaluate(frame, expr.args[0])
+            assert isinstance(name, str), "Invalid name"
             file = frame.getValue(name)
+            assert isinstance(file, lang.File), "Invalid File"
             return callable.func(file.iohandler)
         argvals = [evaluate(frame, arg) for arg in expr.args]
         return callable.func(*argvals)
@@ -120,6 +125,7 @@ def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> Optional[lang.Valu
             argval = evaluate(frame, arg)
             slot.value = argval
         return executeStmts(frame, callable.stmts)
+    raise TypeError("Invalid Callable")
 
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
     value = evaluate(frame, expr.expr)
