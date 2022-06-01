@@ -317,7 +317,7 @@ def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
     """
     Returns the type of value that name is mapped to in frame.
     """
-    return frame.getType(str(expr.name))
+    return expr.frame.getType(str(expr.name))
 
 def resolveProcCall(
     frame: lang.Frame,
@@ -329,8 +329,11 @@ def resolveProcCall(
     """
     resolveNamesInExpr(frame, expr)
     assert isinstance(expr.callable, lang.GetName), \
-        "Callable unresolved"
+        f"Callable {expr.callable} unresolved"
     callableType = resolveGetName(frame, expr.callable)
+    expectTypeElseError(
+        callableType, 'NULL', token=expr.callable.token()
+    )
     callFrame = expr.callable.frame
     callable = callFrame.getValue(str(expr.callable.name))
     if not isinstance(callable, lang.Procedure):
@@ -520,21 +523,29 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
     elif isinstance(stmt, lang.FunctionStmt):
         verifyFunction(frame, stmt)
     elif isinstance(stmt, lang.OpenFile):
-        resolveName(frame, stmt, 'filename')
-        resolve(frame, stmt.filename)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.ReadFile):
-        resolveName(frame, stmt, 'filename')
-        resolveName(frame, stmt, 'target')
-        resolve(frame, stmt.filename)
-        resolve(frame, stmt.target)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.WriteFile):
-        resolveName(frame, stmt, 'filename')
-        resolveName(frame, stmt, 'data')
-        resolve(frame, stmt.filename)
-        resolve(frame, stmt.data)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.CloseFile):
-        resolveName(frame, stmt, 'filename')
-        resolve(frame, stmt.filename)
+        resolveNamesInExpr(frame, stmt)
+        expectTypeElseError(
+            resolve(frame, stmt.filename), 'STRING',
+            token=stmt.filename.token()
+        )
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
     elif isinstance(stmt, lang.CallStmt):

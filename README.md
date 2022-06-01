@@ -85,3 +85,5 @@ This project is also an attempt to write a programming book in a new style. Each
 - [24c Improvements: Type Relationship](https://github.com/nyjc-computing/pseudo-9608/pull/65)
 - [24d Improvements: Parser](https://github.com/nyjc-computing/pseudo-9608/pull/67)
 - [24e Improvements: Resolver](https://github.com/nyjc-computing/pseudo-9608/pull/69)
+- [24f Improvements: Interpreter](https://github.com/nyjc-computing/pseudo-9608/pull/70)
+- [24g Improvements: Pseudo](https://github.com/nyjc-computing/pseudo-9608/pull/71)
