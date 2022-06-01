@@ -1,4 +1,6 @@
-from typing import Iterable, Mapping, Callable as function
+from typing import Optional
+from typing import Iterable, List, MutableMapping
+from typing import TypedDict, Callable as function
 from sys import exc_info
 from traceback import format_exception
 
@@ -23,12 +25,12 @@ __version__ = '0.2.1'
 
 
 # https://stackoverflow.com/a/66416364/318186
-def printException():
+def printException() -> None:
     etype, value, tb = exc_info()
     info, error = format_exception(etype, value, tb)[-2:]
     print(f'Exception in:\n{info}\n{error}')
 
-def error(lines: Iterable, err: builtin.PseudoError) -> None:
+def error(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
     if err.line:
         lineinfo = f"[Line {err.line}]"
