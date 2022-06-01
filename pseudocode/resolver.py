@@ -299,6 +299,7 @@ def resolveIndex(
             expectTypeElseError(
                 nameType, 'INTEGER', token=indexExpr.token()
             )
+    expr.index = resolveExprs(frame, expr.index)
     # Array indexes must be integer
     intsElseError(frame, *expr.index)
     # Arrays in Objects not yet supported; assume frame
