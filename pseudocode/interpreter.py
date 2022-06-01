@@ -451,6 +451,7 @@ def execute(
         execReturn(frame, stmt, **kwargs)
     elif (
         isinstance(stmt, lang.DeclareStmt)
+        or isinstance(stmt, lang.TypeStmt)
         or isinstance(stmt, lang.ProcedureStmt)
         or isinstance(stmt, lang.FunctionStmt)
     ):
