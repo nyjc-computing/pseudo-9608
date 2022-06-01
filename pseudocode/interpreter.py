@@ -92,19 +92,18 @@ def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.PyLiteral:
     rightval = evaluate(frame, expr.right)
     return expr.oper(leftval, rightval)
 
-def evalGet(frame: lang.Frame, expr: lang.Get) -> lang.Value:
-    # Frame should have been inserted in resolver
-    # So ignore the frame that is passed here
-    obj = expr.frame
-    # evaluate obj until object is retrieved
-    if isinstance(obj, lang.Expr):
-        obj = evaluate(frame, obj)
-    if not isinstance(obj, lang.Object):
-        raise builtin.RuntimeError("Invalid object", expr.token())
-    name = expr.name
-    if isinstance(obj, lang.Array):
-        name = evalIndex(frame, expr.name)
-    return obj.getValue(name)
+def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
+    if isinstance(expr, lang.GetName):
+        return expr.frame.getValue(str(expr.name))
+    if isinstance(expr, lang.GetIndex):
+        array = evalGet(frame, expr.array)
+        indexes = evalIndex(frame, expr.index)
+        return array.getValue(indexes)
+    if isinstance(expr, lang.GetAttr):
+        obj = evalGet(frame, expr.object)
+        return obj.getValue(str(expr.name))
+    if isinstance(expr, lang.Call):
+        return evalCall(frame, expr)
 
 def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> Optional[lang.Value]:
     callable = evalGet(frame, expr.callable)
