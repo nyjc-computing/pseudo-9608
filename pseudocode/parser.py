@@ -127,9 +127,11 @@ def indexExpr(
     tokens: Tokens,
     arrayExpr: lang.NameExpr,
 ) -> lang.GetIndex:
-    indexes: lang.IndexExpr = (literal(tokens),)
+    parse = parser(tokens)
+    indexes: lang.IndexExpr = (parse(tokens),)
     while matchWord(tokens, ','):
-        indexes += (literal(tokens),)
+        parse = parser(tokens)
+        indexes += (parse(tokens),)
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, indexes)
 
