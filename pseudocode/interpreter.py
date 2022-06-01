@@ -174,6 +174,7 @@ def executeStmts(
             return execReturn(frame, stmt, **kwargs)
         else:
             execute(frame, stmt, **kwargs)
+    return None
 
 def execOutput(
     frame: lang.Frame,
@@ -203,6 +204,7 @@ def execCase(
     **kwargs,
 ) -> None:
     cond = evaluate(frame, stmt.cond)
+    assert not isinstance(cond, lang.PseudoValue), f"Invalid cond {cond}"
     if cond in stmt.stmtMap:
         executeStmts(frame, stmt.stmtMap[cond], **kwargs)
     elif stmt.fallback:
@@ -243,9 +245,10 @@ def execOpenFile(
     stmt: lang.OpenFile,
     **kwargs,
 ) -> None:
-    filename: str = evaluate(frame, stmt.filename)
+    filename = evaluate(frame, stmt.filename)
+    assert isinstance(filename, str), f"Invalid filename {filename}"
     undeclaredElseError(
-        frame, filename, "File already opened", stmt.filename.token()
+        frame, filename, "File already opened", token=stmt.filename.token()
     )
     frame.declare(filename, 'FILE')
     frame.setValue(
@@ -265,7 +268,7 @@ def execReadFile(
     filename = evaluate(frame, stmt.filename)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
-        frame, filename, "File not open", stmt.filename.token()
+        frame, filename, "File not open", token=stmt.filename.token()
     )
     file = frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
@@ -274,6 +277,7 @@ def execReadFile(
     )
     expectTypeElseError(file.mode, 'READ', token=stmt.filename.token())
     varname = evaluate(frame, stmt.target)
+    assert isinstance(varname, str), f"Expected str, got {varname!r}"
     declaredElseError(frame, varname, token=stmt.target.token())
     # TODO: Catch and handle Python file io errors
     line = file.iohandler.readline().rstrip()
