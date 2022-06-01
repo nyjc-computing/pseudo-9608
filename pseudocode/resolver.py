@@ -545,4 +545,3 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
         resolveDeclare(frame, stmt.expr)
     assert not isinstance(stmt, lang.Return), \
         "Unhandled Return in verify()"
-    raise ValueError(f"Invalid Stmt {stmt}")
