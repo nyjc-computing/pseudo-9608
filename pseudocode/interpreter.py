@@ -1,4 +1,6 @@
-from typing import Optional, Iterable, Tuple, Callable as function
+from typing import Optional, Union
+from typing import Iterable, Callable as function
+from typing import overload
 
 from . import builtin, lang, system
 
@@ -111,24 +113,43 @@ def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
     if isinstance(expr, lang.Call):
         return evalCall(frame, expr)
 
-def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> lang.Value:
-    callable = evalGet(frame, expr.callable)
+@overload
+def evalCallable(frame: lang.Frame, callable: lang.Builtin, args: lang.Args) -> lang.PyLiteral: ...
+@overload
+def evalCallable(frame: lang.Frame, callable: lang.Procedure, args: lang.Args) -> None: ...
+@overload
+def evalCallable(frame: lang.Frame, callable: lang.Function, args: lang.Args) -> lang.Value: ...
+def evalCallable(
+    frame: lang.Frame,
+    callable: Union[lang.Builtin, lang.Callable],
+    args: lang.Args,
+):
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
-            name = evaluate(frame, expr.args[0])
+            name = evaluate(frame, args[0])
             assert isinstance(name, str), "Invalid name"
             file = frame.getValue(name)
             assert isinstance(file, lang.File), "Invalid File"
             return callable.func(file.iohandler)
-        argvals = [evaluate(frame, arg) for arg in expr.args]
+        argvals = [evaluate(frame, arg) for arg in args]
         return callable.func(*argvals)
     elif isinstance(callable, lang.Callable):
         # Assign args to param slots
-        for arg, slot in zip(expr.args, callable.params):
+        for arg, slot in zip(args, callable.params):
             argval = evaluate(frame, arg)
             slot.value = argval
-        return executeStmts(frame, callable.stmts)
-    raise TypeError("Invalid Callable")
+        returnval = executeStmts(frame, callable.stmts)
+        if isinstance(callable, lang.Function):
+            assert returnval, f"None returned from {callable}"
+            return returnval
+
+def evalCall(frame: lang.Frame, expr: lang.Call, **kwargs) -> Optional[lang.Value]:
+    callable = evalGet(frame, expr.callable)
+    assert (
+        isinstance(callable, lang.Builtin)
+        or isinstance(callable, lang.Callable)
+    ), f"Invalid Builtin/Callable {callable}"
+    return evalCallable(frame, callable, expr.args)
 
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
     if isinstance(expr.assignee, lang.GetName):
