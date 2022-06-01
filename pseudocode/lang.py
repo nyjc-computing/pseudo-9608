@@ -11,7 +11,7 @@ PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
-IndexExpr = Tuple["Literal", ...]  # Array indexes
+IndexExpr = Tuple["Expr", ...]  # Array indexes
 IndexRange = Tuple[int, int]  # Array ranges (declared)
 Passby = LiteralType['BYREF', 'BYVALUE']
 Args = Collection["Expr"]  # Callable args
@@ -67,6 +67,9 @@ class Name:
     ) -> None:
         self.name = name
         self._token = token
+
+    def __repr__(self) -> str:
+        return f'Name({self.name})'
 
     def __str__(self) -> NameKey:
         return self.name
@@ -562,22 +565,19 @@ class Literal(Expr):
 
 
 class Declare(Expr):
-    __slots__ = ('name', 'type', 'metadata', '_token')
+    __slots__ = ('name', 'type', 'metadata')
     def __init__(
         self,
-        name: NameKey,
+        name: Name,
         type: Type,
         metadata: Mapping,
-        *,
-        token: "Token",
     ) -> None:
         self.name = name
         self.type = type
         self.metadata = metadata
-        self._token = token
 
     def token(self):
-        return self._token
+        return self.name.token()
 
 
 

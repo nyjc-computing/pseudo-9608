@@ -142,12 +142,13 @@ def declareByref(
     declare: lang.Declare,
 ) -> None:
     assert frame.outer, "Declared name in a frame with no outer"
+    name: lang.NameKey = str(declare.name)
     expectTypeElseError(
-        declare.type, frame.outer.getType(declare.name),
+        declare.type, frame.outer.getType(name),
         token=declare.token()
     )
     # Reference frame vars in local
-    frame.set(declare.name, frame.outer.get(declare.name))
+    frame.set(name, frame.outer.get(name))
 
 def declareByval(
     frame: Union[lang.Frame, lang.ObjectTemplate],
@@ -160,7 +161,8 @@ def declareByval(
         raise builtin.LogicError(
             "ARRAY in TYPE not supported", declare.token()
         )
-    frame.declare(declare.name, declare.type)
+    name: lang.NameKey = str(declare.name)
+    frame.declare(name, declare.type)
     if declare.type == 'ARRAY':
         array = lang.Array(
             typesys=frame.types,
@@ -168,7 +170,7 @@ def declareByval(
             type=declare.metadata['type'],
         )
         assert isinstance(frame, lang.Frame), "Frame expected"
-        frame.setValue(declare.name, array)
+        frame.setValue(name, array)
 
 def resolveDeclare(
     frame: Union[lang.Frame, lang.ObjectTemplate],
@@ -297,6 +299,7 @@ def resolveIndex(
             expectTypeElseError(
                 nameType, 'INTEGER', token=indexExpr.token()
             )
+    expr.index = resolveExprs(frame, expr.index)
     # Array indexes must be integer
     intsElseError(frame, *expr.index)
     # Arrays in Objects not yet supported; assume frame
@@ -452,7 +455,7 @@ def transformDeclares(
     params: Tuple[lang.TypedValue, ...] = tuple()
     for declaration in declares:
         resolveDeclare(frame, declaration, passby=passby)
-        params += (frame.get(declaration.name),)
+        params += (frame.get(str(declaration.name)),)
     return params
 
 def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
@@ -545,4 +548,3 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
         resolveDeclare(frame, stmt.expr)
     assert not isinstance(stmt, lang.Return), \
         "Unhandled Return in verify()"
-    raise ValueError(f"Invalid Stmt {stmt}")

@@ -120,16 +120,18 @@ def callExpr(
     return lang.Call(callableExpr, args)
 
 def attrExpr(tokens: Tokens, objExpr: lang.NameExpr) -> lang.GetAttr:
-    name = identifier(tokens)
-    return lang.GetAttr(objExpr, name.name)
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
+    return lang.GetAttr(objExpr, name)
 
 def indexExpr(
     tokens: Tokens,
     arrayExpr: lang.NameExpr,
 ) -> lang.GetIndex:
-    indexes: lang.IndexExpr = (literal(tokens),)
+    parse = parser(tokens)
+    indexes: lang.IndexExpr = (parse(tokens),)
     while matchWord(tokens, ','):
-        indexes += (literal(tokens),)
+        parse = parser(tokens)
+        indexes += (parse(tokens),)
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, indexes)
 
@@ -258,7 +260,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         ):
             raise builtin.ParseError("Invalid type", check(tokens))
         
-    name = identifier(tokens)
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     matchWordElseError(tokens, ':', msg="after name")
     expectTypeToken(tokens)
     metadata: lang.TypeMetadata = {}
@@ -273,10 +275,9 @@ def declare(tokens: Tokens) -> lang.Declare:
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
     return lang.Declare(
-        str(name),
+        name,
         typetoken.word,
         metadata,
-        token=name.token(),
     )
     
 def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
@@ -285,7 +286,7 @@ def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     return lang.DeclareStmt(expr)
 
 def typeStmt(tokens: Tokens) -> lang.TypeStmt:
-    name = identifier(tokens).name
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     matchWordElseError(tokens, '\n')
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):
@@ -356,7 +357,7 @@ def repeatStmt(tokens: Tokens) -> lang.Repeat:
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
     return lang.Repeat(None, cond, stmts)
 
-def forStmt(tokens: Tokens) -> lang.Loop:
+def forStmt(tokens: Tokens) -> lang.While:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
     parse = parser(tokens)
@@ -384,10 +385,10 @@ def forStmt(tokens: Tokens) -> lang.Loop:
     )
     initStmt = lang.AssignStmt(init)
     incrStmt = lang.AssignStmt(incr)
-    return lang.Loop(initStmt, cond, stmts + [incrStmt])
+    return lang.While(initStmt, cond, stmts + [incrStmt])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
-    name = identifier(tokens).name
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'
@@ -414,7 +415,7 @@ def callStmt(tokens: Tokens) -> lang.CallStmt:
     return lang.CallStmt(callable)
 
 def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
-    name = identifier(tokens).name
+    name = identifier(tokens).name  # Extract Name from UnresolvedName
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'

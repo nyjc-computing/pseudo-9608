@@ -58,7 +58,7 @@ class Interpreter:
         any output from the executed statements.
         The default handler is Python's print().
         """
-        self.outputHandler = handler
+        self.outputHandler = handler  # type: ignore
 
     def interpret(self) -> None:
         executeStmts(
@@ -129,7 +129,7 @@ def evalCallable(
 ):
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
-            name = evaluate(frame, args[0])
+            name = evaluate(frame, args[0])  # type: ignore
             assert isinstance(name, str), "Invalid name"
             file = frame.getValue(name)
             assert isinstance(file, lang.File), "Invalid File"
@@ -147,23 +147,26 @@ def evalCallable(
             return returnval
 
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
+    value = evaluate(frame, expr.expr)
     if isinstance(expr.assignee, lang.GetName):
         frameMap = expr.assignee.frame
         name = str(expr.assignee.name)
-        frameMap.setValue(name, input())
+        frameMap.setValue(name, value)
     elif isinstance(expr.assignee, lang.GetIndex):
         array = evalGet(frame, expr.assignee.array)
         assert isinstance(array, lang.Array), "Invalid Array"
         index = evalIndex(frame, expr.assignee.index)
-        array.setValue(index, input())
+        array.setValue(index, value)
     elif isinstance(expr.assignee, lang.GetAttr):
         obj = evalGet(frame, expr.assignee.object)
         assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(expr.assignee.name)
-        obj.setValue(name, input())
-    raise builtin.RuntimeError(
-        "Invalid Input assignee", token=expr.assignee.token()
-    )
+        obj.setValue(name, value)
+    else:
+        raise builtin.RuntimeError(
+            "Invalid Input assignee", token=expr.assignee.token()
+        )
+    return value
 
 def evaluate(
     frame: lang.Frame,
@@ -424,33 +427,35 @@ def execute(
 ) -> None:
     if isinstance(stmt, lang.Output):
         execOutput(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Input):
+    elif isinstance(stmt, lang.Input):
         execInput(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Case):
+    elif isinstance(stmt, lang.Case):
         execCase(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.If):
+    elif isinstance(stmt, lang.If):
         execIf(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.While):
+    elif isinstance(stmt, lang.While):
         execWhile(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Repeat):
+    elif isinstance(stmt, lang.Repeat):
         execRepeat(frame, stmt, **kwargs)
-    if (
+    elif (
         isinstance(stmt, lang.OpenFile)
         or isinstance(stmt, lang.ReadFile)
         or isinstance(stmt, lang.WriteFile)
         or isinstance(stmt, lang.CloseFile)
     ):
         execFile(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.CallStmt):
+    elif isinstance(stmt, lang.CallStmt):
         execCall(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.AssignStmt):
+    elif isinstance(stmt, lang.AssignStmt):
         execAssign(frame, stmt, **kwargs)
-    if isinstance(stmt, lang.Return):
+    elif isinstance(stmt, lang.Return):
         execReturn(frame, stmt, **kwargs)
-    if (
+    elif (
         isinstance(stmt, lang.DeclareStmt)
+        or isinstance(stmt, lang.TypeStmt)
         or isinstance(stmt, lang.ProcedureStmt)
         or isinstance(stmt, lang.FunctionStmt)
     ):
         pass
-    raise ValueError(f"Invalid Stmt {stmt}")
+    else:
+        raise ValueError(f"Invalid Stmt {stmt}")
