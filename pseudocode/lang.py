@@ -565,22 +565,19 @@ class Literal(Expr):
 
 
 class Declare(Expr):
-    __slots__ = ('name', 'type', 'metadata', '_token')
+    __slots__ = ('name', 'type', 'metadata')
     def __init__(
         self,
-        name: NameKey,
+        name: Name,
         type: Type,
         metadata: Mapping,
-        *,
-        token: "Token",
     ) -> None:
         self.name = name
         self.type = type
         self.metadata = metadata
-        self._token = token
 
     def token(self):
-        return self._token
+        return self.name.token()
 
 
 
