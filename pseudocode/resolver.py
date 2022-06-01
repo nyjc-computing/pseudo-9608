@@ -1,5 +1,4 @@
-from typing import overload
-from typing import Any, Optional, Union, Literal
+from typing import Optional, Union, Literal
 from typing import Iterable, Iterator, Collection
 from typing import Tuple
 from itertools import product
@@ -20,7 +19,9 @@ def expectTypeElseError(
     if exprtype not in expected:
         # Stringify expected types
         typesStr = f"({', '.join(expected)})"
-        raise builtin.LogicError(f"Expected {typesStr}, is {exprtype}", token)
+        raise builtin.LogicError(
+            f"Expected {typesStr}, is {exprtype}", token
+        )
 
 def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     ranges = [
@@ -213,8 +214,12 @@ def resolveBinary(
         expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token())
         return 'BOOLEAN'
     if expr.oper in (builtin.ne, builtin.eq):
-        expectTypeElseError(lType, *builtin.EQUATABLE, token=expr.left.token())
-        expectTypeElseError(rType, *builtin.EQUATABLE, token=expr.right.token())
+        expectTypeElseError(
+            lType, *builtin.EQUATABLE, token=expr.left.token()
+        )
+        expectTypeElseError(
+            rType, *builtin.EQUATABLE, token=expr.right.token()
+        )
         if not (
             (lType == 'BOOLEAN' and rType == 'BOOLEAN')
             or (lType in builtin.NUMERIC and rType in builtin.NUMERIC)
@@ -225,13 +230,26 @@ def resolveBinary(
             )
         return 'BOOLEAN'
     if expr.oper in (builtin.gt, builtin.gte, builtin.lt, builtin.lte):
-        expectTypeElseError(lType, *builtin.NUMERIC, token=expr.left.token())
-        expectTypeElseError(rType, *builtin.NUMERIC, token=expr.left.token())
+        expectTypeElseError(
+            lType, *builtin.NUMERIC, token=expr.left.token()
+        )
+        expectTypeElseError(
+            rType, *builtin.NUMERIC, token=expr.right.token()
+        )
         return 'BOOLEAN'
-    if expr.oper in (builtin.add, builtin.sub, builtin.mul, builtin.div):
-        expectTypeElseError(lType, *builtin.NUMERIC, token=expr.left.token())
-        expectTypeElseError(rType, *builtin.NUMERIC, token=expr.left.token())
-        if (expr.oper is not builtin.div) and (lType == rType == 'INTEGER'):
+    if expr.oper in (
+        builtin.add, builtin.sub, builtin.mul, builtin.div
+    ):
+        expectTypeElseError(
+            lType, *builtin.NUMERIC, token=expr.left.token()
+        )
+        expectTypeElseError(
+            rType, *builtin.NUMERIC, token=expr.right.token()
+        )
+        if (
+            (expr.oper is not builtin.div)
+            and (lType == rType == 'INTEGER')
+        ):
             return 'INTEGER'
         return 'REAL'
     raise ValueError("No return for Binary")
@@ -473,7 +491,10 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         )
     verifyStmts(local, stmt.stmts, stmt.returnType)
 
-def verifyDeclareType(frame: lang.Frame, stmt: lang.TypeStmt) -> None:
+def verifyDeclareType(
+    frame: lang.Frame,
+    stmt: lang.TypeStmt,
+) -> None:
     frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=frame.types)
     for expr in stmt.exprs:
@@ -516,6 +537,12 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
     elif isinstance(stmt, lang.CallStmt):
         assert isinstance(stmt.expr, lang.Call), "Invalid Call"
         resolveProcCall(frame, stmt.expr)
-    elif isinstance(stmt, lang.ExprStmt):
-        resolve(frame, stmt.expr)
-    raise ValueError("Invalid Stmt {stmt}")
+    elif isinstance(stmt, lang.AssignStmt):
+        assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
+        resolveAssign(frame, stmt.expr)
+    elif isinstance(stmt, lang.DeclareStmt):
+        assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
+        resolveDeclare(frame, stmt.expr)
+    assert not isinstance(stmt, lang.Return), \
+        "Unhandled Return in verify()"
+    raise ValueError(f"Invalid Stmt {stmt}")
