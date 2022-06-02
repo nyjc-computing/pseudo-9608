@@ -20,9 +20,15 @@ class Result(TypedDict):
 
 
 __version__ = '0.3.5'
-HELP = f"""
+VERSION = f"""
 Pseudo {__version__}
 """.strip()
+HELP = """
+usage: pseudo [option] ... file
+Options and arguments:
+-h     : print this help message and exit (also --help)
+file   : program read from script file
+"""
 
 
 
@@ -107,6 +113,9 @@ class Pseudo:
             return result
 
 
+
+# Error codes
+# https://gist.github.com/bojanrajkovic/831993
 
 def main():
     srcfile = "main.pseudo"
