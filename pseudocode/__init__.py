@@ -1,7 +1,7 @@
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-import sys, traceback
+import os, sys, traceback
 
 from . import builtin
 from .lang import Frame
@@ -19,9 +19,13 @@ class Result(TypedDict):
 
 
 
-__version__ = '0.3.5'
-HELP = f"""
-Pseudo {__version__}
+__version__ = '0.4.0'
+VERSION = f"Pseudo {__version__}"
+HELP = """
+usage: pseudo [option] ... file
+Options and arguments:
+-h     : print this help message and exit (also --help)
+file   : program read from script file
 """.strip()
 
 
@@ -108,13 +112,36 @@ class Pseudo:
 
 
 
+# Error codes
+# https://gist.github.com/bojanrajkovic/831993
+
 def main():
-    srcfile = "main.pseudo"
+    # Argument handling
+    if len(sys.argv) == 1:
+        print("No argument provided.")  # Unhandled error
+        print("Try `pseudo -h' for more information.")
+        sys.exit(64)  # command line usage error
     if len(sys.argv) > 1:
-        srcfile = sys.argv[1]
-    # print(HELP)
-    # print("""Usage: pseudo [FILE]""")
-    # sys.exit(65)
+        if sys.argv[1] == '-h':
+            print(HELP)
+            sys.exit(0)
+        elif sys.argv[1].startswith('-'):
+            print(f"Unknown option: {sys.argv[1]}")
+            print("Try `pseudo -h' for more information.")    
+            sys.exit(64)  # command line usage error
+
+    # File checks
+    srcfile = sys.argv[1]
+    if not os.path.isfile(srcfile):
+        print(f"pseudo: can't open file {srcfile!r}")
+        sys.exit(65)  # data format error
+    try:
+        with open(srcfile, 'r') as f:
+            f.readline()
+    except Exception as error:
+        print(f"pseudo: can't open file {srcfile!r}:")
+        print(error)
+        sys.exit(65)  # data format error
 
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
@@ -123,7 +150,7 @@ def main():
     if err:
         if type(err) in (builtin.ParseError, builtin.LogicError):
             error(lines, err)
-            sys.exit(65)
+            sys.exit(65)  # data format error
         elif type(err) in (RuntimeError,):
             error(lines, err)
-            sys.exit(70)
+            sys.exit(70)  # internal software error
