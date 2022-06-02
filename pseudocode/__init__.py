@@ -116,11 +116,12 @@ class Pseudo:
 # https://gist.github.com/bojanrajkovic/831993
 
 def main():
-    # Argument handling
+    # REPL
     if len(sys.argv) == 1:
-        print("No argument provided.")  # Unhandled error
-        print("Try `pseudo -h' for more information.")
-        sys.exit(64)  # command line usage error
+        print("REPL unsupported.")  # Unhandled error
+        sys.exit(0)
+
+    # Argument handling
     if len(sys.argv) > 1:
         if sys.argv[1] == '-h':
             print(HELP)
