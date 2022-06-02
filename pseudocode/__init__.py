@@ -28,7 +28,7 @@ usage: pseudo [option] ... file
 Options and arguments:
 -h     : print this help message and exit (also --help)
 file   : program read from script file
-"""
+""".strip()
 
 
 
@@ -119,11 +119,14 @@ class Pseudo:
 
 def main():
     srcfile = "main.pseudo"
+
+    # Argument handling
+    if len(sys.argv) == 1:
+        print("No argument provided.")  # Unhandled error
+        print("Try `pseudo -h' for more information.")
+        sys.exit(64)  # command line usage error
     if len(sys.argv) > 1:
         srcfile = sys.argv[1]
-    # print(HELP)
-    # print("""Usage: pseudo [FILE]""")
-    # sys.exit(65)
 
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
@@ -132,7 +135,7 @@ def main():
     if err:
         if type(err) in (builtin.ParseError, builtin.LogicError):
             error(lines, err)
-            sys.exit(65)
+            sys.exit(65)  # data format error
         elif type(err) in (RuntimeError,):
             error(lines, err)
-            sys.exit(70)
+            sys.exit(70)  # internal software error
