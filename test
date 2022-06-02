@@ -1,2 +1,18 @@
 python -m mypy pseudocode
 python -m unittest
+
+echo -n "Build package (y/N)? "
+read build
+if [[ "${build}" == "y" ]]; then
+    poetry build
+else
+    exit 0
+fi
+
+echo -n "Publish package (y/N)? "
+read publish
+if [[ "${publish}" == "y" ]]; then
+    poetry publish
+else
+    exit 0
+fi
