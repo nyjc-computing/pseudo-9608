@@ -116,10 +116,16 @@ class Pseudo:
 # https://gist.github.com/bojanrajkovic/831993
 
 def main():
-    # REPL
+    # REPL mode
     if len(sys.argv) == 1:
-        print("REPL unsupported.")  # Unhandled error
-        sys.exit(0)
+        pseudo = Pseudo()
+        print(VERSION)
+        while True:
+            line = input('### ')
+            result = pseudo.run(line)
+            if not result['error']:
+                continue
+            error(result['lines'], result['error'])
 
     # Argument handling
     if len(sys.argv) > 1:
@@ -144,14 +150,16 @@ def main():
         print(error)
         sys.exit(65)  # data format error
 
+    # Script mode
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
-    lines = result['lines']
-    err = result['error']
-    if err:
-        if type(err) in (builtin.ParseError, builtin.LogicError):
-            error(lines, err)
-            sys.exit(65)  # data format error
-        elif type(err) in (RuntimeError,):
-            error(lines, err)
-            sys.exit(70)  # internal software error
+    if not result['error']:
+        sys.exit(0)
+
+    # Error handling
+    error(result['lines'], result['error'])
+    if type(result['error']) in (builtin.ParseError, builtin.LogicError):
+        sys.exit(65)  # data format error
+    elif type(result['error']) in (RuntimeError,):
+        error(result['lines'], result['error'])
+        sys.exit(70)  # internal software error
