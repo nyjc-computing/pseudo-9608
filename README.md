@@ -10,7 +10,7 @@ pip install pseudo-9608
 
 ## Usage
 
-### Running psuedocode on a file
+### Running pseudocode on a file
 
 ```
 import pseudocode
@@ -18,7 +18,7 @@ import pseudocode
 pseudocode.runFile('myfile.pseudo')
 ```
 
-### Running psuedocode on a string
+### Running pseudocode on a string
 
 ```
 import pseudocode
