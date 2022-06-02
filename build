@@ -72,4 +72,8 @@ if [[ "$VERSION" != pyproject_version ]]; then
     colorize RED "pyproject.toml: Version is $(pyproject_version), expected ${VERSION}"
     exit 1
 fi
+
+# Configure credentials to avoid poetry's authentication prompt
+# See https://python-poetry.org/docs/repositories/#configuring-credentials
+
 poetry publish
