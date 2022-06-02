@@ -1,7 +1,7 @@
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-import sys, traceback
+import os, sys, traceback
 
 from . import builtin
 from .lang import Frame
@@ -132,7 +132,11 @@ def main():
             print("Try `pseudo -h' for more information.")    
             sys.exit(64)  # command line usage error
 
+    # File checks
     srcfile = sys.argv[1]
+    if not os.path.isfile(srcfile):
+        print(f"pseudo: can't open file {srcfile!r}")
+        sys.exit(65)  # data format error
 
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
