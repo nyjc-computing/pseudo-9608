@@ -126,6 +126,9 @@ def main():
         print("Try `pseudo -h' for more information.")
         sys.exit(64)  # command line usage error
     if len(sys.argv) > 1:
+        if sys.argv[1] == '-h':
+            print(HELP)
+            sys.exit(0)
         srcfile = sys.argv[1]
 
     pseudo = Pseudo()
