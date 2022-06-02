@@ -19,7 +19,7 @@ class Result(TypedDict):
 
 
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 HELP = f"""
 Pseudo {__version__}
 """.strip()
