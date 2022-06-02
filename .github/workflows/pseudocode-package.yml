@@ -42,8 +42,8 @@ jobs:
       run: |
         source .venv/bin/activate
         python -m unittest
-    # # Run static checker
-    # - name: Run mypy
-    #   run: |
-    #     source .venv/bin/activate
-    #     python -m mypy pseudocode
+    # Run static checker
+    - name: Run mypy
+      uses: jpetrucciani/mypy-check@master
+      with:
+        path: 'pseudocode'
