@@ -138,7 +138,8 @@ def main():
         print(f"pseudo: can't open file {srcfile!r}")
         sys.exit(65)  # data format error
     try:
-        with open(srcfile, 'r') as f: ...
+        with open(srcfile, 'r') as f:
+            f.readline()
     except Exception as err:
         print(f"pseudo: can't open file {srcfile!r}:")
         print(err)
