@@ -37,11 +37,11 @@ jobs:
     # Install dependencies with poetry
     - name: Install dependencies
       run: poetry install --no-interaction --no-root
-    # # Run tests
-    # - name: Run unittests
-    #   run: |
-    #     source .venv/bin/activate
-    #     python -m unittest
+    # Run tests
+    - name: Run unittests
+      run: |
+        source .venv/bin/activate
+        python -m unittest
     # # Run static checker
     # - name: Run mypy
     #   run: |
