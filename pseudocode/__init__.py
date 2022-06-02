@@ -19,10 +19,8 @@ class Result(TypedDict):
 
 
 
-__version__ = '0.3.5'
-VERSION = f"""
-Pseudo {__version__}
-""".strip()
+__version__ = '0.4.0'
+VERSION = f"Pseudo {__version__}"
 HELP = """
 usage: pseudo [option] ... file
 Options and arguments:
@@ -140,9 +138,9 @@ def main():
     try:
         with open(srcfile, 'r') as f:
             f.readline()
-    except Exception as err:
+    except Exception as error:
         print(f"pseudo: can't open file {srcfile!r}:")
-        print(err)
+        print(error)
         sys.exit(65)  # data format error
 
     pseudo = Pseudo()
