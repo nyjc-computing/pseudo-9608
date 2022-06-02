@@ -13,9 +13,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-mypy = "^0.950"
 
 [tool.poetry.dev-dependencies]
+mypy = "^0.950"
+
+[tool.poetry.scripts]
+pseudo = 'pseudocode.pseudo:run'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
