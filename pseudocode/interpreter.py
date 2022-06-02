@@ -298,7 +298,8 @@ def execOpenFile(
     filename = evaluate(frame, stmt.filename)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     undeclaredElseError(
-        frame, filename, "File already opened", token=stmt.filename.token()
+        frame, filename, "File already opened", 
+        token=stmt.filename.token()
     )
     frame.declare(filename, 'FILE')
     frame.setValue(
