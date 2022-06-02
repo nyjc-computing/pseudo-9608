@@ -24,11 +24,11 @@ function colorize {
 }
 
 function pyproject_version {
-    echo $(grep 'version = ' pyproject.toml | sed 's/version = //; s/"//')
+    echo $(grep 'version = ' pyproject.toml | sed 's/version = //; s/"//g')
 }
 
 function pseudocode_version {
-    echo $(grep '__version__ = ' pseudocode/__init__.py | sed 's/__version__ = //; s/"//')
+    echo $(grep '__version__ = ' pseudocode/__init__.py | sed "s/__version__ = //; s/'//g")
 }
 
 # Code checking
@@ -64,11 +64,11 @@ fi
 # Check for matching version numbers in pseudocode/__init__.py
 # and pyproject.toml before publishing
 
-if [[ "$VERSION" != pseudocode_version ]]; then
+if [[ "$VERSION" != $(pseudocode_version) ]]; then
     colorize RED "pseudocode/__init__.py: Version is $(pseudocode_version), expected ${VERSION}"
     exit 1
 fi
-if [[ "$VERSION" != pyproject_version ]]; then
+if [[ "$VERSION" != $(pyproject_version) ]]; then
     colorize RED "pyproject.toml: Version is $(pyproject_version), expected ${VERSION}"
     exit 1
 fi
