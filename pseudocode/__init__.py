@@ -137,6 +137,12 @@ def main():
     if not os.path.isfile(srcfile):
         print(f"pseudo: can't open file {srcfile!r}")
         sys.exit(65)  # data format error
+    try:
+        with open(srcfile, 'r') as f: ...
+    except Exception as err:
+        print(f"pseudo: can't open file {srcfile!r}:")
+        print(err)
+        sys.exit(65)  # data format error
 
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
