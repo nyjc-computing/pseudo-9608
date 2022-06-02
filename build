@@ -32,17 +32,20 @@ function pseudocode_version {
 }
 
 # Code checking
+# Run unittest and mypy checks
 
-if ! python -m mypy pseudocode; then
-    colorize RED "mypy check failed"
-    exit 1
-elif ! python -m unittest; then
+if ! python -m unittest; then
     colorize RED "Unit tests failed"
+    exit 1
+elif ! python -m mypy pseudocode; then
+    colorize RED "mypy check failed"
     exit 1
 fi
 
 # Build
-
+# If version number is not provided, prompt user to build
+# If response is 'y', proceed to build, then exit
+# If version number is provided, build then proceed to publish
 
 VERSION="$1"
 if [[ -z "$VERSION" ]]; then
@@ -57,6 +60,9 @@ else
     poetry build
 fi
 
+# Publish
+# Check for matching version numbers in pseudocode/__init__.py
+# and pyproject.toml before publishing
 
 if [[ "$VERSION" != pseudocode_version ]]; then
     colorize RED "pseudocode/__init__.py: Version is $(pseudocode_version), expected ${VERSION}"
