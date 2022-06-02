@@ -118,8 +118,6 @@ class Pseudo:
 # https://gist.github.com/bojanrajkovic/831993
 
 def main():
-    srcfile = "main.pseudo"
-
     # Argument handling
     if len(sys.argv) == 1:
         print("No argument provided.")  # Unhandled error
@@ -129,7 +127,12 @@ def main():
         if sys.argv[1] == '-h':
             print(HELP)
             sys.exit(0)
-        srcfile = sys.argv[1]
+        elif sys.argv[1].startswith('-'):
+            print(f"Unknown option: {sys.argv[1]}")
+            print("Try `pseudo -h' for more information.")    
+            sys.exit(64)  # command line usage error
+
+    srcfile = sys.argv[1]
 
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
