@@ -10,7 +10,15 @@ pip install pseudo-9608
 
 ## Usage
 
-### Running pseudocode on a file
+### Shell: Running with a pseudocode file
+
+```
+$ pseudo myfile.pseudo
+```
+
+This will run the pseudocode interpreter on the file `myfile.pseudo`.
+
+### Python: Running with a pseudocode file
 
 ```
 import pseudocode
@@ -18,7 +26,9 @@ import pseudocode
 pseudocode.runFile('myfile.pseudo')
 ```
 
-### Running pseudocode on a string
+This will run the pseudocode interpreter on the file `myfile.pseudo`.
+
+### Python: Running with a pseudocode string
 
 ```
 import pseudocode
@@ -29,6 +39,8 @@ OUTPUT "Hello World!"
 
 pseudocode.run(code)
 ```
+
+This will run the pseudocode interpreter on the string `code`.
 
 # Chapters
 
