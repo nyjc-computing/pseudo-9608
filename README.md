@@ -100,4 +100,5 @@ This project is also an attempt to write a programming book in a new style. Each
 - [24f Improvements: Interpreter](https://github.com/nyjc-computing/pseudo-9608/pull/70)
 - [24g Improvements: Pseudo](https://github.com/nyjc-computing/pseudo-9608/pull/71)
 - [25a Automation: Testing](https://github.com/nyjc-computing/pseudo-9608/pull/72)
-- [25b Automation: setup](https://github.com/nyjc-computing/pseudo-9608/pull/73)
+- [25b Automation: Setup](https://github.com/nyjc-computing/pseudo-9608/pull/73)
+- [25c Automation: Security](https://github.com/nyjc-computing/pseudo-9608/pull/75)
