@@ -1,8 +1,7 @@
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-from sys import exc_info
-from traceback import format_exception
+import sys, traceback
 
 from . import builtin
 from .lang import Frame
@@ -21,13 +20,16 @@ class Result(TypedDict):
 
 
 __version__ = '0.3.2'
+HELP = f"""
+Pseudo {__version__}
+""".strip()
 
 
 
 # https://stackoverflow.com/a/66416364/318186
 def printException() -> None:
-    etype, value, tb = exc_info()
-    info, error = format_exception(etype, value, tb)[-2:]
+    etype, value, tb = sys.exc_info()
+    info, error = traceback.format_exception(etype, value, tb)[-2:]
     print(f'Exception in:\n{info}\n{error}')
 
 def error(lines: Iterable[str], err: builtin.PseudoError) -> None:
@@ -103,3 +105,25 @@ class Pseudo:
             printException()
         finally:
             return result
+
+
+
+def main():
+    srcfile = "main.pseudo"
+    if len(sys.argv) > 1:
+        srcfile = sys.argv[1]
+    # print(HELP)
+    # print("""Usage: pseudo [FILE]""")
+    # sys.exit(65)
+
+    pseudo = Pseudo()
+    result = pseudo.runFile(srcfile)
+    lines = result['lines']
+    err = result['error']
+    if err:
+        if type(err) in (builtin.ParseError, builtin.LogicError):
+            error(lines, err)
+            sys.exit(65)
+        elif type(err) in (RuntimeError,):
+            error(lines, err)
+            sys.exit(70)
