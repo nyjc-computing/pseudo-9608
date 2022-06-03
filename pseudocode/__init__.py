@@ -36,7 +36,7 @@ def printException() -> None:
     info, error = traceback.format_exception(etype, value, tb)[-2:]
     print(f'Exception in:\n{info}\n{error}')
 
-def error(lines: Iterable[str], err: builtin.PseudoError) -> None:
+def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
     if err.line:
         lineinfo = f"[Line {err.line}]"
@@ -126,9 +126,10 @@ def main():
         while True:
             line = input('### ')
             result = pseudo.run(line)
+            breakpoint()
             if not result['error']:
                 continue
-            error(result['lines'], result['error'])
+            report(result['lines'], result['error'])
 
     # Argument handling
     if len(sys.argv) > 1:
@@ -160,9 +161,8 @@ def main():
         sys.exit(0)
 
     # Error handling
-    error(result['lines'], result['error'])
+    report(result['lines'], result['error'])
     if type(result['error']) in (builtin.ParseError, builtin.LogicError):
         sys.exit(65)  # data format error
     elif type(result['error']) in (RuntimeError,):
-        error(result['lines'], result['error'])
         sys.exit(70)  # internal software error
