@@ -61,6 +61,7 @@ class Interpreter:
         self.outputHandler = handler  # type: ignore
 
     def interpret(self) -> None:
+        assert False
         executeStmts(
             self.frame,
             self.statements,
