@@ -126,7 +126,6 @@ def main():
         while True:
             line = input('### ')
             result = pseudo.run(line)
-            breakpoint()
             if not result['error']:
                 continue
             report(result['lines'], result['error'])
