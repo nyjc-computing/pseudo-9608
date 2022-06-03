@@ -1,7 +1,7 @@
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-import os, sys, traceback
+import os, sys
 
 import logging
 logging.basicConfig(
@@ -38,13 +38,8 @@ file   : program read from script file
 
 
 def logException() -> None:
-    logging.exception()
-
-# https://stackoverflow.com/a/66416364/318186
-def printException() -> None:
-    etype, value, tb = sys.exc_info()
-    info, error = traceback.format_exception(etype, value, tb)[-2:]
-    print(f'Exception in:\n{info}\n{error}')
+    # https://docs.python.org/3.8/library/logging.html#logging.Logger.exception
+    logging.exception("Unexpected error has occurred")
 
 def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
