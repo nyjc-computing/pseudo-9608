@@ -3,6 +3,13 @@ from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
 import os, sys, traceback
 
+import logging
+logging.basicConfig(
+    filename='pseudo.log',
+    filemode='w',
+    format='%(name)s - %(levelname)s - %(message)s',
+)
+
 from . import builtin
 from .lang import Frame
 from .system import system as sysFrame
@@ -29,6 +36,9 @@ file   : program read from script file
 """.strip()
 
 
+
+def logException() -> None:
+    logging.exception()
 
 # https://stackoverflow.com/a/66416364/318186
 def printException() -> None:
@@ -87,7 +97,7 @@ class Pseudo:
             result['error'] = err
             return result
         except Exception:
-            printException()
+            logException()
             return result
 
         # Resolving
@@ -98,7 +108,7 @@ class Pseudo:
             result['error'] = err
             return result
         except Exception:
-            printException()
+            logException()
             return result
 
         # Interpreting
@@ -109,7 +119,7 @@ class Pseudo:
         except builtin.RuntimeError as err:
             result['error'] = err
         except Exception:
-            printException()
+            logException()
         finally:
             return result
 
