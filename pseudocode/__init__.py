@@ -1,7 +1,14 @@
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-import os, sys, traceback
+import os, sys
+
+import logging
+logging.basicConfig(
+    filename='pseudo.log',
+    filemode='w',
+    format='%(name)s - %(levelname)s - %(message)s',
+)
 
 from . import builtin
 from .lang import Frame
@@ -11,6 +18,8 @@ from . import scanner, parser
 from .resolver import Resolver
 from .interpreter import Interpreter
 
+
+
 class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
     lines: List[str]
@@ -19,7 +28,7 @@ class Result(TypedDict):
 
 
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 VERSION = f"Pseudo {__version__}"
 HELP = """
 usage: pseudo [option] ... file
@@ -30,11 +39,16 @@ file   : program read from script file
 
 
 
-# https://stackoverflow.com/a/66416364/318186
-def printException() -> None:
-    etype, value, tb = sys.exc_info()
-    info, error = traceback.format_exception(etype, value, tb)[-2:]
-    print(f'Exception in:\n{info}\n{error}')
+def logException(msg="Unexpected error has occurred") -> None:
+    # https://docs.python.org/3.8/library/logging.html#logging.Logger.exception
+    logging.exception(msg)
+    print("Pseudo ERROR: " + msg)
+    print("""
+The details of this error have been logged in pseudo.log.
+
+Please help us detect and fix bugs in pseudo by reporting this error at
+https://github.com/nyjc-computing/pseudo-9608/issues/new/choose.
+""".strip())
 
 def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
@@ -87,7 +101,7 @@ class Pseudo:
             result['error'] = err
             return result
         except Exception:
-            printException()
+            logException()
             return result
 
         # Resolving
@@ -98,7 +112,7 @@ class Pseudo:
             result['error'] = err
             return result
         except Exception:
-            printException()
+            logException()
             return result
 
         # Interpreting
@@ -109,7 +123,7 @@ class Pseudo:
         except builtin.RuntimeError as err:
             result['error'] = err
         except Exception:
-            printException()
+            logException()
         finally:
             return result
 
