@@ -18,6 +18,8 @@ from . import scanner, parser
 from .resolver import Resolver
 from .interpreter import Interpreter
 
+
+
 class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
     lines: List[str]
@@ -37,9 +39,16 @@ file   : program read from script file
 
 
 
-def logException() -> None:
+def logException(msg="Unexpected error has occurred") -> None:
     # https://docs.python.org/3.8/library/logging.html#logging.Logger.exception
-    logging.exception("Unexpected error has occurred")
+    logging.exception(msg)
+    print("Pseudo ERROR: " + msg)
+    print("""
+The details of this error have been logged in pseudo.log.
+
+Please help us detect and fix bugs in pseudo by reporting this error at
+https://github.com/nyjc-computing/pseudo-9608/issues/new/choose.
+""".strip())
 
 def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
