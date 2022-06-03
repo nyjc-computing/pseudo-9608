@@ -36,7 +36,7 @@ def printException() -> None:
     info, error = traceback.format_exception(etype, value, tb)[-2:]
     print(f'Exception in:\n{info}\n{error}')
 
-def error(lines: Iterable[str], err: builtin.PseudoError) -> None:
+def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
     if err.line:
         lineinfo = f"[Line {err.line}]"
@@ -51,6 +51,10 @@ def error(lines: Iterable[str], err: builtin.PseudoError) -> None:
 class Pseudo:
     """A 9608 pseudocode interpreter"""
     def __init__(self) -> None:
+        self.frame: Frame = Frame(
+            typesys=sysFrame.types,
+            outer=sysFrame
+        )
         self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
@@ -68,10 +72,9 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src: str) -> Result:
-        globalFrame = Frame(typesys=sysFrame.types, outer=sysFrame)
         result: Result = {
             'lines': [],
-            'frame': globalFrame,
+            'frame': self.frame,
             'error': None,
         }
 
@@ -88,7 +91,7 @@ class Pseudo:
             return result
 
         # Resolving
-        resolver = Resolver(globalFrame, statements)
+        resolver = Resolver(self.frame, statements)
         try:
             resolver.inspect()
         except builtin.LogicError as err:
@@ -99,7 +102,7 @@ class Pseudo:
             return result
 
         # Interpreting
-        interpreter = Interpreter(globalFrame, statements)
+        interpreter = Interpreter(self.frame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
             interpreter.interpret()
@@ -116,11 +119,18 @@ class Pseudo:
 # https://gist.github.com/bojanrajkovic/831993
 
 def main():
-    # Argument handling
+    # REPL mode
     if len(sys.argv) == 1:
-        print("No argument provided.")  # Unhandled error
-        print("Try `pseudo -h' for more information.")
-        sys.exit(64)  # command line usage error
+        pseudo = Pseudo()
+        print(VERSION)
+        while True:
+            line = input('### ')
+            result = pseudo.run(line)
+            if not result['error']:
+                continue
+            report(result['lines'], result['error'])
+
+    # Argument handling
     if len(sys.argv) > 1:
         if sys.argv[1] == '-h':
             print(HELP)
@@ -143,14 +153,15 @@ def main():
         print(error)
         sys.exit(65)  # data format error
 
+    # Script mode
     pseudo = Pseudo()
     result = pseudo.runFile(srcfile)
-    lines = result['lines']
-    err = result['error']
-    if err:
-        if type(err) in (builtin.ParseError, builtin.LogicError):
-            error(lines, err)
-            sys.exit(65)  # data format error
-        elif type(err) in (RuntimeError,):
-            error(lines, err)
-            sys.exit(70)  # internal software error
+    if not result['error']:
+        sys.exit(0)
+
+    # Error handling
+    report(result['lines'], result['error'])
+    if type(result['error']) in (builtin.ParseError, builtin.LogicError):
+        sys.exit(65)  # data format error
+    elif type(result['error']) in (RuntimeError,):
+        sys.exit(70)  # internal software error
