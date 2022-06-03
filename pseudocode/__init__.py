@@ -28,7 +28,7 @@ class Result(TypedDict):
 
 
 
-__version__ = '0.4.1'
+__version__ = '0.5.0a'
 VERSION = f"Pseudo {__version__}"
 HELP = """
 usage: pseudo [option] ... file
