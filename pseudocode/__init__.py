@@ -51,6 +51,10 @@ def error(lines: Iterable[str], err: builtin.PseudoError) -> None:
 class Pseudo:
     """A 9608 pseudocode interpreter"""
     def __init__(self) -> None:
+        self.frame: Frame = Frame(
+            typesys=sysFrame.types,
+            outer=sysFrame
+        )
         self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
@@ -68,10 +72,9 @@ class Pseudo:
         return self.run(src)
     
     def run(self, src: str) -> Result:
-        globalFrame = Frame(typesys=sysFrame.types, outer=sysFrame)
         result: Result = {
             'lines': [],
-            'frame': globalFrame,
+            'frame': self.frame,
             'error': None,
         }
 
@@ -88,7 +91,7 @@ class Pseudo:
             return result
 
         # Resolving
-        resolver = Resolver(globalFrame, statements)
+        resolver = Resolver(self.frame, statements)
         try:
             resolver.inspect()
         except builtin.LogicError as err:
@@ -99,7 +102,7 @@ class Pseudo:
             return result
 
         # Interpreting
-        interpreter = Interpreter(globalFrame, statements)
+        interpreter = Interpreter(self.frame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
             interpreter.interpret()
