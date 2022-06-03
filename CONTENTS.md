@@ -65,3 +65,6 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [25b Automation: Setup](https://github.com/nyjc-computing/pseudo-9608/pull/73)
 - [25c Automation: Security](https://github.com/nyjc-computing/pseudo-9608/pull/75)
 - [26a Release: Usage](https://github.com/nyjc-computing/pseudo-9608/pull/74)
+- [26b Release: REPL](https://github.com/nyjc-computing/pseudo-9608/pull/76)
+- [26c Release: Logging](https://github.com/nyjc-computing/pseudo-9608/pull/80)
+- [26d Release: Readme](https://github.com/nyjc-computing/pseudo-9608/pull/81/)
