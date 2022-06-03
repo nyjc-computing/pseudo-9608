@@ -103,3 +103,5 @@ This project is also an attempt to write a programming book in a new style. Each
 - [25b Automation: Setup](https://github.com/nyjc-computing/pseudo-9608/pull/73)
 - [25c Automation: Security](https://github.com/nyjc-computing/pseudo-9608/pull/75)
 - [26a Release: Usage](https://github.com/nyjc-computing/pseudo-9608/pull/74)
+- [26b Release: REPL](https://github.com/nyjc-computing/pseudo-9608/pull/76)
+- [26c Release: Logging](https://github.com/nyjc-computing/pseudo-9608/pull/80)
