@@ -67,8 +67,8 @@ def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     if err.line:
         lineinfo = f"[Line {err.line}]"
         print(lineinfo, lines[err.line - 1])  # type: ignore
-    if err.col:
-        leftmargin = len(lineinfo) + 1 + err.col
+    if err.column:
+        leftmargin = len(lineinfo) + 1 + err.column
         print((' ' * leftmargin) + '^')
     print(errType, err.report())
 

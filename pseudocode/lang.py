@@ -74,7 +74,7 @@ class Token:
         value,
     ) -> None:
         self.line = line
-        self.col = column
+        self.column = column
         self.type = type
         self.word = word
         self.value = value
