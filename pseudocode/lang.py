@@ -1,5 +1,4 @@
-"""
-Entities and types used by pseudo-9608.
+"""Entities and types used by pseudo-9608.
 
 Token
     A token in the source code
@@ -61,10 +60,11 @@ class TypeMetadata(TypedDict, total=False):
 
 # ----------------------------------------------------------------------
 class Token:
-    """
-    Tokens encapsulate data needed by the parser to construct Exprs and Stmts.
+    """Tokens encapsulate data needed by the parser to construct Exprs
+    and Stmts.
     It also encapsulates code information for error reporting.
     """
+
     def __init__(
         self,
         line: int,
@@ -86,8 +86,8 @@ class Token:
 
 
 class Name:
-    """
-    Name represents a meaningful name, either a custom type or a variable name.
+    """Name represents a meaningful name, either a custom type or a
+    variable name.
     """
     __slots__ = ('name', '_token')
     def __init__(
@@ -111,10 +111,10 @@ class Name:
 
 
 class TypedValue:
-    """
-    All pseudocode values are encapsulated in a TypedValue.
+    """All pseudocode values are encapsulated in a TypedValue.
     Each TypedValue has a type and a value.
     """
+
     def __init__(
         self,
         type: Type,
@@ -129,8 +129,7 @@ class TypedValue:
 
 
 class TypeTemplate:
-    """
-    Represents a type template in 9608 pseudocode.
+    """Represents a type template in 9608 pseudocode.
     A type template can be cloned to create a TypedValue slot
     (in a Frame or Object).
 
@@ -139,6 +138,7 @@ class TypeTemplate:
     clone()
         Returns a TypedValue of the same type
     """
+
     def __init__(
         self,
         type: Type,
@@ -161,8 +161,7 @@ class TypeTemplate:
 
 
 class ObjectTemplate:
-    """
-    Represents an object template in 9608 pseudocode.
+    """Represents an object template in 9608 pseudocode.
     A space that maps Names to Types.
     An object template can be cloned to create an Object
     (in a Frame or nested Object).
@@ -172,6 +171,7 @@ class ObjectTemplate:
     clone()
         Returns an empty Object of the same type
     """
+
     def __init__(
         self,
         typesys: "TypeSystem",
@@ -198,8 +198,7 @@ class ObjectTemplate:
 
 
 class TypeSystem:
-    """
-    A space that maps Types to TypeTemplates.
+    """A space that maps Types to TypeTemplates.
     Handles registration of types in 9608 pseudocode.
     Each type is registered with a name, and an optional template.
     Existence checks should be carried out (using has()) before using
@@ -217,6 +216,7 @@ class TypeSystem:
     cloneType(type)
         return a copy of the template for the type
     """
+
     def __init__(
         self,
         *types: Type,
@@ -247,8 +247,7 @@ class TypeSystem:
 
 
 class PseudoValue:
-    """
-    Base class for pseudo values which are not PyLiterals.
+    """Base class for pseudo values which are not PyLiterals.
     This includes Arrays, Objects, and Callables.
     PseudoValues may be stored in Arrays, Objects, or Callables, wrapped
     in a TypedValue.
@@ -257,8 +256,7 @@ class PseudoValue:
 
 
 class Object(PseudoValue):
-    """
-    A space that maps NameKeys to TypedValues.
+    """A space that maps NameKeys to TypedValues.
     Existence checks should be carried out (using has()) before using
     the methods here.
 
@@ -279,6 +277,7 @@ class Object(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
+
     def __init__(
         self,
         typesys: "TypeSystem",
@@ -317,8 +316,7 @@ class Object(PseudoValue):
 
 
 class Frame(Object):
-    """
-    Frames differ from Objects in that they can be chained (with a
+    """Frames differ from Objects in that they can be chained (with a
     reference to an outer Frame, names can be reassigned to a different
     TypedValue, and slots can be deleted after declaration.
     Existence checks should be carried out (using has()) before using
@@ -333,6 +331,7 @@ class Frame(Object):
     lookup(name)
         returns the first frame containing the name
     """
+
     def __init__(
         self,
         typesys: "TypeSystem",
@@ -357,8 +356,7 @@ class Frame(Object):
 
 
 class Array(PseudoValue):
-    """
-    A space that maps IndexKeys to TypedValues.
+    """A space that maps IndexKeys to TypedValues.
     Arrays differ from Objects in the use of IndexKey instead of
     NameKey, and in being statically allocated at init.
 
@@ -387,6 +385,7 @@ class Array(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
+
     def __init__(
         self,
         typesys: "TypeSystem",
@@ -410,8 +409,7 @@ class Array(PseudoValue):
 
     @staticmethod
     def rangeProduct(indexes: Iterable[Tuple[int, int]]) -> Iterator:
-        """
-        Returns an iterator from an interable of (start, end) tuples.
+        """Returns an iterator from an interable of (start, end) tuples.
         E.g. ((0, 2), (0, 3)) will return the following iterations:
             (0, 0), ..., (0, 3),
             (1, 0), ..., (1, 3),
@@ -425,8 +423,8 @@ class Array(PseudoValue):
 
     @property
     def dim(self) -> int:
-        """
-        Returns the number of dimensions the array has, as an integer.
+        """Returns the number of dimensions the array has, as an
+        integer.
         E.g. a 1D array would return 1, 2D array would return 2, ...
         """
         return len(self.ranges)
@@ -456,8 +454,7 @@ class Array(PseudoValue):
 
 
 class Builtin(PseudoValue):
-    """
-    Represents a system function in pseudo.
+    """Represents a system function in pseudo.
 
     Attributes
     ----------
@@ -466,6 +463,7 @@ class Builtin(PseudoValue):
     - func
         the Python function to call when invoked
     """
+
     __slots__ = ('params', 'func')
     def __init__(
         self,
@@ -484,8 +482,7 @@ class Builtin(PseudoValue):
 
 
 class Callable(PseudoValue):
-    """
-    Base class for Function and Procedure.
+    """Base class for Function and Procedure.
     Represents a Callable in pseudo.
 
     Attributes
@@ -497,6 +494,7 @@ class Callable(PseudoValue):
     - stmts
         A list of statements the callable executes when called
     """
+
     __slots__ = ('frame', 'params', 'stmts')
     def __init__(
         self,
@@ -527,8 +525,7 @@ class Procedure(Callable):
 
 
 class File(PseudoValue):
-    """
-    Represents a file object in pseudo.
+    """Represents a file object in pseudo.
     Files can be opened in READ, WRITE, or APPEND mode.
 
     Attributes
@@ -540,6 +537,7 @@ class File(PseudoValue):
     - iohandler
         An object for accessing the file
     """
+
     __slots__ = ('name', 'mode', 'iohandler')
     def __init__(
         self,
@@ -557,8 +555,7 @@ class File(PseudoValue):
 
 
 class Expr:
-    """
-    Represents an expression in 9608 pseudocode.
+    """Represents an expression in 9608 pseudocode.
     An expression can be resolved to a Type, and evaluated to a Value.
     An Expr must return an associated token for error-reporting
     purposes.
@@ -568,6 +565,7 @@ class Expr:
     token() -> Token
         Returns the token asociated with the expr
     """
+
     __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
@@ -582,10 +580,10 @@ class Expr:
 
 
 class Literal(Expr):
+    """A Literal represents any value coming directly from the source
+    code.
     """
-    A Literal represents any value coming directly from
-    the source code.
-    """
+
     __slots__ = ('type', 'value', '_token')
     def __init__(self, type: Type, value: PyLiteral, *, token: "Token") -> None:
         self.type = type
@@ -598,9 +596,8 @@ class Literal(Expr):
 
 
 class Declare(Expr):
-    """
-    A Declare Expr associates a Name with its declared Type.
-    """
+    """A Declare Expr associates a Name with its declared Type."""
+
     __slots__ = ('name', 'type', 'metadata')
     def __init__(
         self,
@@ -618,11 +615,11 @@ class Declare(Expr):
 
 
 class Assign(Expr):
+    """An Assign Expr represents an assignment operation.
+    The Expr's evaluated value should be assigned to the Name/Index
+    represented by the assignee.
     """
-    An Assign Expr represents an assignment operation.
-    The Expr's evaluated value should be assigned to the Name/Index represented
-    by the assignee.
-    """
+
     __slots__ = ('assignee', 'expr')
     def __init__(
         self,
@@ -638,10 +635,10 @@ class Assign(Expr):
 
 
 class Unary(Expr):
+    """A Unary Expr represents the invocation of a unary callable with a
+    single operand.
     """
-    A Unary Expr represents the invocation of a unary callable with a single
-    operand.
-    """
+
     __slots__ = ('oper', 'right', '_token')
     def __init__(
         self,
@@ -660,10 +657,10 @@ class Unary(Expr):
 
 
 class Binary(Expr):
+    """A Binary Expr represents the invocation of a binary callable
+    with two operands.
     """
-    A Binary Expr represents the invocation of a binary callable with two
-    operands.
-    """
+
     __slots__ = ('left', 'oper', 'right', '_token')
     def __init__(
         self,
@@ -684,14 +681,15 @@ class Binary(Expr):
 
 
 class UnresolvedName(Expr):
-    """
-    An UnresolvedName is a Name which has been parsed, and whose context is
-    not yet determined.
+    """An UnresolvedName is a Name which has been parsed, and whose
+    context is not yet determined.
 
-    The context is usually determined at the resolving stage. When determined,
-    the UnresolvedName should not be mutated; an appropriate Get Expr should
-    be used to contain the name and context instead.
+    The context is usually determined at the resolving stage. When
+    determined, the UnresolvedName should not be mutated; an
+    appropriate Get Expr should be used to contain the name and context
+    instead.
     """
+
     __slots__ = ('name',)
     def __init__(
         self,
@@ -705,9 +703,9 @@ class UnresolvedName(Expr):
 
 
 class GetName(Expr):
+    """A GetName Expr represents a Name with a Frame context.
     """
-    A GetName Expr represents a Name with a Frame context.
-    """
+
     __slots__ = ('frame', 'name')
     def __init__(
         self,
@@ -723,9 +721,9 @@ class GetName(Expr):
 
 
 class GetIndex(Expr):
+    """A GetName Expr represents a Index with an Array context.
     """
-    A GetName Expr represents a Index with an Array context.
-    """
+
     __slots__ = ('array', 'index')
     def __init__(
         self,
@@ -741,9 +739,9 @@ class GetIndex(Expr):
 
 
 class GetAttr(Expr):
+    """A GetName Expr represents a Name with an Object context.
     """
-    A GetName Expr represents a Name with an Object context.
-    """
+
     __slots__ = ('object', 'name')
     def __init__(
         self,
@@ -759,10 +757,10 @@ class GetAttr(Expr):
 
 
 class Call(Expr):
+    """A Call Expr represents the invocation of a Callable (Function or
+    Procedure) with arguments.
     """
-    A Call Expr represents the invocation of a Callable (Function or Procedure)
-     with arguments.
-    """
+
     __slots__ = ('callable', 'args')
     def __init__(
         self,
@@ -778,11 +776,11 @@ class Call(Expr):
 
 
 class Stmt:
+    """Represents a statement in 9608 pseudocode.
+    A statement usually has one or more expressions, and represents an
+    effect: console output, user input, or frame mutation.
     """
-    Represents a statement in 9608 pseudocode.
-    A statement usually has one or more expressions, and represents an effect:
-    console output, user input, or frame mutation.
-    """
+
     __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
@@ -793,45 +791,45 @@ class Stmt:
 
 
 class ExprStmt(Stmt):
+    """Base class for statements that contain only a single Expr.
     """
-    Base class for statements that contain only a single Expr.
-    """
+
     __slots__ = ('expr',)
 
 class Return(ExprStmt):
+    """Return encapsulates the value to be returned from a Function.
     """
-    Return encapsulates the value to be returned from a Function.
-    """
+
     def __init__(self, expr: "Expr") -> None:
         self.expr = expr
 
 class AssignStmt(ExprStmt):
+    """AssignStmt encapsulates an Assign Expr.
     """
-    AssignStmt encapsulates an Assign Expr.
-    """
+
     def __init__(self, expr: "Assign") -> None:
         self.expr = expr
 
 class DeclareStmt(ExprStmt):
+    """DeclareStmt encapsulates a Declare Expr.
     """
-    DeclareStmt encapsulates a Declare Expr.
-    """
+
     def __init__(self, expr: "Declare") -> None:
         self.expr = expr
 
 class CallStmt(ExprStmt):
+    """CallStmt encapsulates a Call Expr.
     """
-    CallStmt encapsulates a Call Expr.
-    """
+
     def __init__(self, expr: "Call") -> None:
         self.expr = expr
 
 
 
 class Output(Stmt):
+    """Output encapsulates values to be displayed in a terminal/console.
     """
-    Output encapsulates values to be displayed in a terminal/console.
-    """
+
     __slots__ = ('exprs',)
     def __init__(
         self,
@@ -842,9 +840,10 @@ class Output(Stmt):
 
 
 class Input(Stmt):
+    """Output encapsulates a GetExpr to which user input should be
+    assigned.
     """
-    Output encapsulates a GetExpr to which user input should be assigned.
-    """
+
     __slots__ = ('keyExpr',)
     def __init__(
         self,
@@ -855,11 +854,11 @@ class Input(Stmt):
 
 
 class Conditional(Stmt):
+    """Conditional encapsulates a mapping of values to statements.
+    A provided condition cond, when evaluated to a value, results in
+    the associated statement(s) being executed.
     """
-    Conditional encapsulates a mapping of values to statements.
-    A provided condition cond, when evaluated to a value, results in the 
-    associated statements being executed.
-    """
+
     __slots__ = ('cond', 'stmtMap', 'fallback')
     def __init__(
         self,
@@ -878,10 +877,10 @@ class If(Conditional): ...
 
 
 class Loop(Stmt):
+    """Loop encapsulates statements to be executed repeatedly until its
+    cond evaluates to a False value.
     """
-    Loop encapsulates statements to be executed repeatedly until its cond
-    evaluates to a False value.
-    """
+
     __slots__ = ('init', 'cond', 'stmts')
     def __init__(
         self,
@@ -894,10 +893,10 @@ class Loop(Stmt):
         self.stmts = stmts
 
 class While(Loop):
+    """While represents a pre-condition Loop, executed only if the cond
+    evaluates to True.
     """
-    While represents a pre-condition Loop, executed only if the cond evaluates
-    to True.
-    """
+
     def __init__(
         self,
         init: Optional["Stmt"],
@@ -909,10 +908,10 @@ class While(Loop):
         self.stmts = stmts
 
 class Repeat(Loop):
+    """Repeat represents a post-condition Loop, executed at least once,
+    and then again only if the cond evaluates to True.
     """
-    Repeat represents a post-condition Loop, executed at least once, and then
-    again only if the cond evaluates to True.
-    """
+
     def __init__(
         self,
         init: None,
@@ -926,9 +925,8 @@ class Repeat(Loop):
 
 
 class ProcFunc(Stmt):
-    """
-    ProcFunc encapsulates a declared Procedure or Function.
-    """
+    """ProcFunc encapsulates a declared Procedure or Function."""
+    
     __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
@@ -951,9 +949,8 @@ class FunctionStmt(ProcFunc): ...
 
 
 class TypeStmt(Stmt):
-    """
-    TypeStmt encapsulates a declared custom Type.
-    """
+    """TypeStmt encapsulates a declared custom Type."""
+    
     __slots__ = ('name', 'exprs')
     def __init__(
         self,
@@ -966,9 +963,7 @@ class TypeStmt(Stmt):
 
 
 class FileStmt(Stmt):
-    """
-    Base class for Stmts involving Files.
-    """
+    """Base class for Stmts involving Files."""
 
 class OpenFile(FileStmt):
     __slots__ = ('filename', 'mode')

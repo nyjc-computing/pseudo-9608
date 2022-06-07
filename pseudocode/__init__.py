@@ -1,3 +1,9 @@
+"""The main entry point to the pseudo-9608 package.
+
+Pseudo
+    Interprets code from a file or string
+"""
+
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
@@ -41,12 +47,10 @@ file   : program read from script file
 
 
 def logException(msg="Unexpected error has occurred") -> None:
-    """
-    Helper function that logs unexpected (Python) exceptions.
-
-    If logException is invoked, it means Pseudo has encountered an error it
-    should not have. If Pseudo is bug-free, logException should never be
-    invoked at all.
+    """Helper function that logs unexpected (Python) exceptions.
+    If logException is invoked, it means Pseudo has encountered an error
+    it should not have. If Pseudo is bug-free, logException should never
+    be invoked at all.
     """
     # https://docs.python.org/3.8/library/logging.html#logging.Logger.exception
     logging.exception(msg)
@@ -71,8 +75,7 @@ def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
 
 
 class Pseudo:
-    """
-    A 9608 pseudocode interpreter.
+    """A 9608 pseudocode interpreter.
 
     Pseudo encapsulates the pipelines of the code interpreting process:
     1. Scanning
@@ -87,6 +90,7 @@ class Pseudo:
        Expressions are evaluated to retrieve values, and statements are
        executed to invoke their effects.
     """
+
     def __init__(self) -> None:
         self.frame: Frame = Frame(
             typesys=sysFrame.types,
@@ -98,8 +102,7 @@ class Pseudo:
         }
 
     def registerHandlers(self, **kwargs: function) -> None:
-        """
-        Pseudo may register custom handlers e.g. for testing purposes.
+        """Pseudo may register custom handlers e.g. for testing purposes.
         Handlers are registered using a str key.
 
         The following handlers are currently supported:
@@ -111,17 +114,14 @@ class Pseudo:
             self.handlers[key] = handler
 
     def runFile(self, srcfile: str) -> Result:
-        """
-        Executes code from the file with the provided srcfile path.
+        """Executes code from the file with the provided srcfile path.
         """
         with open(srcfile, 'r') as f:
             src = f.read()
         return self.run(src)
     
     def run(self, src: str) -> Result:
-        """
-        Executes code represented by the src string.
-        """
+        """Executes code represented by the src string."""
         result: Result = {
             'lines': [],
             'frame': self.frame,
@@ -169,8 +169,7 @@ class Pseudo:
 # https://gist.github.com/bojanrajkovic/831993
 
 def main():
-    """
-    This is the entry point which shell scripts should invoke.
+    """This is the entry point which shell scripts should invoke.
 
     It encapsulates the following invocation modes:
     1. REPL mode

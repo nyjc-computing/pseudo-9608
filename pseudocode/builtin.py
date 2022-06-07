@@ -1,11 +1,11 @@
-"""
-Keywords, operators, and errors supported in pseudo-9608.
+"""Keywords, operators, and errors supported in pseudo-9608.
 """
 
 # Errors
 
 class PseudoError(Exception):
     """Base exception class for all Pseudo errors."""
+    
     def __init__(self, msg, token, line=None) -> None:
         super().__init__(msg)
         self.token = token
