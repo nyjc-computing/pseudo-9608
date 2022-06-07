@@ -1,3 +1,30 @@
+"""
+Entities and types used by pseudo-9608.
+
+Token
+    A token in the source code
+
+Name
+    A named reference
+
+TypeSystem
+    A manager for built-in and declared types
+
+Object
+    Allows attributes to be addressed by name
+
+Array
+    Allows elements to be addressed by index
+
+Frame
+    Allows values to be addressed by name
+
+Builtin, Function, Procedure
+    Callables invoked with arguments
+
+File
+    An open file
+"""
 from typing import Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List

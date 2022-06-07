@@ -1,3 +1,7 @@
+"""
+Keywords, operators, and errors supported in pseudo-9608.
+"""
+
 # Errors
 
 class PseudoError(Exception):
