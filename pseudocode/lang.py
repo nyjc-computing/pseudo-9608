@@ -938,7 +938,7 @@ class TypeStmt(Stmt):
 
 
 
-class FileStmt(Stmt): ...
+class FileStmt(Stmt):
     """
     Base class for Stmts involving Files.
     """
