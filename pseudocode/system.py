@@ -1,3 +1,11 @@
+"""system
+Sets up built-in functions and types for pseudo-9608.
+
+system
+    A Frame containing built-in functions, and with a TypeSystem
+    containing builtin-types.
+"""
+
 from typing import TextIO
 import random
 
@@ -11,6 +19,7 @@ system = Frame(typesys=TypeSystem(*TYPES))
 
 
 def RND() -> float:
+    """Returns a random REAL between 0 and 1."""
     return random.random()
 system.declare('RND', 'REAL')
 system.setValue('RND', Builtin(
@@ -19,6 +28,7 @@ system.setValue('RND', Builtin(
 ))
 
 def RANDOMBETWEEN(start: int, end: int) -> int:
+    """Returns a random INTEGER between start and end."""
     if not (start < end):
         raise RuntimeError(f"{start} not less than {end}", None)
     return random.randint(start, end)
@@ -32,6 +42,7 @@ system.setValue('RANDOMBETWEEN', Builtin(
 ))
 
 def EOF(file: TextIO) -> bool:
+    """Returns True if the file's cursor is at the end of the file."""
     # Python has no in-built EOF support;
     # if read() or readline() return an empty string,
     # that's considered EOF
