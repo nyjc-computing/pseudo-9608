@@ -1,3 +1,9 @@
+"""scanner
+
+scan(src: str) -> tokens: list, lines: list
+    Scans src string, returns a list of tokens and a list of code lines.
+"""
+
 from typing import Any
 from typing import List, Tuple
 
@@ -8,12 +14,15 @@ from . import builtin, lang
 # Helper functions
 
 def atEnd(code: "Code") -> bool:
+    """Returns True if at end of code."""
     return code.cursor >= code.length
 
 def check(code: "Code") -> str:
+    """Returns char at cursor."""
     return code.src[code.cursor]
 
 def consume(code: "Code") -> str:
+    """Returns char at cursor, advances cursor."""
     char = check(code)
     code.cursor += 1
     return char
@@ -24,6 +33,7 @@ def makeToken(
     word: str,
     value: Any,
 ) -> lang.Token:
+    """Factory function for a Token."""
     column = code.cursor - code.lineStart - len(word)
     return lang.Token(code.line, column, type, word, value)
 
@@ -32,12 +42,18 @@ def makeToken(
 # Scanning functions
 
 def word(code: "Code") -> str:
+    """A word is a sequence of chars starting with a letter, and
+    continuing with letters or digits.
+    """
     token = consume(code)
     while not atEnd(code) and (check(code).isalpha() or check(code).isdigit()):
         token += consume(code)
     return token
 
 def number(code: "Code") -> str:
+    """A number is a sequence of chars consisting of digits, with 0 or 1
+    period which is not the first char.
+    """
     token = consume(code)
     while not atEnd(code) and check(code).isdigit():
         token += consume(code)
@@ -50,6 +66,9 @@ def number(code: "Code") -> str:
     return token
 
 def string(code: "Code") -> str:
+    """A string is a sequence of chars that are enclosed in
+    double-quotes (").
+    """
     token = consume(code)
     while not atEnd(code) and check(code) != '"':
         token += consume(code)
@@ -58,6 +77,7 @@ def string(code: "Code") -> str:
     return token
 
 def symbol(code: "Code") -> str:
+    """A symbol is a sequence of symbolic chars."""
     token = consume(code)
     if token in builtin.SYM_SINGLE:
         return token
@@ -99,6 +119,11 @@ class Code:
 # Main scanning loop
 
 def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
+    """Select a scanning function to use, from the next char in the code
+    string, and use it.
+    """
+    # Append a line break to help with end-of-statement detection in
+    # parser.
     if not src.endswith('\n'):
         src = src + '\n'
     code = Code(src)
