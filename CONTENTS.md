@@ -68,3 +68,4 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [26b Release: REPL](https://github.com/nyjc-computing/pseudo-9608/pull/76)
 - [26c Release: Logging](https://github.com/nyjc-computing/pseudo-9608/pull/80)
 - [26d Release: Readme](https://github.com/nyjc-computing/pseudo-9608/pull/81/)
+- [27 Documentation](https://github.com/nyjc-computing/pseudo-9608/pull/82)
