@@ -10,10 +10,10 @@ class PseudoError(Exception):
         super().__init__(msg)
         self.token = token
         self.line = line
-        self.col = None
+        self.column = None
         if token:
             self.line = token.line
-            self.col = token.col
+            self.column = token.column
         else:
             self.line = None
 
