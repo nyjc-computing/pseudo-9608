@@ -11,7 +11,7 @@ logging.basicConfig(
     format='%(name)s - %(levelname)s - %(message)s',
 )
 
-from . import builtin
+from pseudocode import builtin
 from .lang import Frame
 from .system import system as sysFrame
 
