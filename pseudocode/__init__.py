@@ -18,12 +18,12 @@ logging.basicConfig(
 )
 
 from pseudocode import builtin
-from .lang import Frame
-from .system import system as sysFrame
+from pseudocode.lang import Frame
+from pseudocode.system import system as sysFrame
 
-from . import scanner, parser
-from .resolver import Resolver
-from .interpreter import Interpreter
+from pseudocode import scanner, parser
+from pseudocode.resolver import Resolver
+from pseudocode.interpreter import Interpreter
 
 
 
