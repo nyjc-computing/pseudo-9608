@@ -35,7 +35,8 @@ class TypeMetadata(TypedDict, total=False):
 # ----------------------------------------------------------------------
 class Token:
     """
-    Encapsulates data for a token.
+    Tokens encapsulate data needed by the parser to construct Exprs and Stmts.
+    It also encapsulates code information for error reporting.
     """
     def __init__(
         self,
@@ -58,6 +59,9 @@ class Token:
 
 
 class Name:
+    """
+    Name represents a meaningful name, either a custom type or a variable name.
+    """
     __slots__ = ('name', '_token')
     def __init__(
         self,
@@ -81,7 +85,7 @@ class Name:
 
 class TypedValue:
     """
-    Represents a value in 9608 pseudocode.
+    All pseudocode values are encapsulated in a TypedValue.
     Each TypedValue has a type and a value.
     """
     def __init__(
@@ -139,7 +143,7 @@ class ObjectTemplate:
     Methods
     -------
     clone()
-        Returns an Object of the same type
+        Returns an empty Object of the same type
     """
     def __init__(
         self,
@@ -217,8 +221,10 @@ class TypeSystem:
 
 class PseudoValue:
     """
-    Base class for pseudo values.
-    Represents a value stored in the frame.
+    Base class for pseudo values which are not PyLiterals.
+    This includes Arrays, Objects, and Callables.
+    PseudoValues may be stored in Arrays, Objects, or Callables, wrapped
+    in a TypedValue.
     """
 
 
@@ -565,6 +571,9 @@ class Literal(Expr):
 
 
 class Declare(Expr):
+    """
+    A Declare Expr associates a Name with its declared Type.
+    """
     __slots__ = ('name', 'type', 'metadata')
     def __init__(
         self,
@@ -582,6 +591,11 @@ class Declare(Expr):
 
 
 class Assign(Expr):
+    """
+    An Assign Expr represents an assignment operation.
+    The Expr's evaluated value should be assigned to the Name/Index represented
+    by the assignee.
+    """
     __slots__ = ('assignee', 'expr')
     def __init__(
         self,
@@ -597,6 +611,10 @@ class Assign(Expr):
 
 
 class Unary(Expr):
+    """
+    A Unary Expr represents the invocation of a unary callable with a single
+    operand.
+    """
     __slots__ = ('oper', 'right', '_token')
     def __init__(
         self,
@@ -615,6 +633,10 @@ class Unary(Expr):
 
 
 class Binary(Expr):
+    """
+    A Binary Expr represents the invocation of a binary callable with two
+    operands.
+    """
     __slots__ = ('left', 'oper', 'right', '_token')
     def __init__(
         self,
@@ -635,6 +657,14 @@ class Binary(Expr):
 
 
 class UnresolvedName(Expr):
+    """
+    An UnresolvedName is a Name which has been parsed, and whose context is
+    not yet determined.
+
+    The context is usually determined at the resolving stage. When determined,
+    the UnresolvedName should not be mutated; an appropriate Get Expr should
+    be used to contain the name and context instead.
+    """
     __slots__ = ('name',)
     def __init__(
         self,
@@ -648,6 +678,9 @@ class UnresolvedName(Expr):
 
 
 class GetName(Expr):
+    """
+    A GetName Expr represents a Name with a Frame context.
+    """
     __slots__ = ('frame', 'name')
     def __init__(
         self,
@@ -663,6 +696,9 @@ class GetName(Expr):
 
 
 class GetIndex(Expr):
+    """
+    A GetName Expr represents a Index with an Array context.
+    """
     __slots__ = ('array', 'index')
     def __init__(
         self,
@@ -678,6 +714,9 @@ class GetIndex(Expr):
 
 
 class GetAttr(Expr):
+    """
+    A GetName Expr represents a Name with an Object context.
+    """
     __slots__ = ('object', 'name')
     def __init__(
         self,
@@ -693,6 +732,10 @@ class GetAttr(Expr):
 
 
 class Call(Expr):
+    """
+    A Call Expr represents the invocation of a Callable (Function or Procedure)
+     with arguments.
+    """
     __slots__ = ('callable', 'args')
     def __init__(
         self,
@@ -708,6 +751,11 @@ class Call(Expr):
 
 
 class Stmt:
+    """
+    Represents a statement in 9608 pseudocode.
+    A statement usually has one or more expressions, and represents an effect:
+    console output, user input, or frame mutation.
+    """
     __slots__: Iterable[str] = tuple()
     def __repr__(self) -> str:
         attrstr = ", ".join([
@@ -718,27 +766,45 @@ class Stmt:
 
 
 class ExprStmt(Stmt):
+    """
+    Base class for statements that contain only a single Expr.
+    """
     __slots__ = ('expr',)
 
 class Return(ExprStmt):
+    """
+    Return encapsulates the value to be returned from a Function.
+    """
     def __init__(self, expr: "Expr") -> None:
         self.expr = expr
 
 class AssignStmt(ExprStmt):
+    """
+    AssignStmt encapsulates an Assign Expr.
+    """
     def __init__(self, expr: "Assign") -> None:
         self.expr = expr
 
 class DeclareStmt(ExprStmt):
+    """
+    DeclareStmt encapsulates a Declare Expr.
+    """
     def __init__(self, expr: "Declare") -> None:
         self.expr = expr
 
 class CallStmt(ExprStmt):
+    """
+    CallStmt encapsulates a Call Expr.
+    """
     def __init__(self, expr: "Call") -> None:
         self.expr = expr
 
 
 
 class Output(Stmt):
+    """
+    Output encapsulates values to be displayed in a terminal/console.
+    """
     __slots__ = ('exprs',)
     def __init__(
         self,
@@ -749,6 +815,9 @@ class Output(Stmt):
 
 
 class Input(Stmt):
+    """
+    Output encapsulates a GetExpr to which user input should be assigned.
+    """
     __slots__ = ('keyExpr',)
     def __init__(
         self,
@@ -759,6 +828,11 @@ class Input(Stmt):
 
 
 class Conditional(Stmt):
+    """
+    Conditional encapsulates a mapping of values to statements.
+    A provided condition cond, when evaluated to a value, results in the 
+    associated statements being executed.
+    """
     __slots__ = ('cond', 'stmtMap', 'fallback')
     def __init__(
         self,
@@ -777,6 +851,10 @@ class If(Conditional): ...
 
 
 class Loop(Stmt):
+    """
+    Loop encapsulates statements to be executed repeatedly until its cond
+    evaluates to a False value.
+    """
     __slots__ = ('init', 'cond', 'stmts')
     def __init__(
         self,
@@ -789,6 +867,10 @@ class Loop(Stmt):
         self.stmts = stmts
 
 class While(Loop):
+    """
+    While represents a pre-condition Loop, executed only if the cond evaluates
+    to True.
+    """
     def __init__(
         self,
         init: Optional["Stmt"],
@@ -800,6 +882,10 @@ class While(Loop):
         self.stmts = stmts
 
 class Repeat(Loop):
+    """
+    Repeat represents a post-condition Loop, executed at least once, and then
+    again only if the cond evaluates to True.
+    """
     def __init__(
         self,
         init: None,
@@ -813,6 +899,9 @@ class Repeat(Loop):
 
 
 class ProcFunc(Stmt):
+    """
+    ProcFunc encapsulates a declared Procedure or Function.
+    """
     __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     def __init__(
         self,
@@ -835,6 +924,9 @@ class FunctionStmt(ProcFunc): ...
 
 
 class TypeStmt(Stmt):
+    """
+    TypeStmt encapsulates a declared custom Type.
+    """
     __slots__ = ('name', 'exprs')
     def __init__(
         self,
@@ -847,12 +939,15 @@ class TypeStmt(Stmt):
 
 
 class FileStmt(Stmt): ...
+    """
+    Base class for Stmts involving Files.
+    """
 
 class OpenFile(FileStmt):
     __slots__ = ('filename', 'mode')
     def __init__(
         self,
-        filename: "Expr",  # TODO: Support other Exprs
+        filename: "Expr",
         mode: str,
     ) -> None:
         self.filename = filename
@@ -862,7 +957,7 @@ class ReadFile(FileStmt):
     __slots__ = ('filename', 'target')
     def __init__(
         self,
-        filename: "Expr",  # TODO: Support other Exprs
+        filename: "Expr",
         target: GetExpr,
     ) -> None:
         self.filename = filename
@@ -872,7 +967,7 @@ class WriteFile(FileStmt):
     __slots__ = ('filename', 'data')
     def __init__(
         self,
-        filename: "Expr",  # TODO: Support other Exprs
+        filename: "Expr",
         data: "Expr",
     ) -> None:
         self.filename = filename
@@ -882,6 +977,6 @@ class CloseFile(FileStmt):
     __slots__ = ('filename',)
     def __init__(
         self,
-        filename: "Expr",  # TODO: Support other Exprs
+        filename: "Expr",
     ) -> None:
         self.filename = filename
