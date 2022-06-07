@@ -104,24 +104,21 @@ class Name:
 
 
 
+@dataclass
 class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
     Each TypedValue has a type and a value.
     """
-
-    def __init__(
-        self,
-        type: Type,
-        value: Optional[Value],
-    ) -> None:
-        self.type = type
-        self.value = value
+    __slots__ = ('type', 'value')
+    type: Type
+    value: Optional[Value]
 
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
 
 
 
+@dataclass
 class TypeTemplate:
     """Represents a type template in 9608 pseudocode.
     A type template can be cloned to create a TypedValue slot
@@ -132,17 +129,9 @@ class TypeTemplate:
     clone()
         Returns a TypedValue of the same type
     """
-
-    def __init__(
-        self,
-        type: Type,
-        value: Optional["ObjectTemplate"],
-    ) -> None:
-        self.type = type
-        self.value = value
-
-    def __repr__(self) -> str:
-        return f"<{self.type}: {type(self.value)}>"
+    __slots__ = ('type', 'value')
+    type: Type
+    value: Optional["ObjectTemplate"]
 
     def clone(self) -> "TypedValue":
         """
@@ -447,6 +436,7 @@ class Array(PseudoValue):
 
 
 
+@dataclass
 class Builtin(PseudoValue):
     """Represents a system function in pseudo.
 
@@ -457,24 +447,13 @@ class Builtin(PseudoValue):
     - func
         the Python function to call when invoked
     """
-
     __slots__ = ('params', 'func')
-    def __init__(
-        self,
-        params: Collection[Param],
-        func: function,
-    ) -> None:
-        self.params = params
-        self.func = func
-
-    def __repr__(self) -> str:
-        attrstr = ", ".join([
-            repr(getattr(self, attr)) for attr in self.__slots__
-        ])
-        return f'{type(self).__name__}({attrstr})'
+    params: Collection[Param]
+    func: function
 
 
 
+@dataclass
 class Callable(PseudoValue):
     """Base class for Function and Procedure.
     Represents a Callable in pseudo.
@@ -490,21 +469,9 @@ class Callable(PseudoValue):
     """
 
     __slots__ = ('frame', 'params', 'stmts')
-    def __init__(
-        self,
-        frame: "Frame",
-        params: Collection[Param],
-        stmts: Iterable["Stmt"],
-    ) -> None:
-        self.frame = frame
-        self.params = params
-        self.stmts = stmts
-
-    def __repr__(self) -> str:
-        attrstr = ", ".join([
-            repr(getattr(self, attr)) for attr in self.__slots__
-        ])
-        return f'{type(self).__name__}({attrstr})'
+    frame: "Frame"
+    params: Collection[Param]
+    stmts: Iterable["Stmt"]
 
 
 
@@ -518,6 +485,7 @@ class Procedure(Callable):
 
 
 
+@dataclass
 class File(PseudoValue):
     """Represents a file object in pseudo.
     Files can be opened in READ, WRITE, or APPEND mode.
@@ -531,20 +499,10 @@ class File(PseudoValue):
     - iohandler
         An object for accessing the file
     """
-
     __slots__ = ('name', 'mode', 'iohandler')
-    def __init__(
-        self,
-        name: NameKey,
-        mode: str,
-        iohandler: IO,
-    ) -> None:
-        self.name = name
-        self.mode = mode
-        self.iohandler = iohandler
-
-    def __repr__(self) -> str:
-        return f"<{self.mode}: {self.name}>"
+    name: NameKey
+    mode: str
+    iohandler: IO
 
 
 
