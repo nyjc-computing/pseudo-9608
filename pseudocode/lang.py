@@ -24,11 +24,12 @@ Builtin, Function, Procedure
 File
     An open file
 """
-from typing import Optional, Union, TypedDict
+from typing import Any, Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, IO
 from abc import abstractmethod
+from dataclasses import dataclass
 from itertools import product
 
 # Pseudocode types
@@ -59,25 +60,18 @@ class TypeMetadata(TypedDict, total=False):
     
 
 # ----------------------------------------------------------------------
+@dataclass(eq=False, frozen=True)
 class Token:
     """Tokens encapsulate data needed by the parser to construct Exprs
     and Stmts.
     It also encapsulates code information for error reporting.
     """
-
-    def __init__(
-        self,
-        line: int,
-        column: int,
-        type: Type,
-        word,
-        value,
-    ) -> None:
-        self.line = line
-        self.column = column
-        self.type = type
-        self.word = word
-        self.value = value
+    __slots__ = ('line', 'column', 'type', 'word', 'value')
+    line: int
+    column: int
+    type: Type
+    word: str
+    value: Any
 
     def __repr__(self) -> str:
         lineinfo = f"[Line {self.line} column {self.col}]"
