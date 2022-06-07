@@ -1,8 +1,12 @@
+"""Keywords, operators, and errors supported in pseudo-9608.
+"""
+
 # Errors
 
 class PseudoError(Exception):
-    """Base exception class for all Psuedo errors."""
-    def __init__(self, msg, token, line=None):
+    """Base exception class for all Pseudo errors."""
+    
+    def __init__(self, msg, token, line=None) -> None:
         super().__init__(msg)
         self.token = token
         self.line = line
@@ -13,15 +17,12 @@ class PseudoError(Exception):
         else:
             self.line = None
 
-    def msg(self):
+    def msg(self) -> str:
         return self.args[0]
 
-    def report(self):
-        if type(self.token) is dict:
-            token = self.token.word
-        else:
-            token = self.token
-        return f"{repr(token)}: {self.msg()}"
+    def report(self) -> str:
+        """Returns the contained token and message as a formatted string"""
+        return f"{repr(self.token)}: {self.msg()}"
 
 class ParseError(PseudoError):
     """Custom error raised by scanner and parser."""
@@ -35,11 +36,12 @@ class LogicError(PseudoError):
 
 
 # Operators
-
+# These operators are used internally by the interpreter.
 def add(x, y):
     return x + y
 
 def sub(x, y=None):
+    """Sub is overloaded to function as sub() and neg()"""
     if y is None:
         return -x
     return x - y

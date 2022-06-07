@@ -1,3 +1,9 @@
+"""interpreter
+
+execute(frame: Frame, statements: list) -> None
+    Interprets and executes a list of statements
+"""
+
 from typing import Optional, Union
 from typing import Iterable, Callable as function
 from typing import overload
@@ -16,6 +22,9 @@ def expectTypeElseError(
     errmsg: str="Expected",
     token: lang.Token,
 ) -> None:
+    """Takes in a type, followed by one or more expected types.
+    Raises an error if the given type is not in the expected types.
+    """
     if not exprmode in expected:
         raise builtin.RuntimeError(f"{errmsg} {expected}", token=token)
 
@@ -25,6 +34,9 @@ def declaredElseError(
     errmsg: str="Undeclared",
     token: lang.Token=None,
 ) -> None:
+    """Takes in a frame and a name.
+    Raises an error if the name is not declared in the frame.
+    """
     if not frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
@@ -34,15 +46,16 @@ def undeclaredElseError(
     errmsg="Already declared",
     token: lang.Token=None,
 ) -> None:
+    """Takes in a frame and a name.
+    Raises an error if the name is already declared in the frame.
+    """
     if frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
 
 
 class Interpreter:
-    """
-    Interprets a list of statements with a given frame.
-    """
+    """Interprets a list of statements with a given frame."""
     outputHandler: function = print
     def __init__(
         self,
@@ -53,9 +66,8 @@ class Interpreter:
         self.statements = statements
 
     def registerOutputHandler(self, handler: function) -> None:
-        """
-        Register handler as the function to use to handle
-        any output from the executed statements.
+        """Register handler as the function to use to handle any output
+        from the executed statements.
         The default handler is Python's print().
         """
         self.outputHandler = handler  # type: ignore
@@ -70,11 +82,13 @@ class Interpreter:
 
 
 # Evaluators
+# Evaluation functions return the evaluated value of Exprs.
 
 def evalIndex(
     frame: lang.Frame,
     indexExpr: lang.IndexExpr,
 ) -> lang.IndexKey:
+    """Returns the evaluated value of an Array's index."""
     indexes: lang.IndexKey = tuple()
     for expr in indexExpr:
         index = evaluate(frame, expr)
@@ -98,6 +112,7 @@ def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.PyLiteral:
     return expr.oper(leftval, rightval)
 
 def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
+    """Returns the name's associated value in a Frame."""
     assert not isinstance(expr, lang.UnresolvedName), "Unexpected UnresolvedName"
     if isinstance(expr, lang.GetName):
         return expr.frame.getValue(str(expr.name))
@@ -128,6 +143,7 @@ def evalCallable(
     args: lang.Args,
     **kwargs,
 ):
+    """Returns the evaluated value of a Builtin/Callable."""
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
             name = evaluate(frame, args[0])  # type: ignore
@@ -149,6 +165,9 @@ def evalCallable(
 
 def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
     value = evaluate(frame, expr.expr)
+    """Handles assignment of a value to an Object attribute, Array
+    index, or Frame name.
+    """
     if isinstance(expr.assignee, lang.GetName):
         frameMap = expr.assignee.frame
         name = str(expr.assignee.name)
@@ -174,6 +193,7 @@ def evaluate(
     expr: lang.Expr,
     **kwargs,
 ) -> lang.Value:
+    """Dispatcher for Expr evaluators."""
     if isinstance(expr, lang.Literal):
         return evalLiteral(frame, expr)
     if isinstance(expr, lang.Unary):
@@ -206,6 +226,7 @@ def executeStmts(
     stmts: Iterable[lang.Stmt],
     **kwargs,
 ) -> Optional[lang.Value]:
+    """Execute a list of statements."""
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
             return execReturn(frame, stmt, **kwargs)
@@ -387,6 +408,7 @@ def execFile(
     stmt: lang.FileStmt,
     **kwargs,
 ) -> None:
+    """Dispatcher for File executors."""
     if isinstance(stmt, lang.OpenFile):
         execOpenFile(frame, stmt, **kwargs)
     elif isinstance(stmt, lang.ReadFile):
@@ -427,6 +449,7 @@ def execute(
     stmt: lang.Stmt,
     **kwargs,
 ) -> None:
+    """Dispatcher for statement executors."""
     if isinstance(stmt, lang.Output):
         execOutput(frame, stmt, **kwargs)
     elif isinstance(stmt, lang.Input):

@@ -1,3 +1,9 @@
+"""parser
+
+parse(tokens: str) -> statements: list
+    Parses tokens and returns a list of statements.
+"""
+
 from typing import Any, Optional, Union, Iterable, Tuple, List
 from typing import Callable as function
 
@@ -10,20 +16,30 @@ Tokens = List[lang.Token]
 # Helper functions
 
 def atEnd(tokens: Tokens) -> bool:
+    """Returns True if at last token."""
     return check(tokens).type == 'EOF'
 
 def atEndThenError(tokens: Tokens) -> None:
+    """Raises ParseError if at last token.
+    This helps prevent infinite looping while parsing
+    statements/expressions.
+    """
     if atEnd(tokens):
         raise builtin.ParseError("Unexpected EOF", check(tokens))
 
 def check(tokens: Tokens) -> lang.Token:
+    """Returns token at cursor."""
     return tokens[0]
 
 def consume(tokens: Tokens) -> lang.Token:
+    """Returns token at cursor, advances cursor."""
     token = tokens.pop(0)
     return token
 
 def expectWord(tokens: Tokens, *words: str) -> Optional[lang.Token]:
+    """Returns token at cursor if its word matches given sequence of
+    words, otherwise returns None.
+    """
     if check(tokens).word in words:
         return check(tokens)
     atEndThenError(tokens)
@@ -33,12 +49,21 @@ def expectType(
     tokens: Tokens,
     *types: lang.Type,
 ) -> Optional[lang.Token]:
+    """Returns token at cursor if its type matches given sequence of
+    types, otherwise returns None.
+    """
     if check(tokens).type in types:
         return check(tokens)
     atEndThenError(tokens)
     return None
 
 def matchWord(tokens: Tokens, *words: str) -> Optional[lang.Token]:
+    """Returns token at cursor if its word matches given sequence of
+    words, otherwise returns None.
+
+    matchWord differs from expectWord by advancing the cursor upon a
+    match.
+    """
     if check(tokens).word in words:
         return consume(tokens)
     atEndThenError(tokens)
@@ -48,6 +73,12 @@ def matchType(
     tokens: Tokens,
     *types: lang.Type,
 ) -> Optional[lang.Token]:
+    """Returns token at cursor if its type matches given sequence of
+    types, otherwise returns None.
+
+    matchType differs from expectType by advancing the cursor upon a
+    match.
+    """
     if check(tokens).type in types:
         return consume(tokens)
     atEndThenError(tokens)
@@ -58,6 +89,12 @@ def matchWordElseError(
     *words: str,
     msg: str='',
 ) -> lang.Token:
+    """Returns token at cursor if its word matches given sequence of
+    words, otherwise returns None.
+
+    matchWordElseError differs from matchWord by raising an error
+    instead of returning None if there is no match.
+    """
     token = matchWord(tokens, *words)
     if token:
         return token
@@ -69,6 +106,12 @@ def matchTypeElseError(
     *types: lang.Type,
         msg: str='',
 ) -> lang.Token:
+    """Returns token at cursor if its type matches given sequence of
+    types, otherwise returns None.
+
+    matchTypeElseError differs from matchType by raising an error
+    instead of returning None if there is no match.
+    """
     token = matchType(tokens, *types)
     if token:
         return token
@@ -76,8 +119,11 @@ def matchTypeElseError(
     raise builtin.ParseError(msg, check(tokens))
 
 # Precedence parsers
+# The expression parsers use the recrusive descent parsing technique to
+# handle expression precedence.
+#
 # Expressions are parsed with this precedence (highest to lowest):
-# 1. <name> | <literal> | <unary> | calls
+# 1. <name> | <literal> | <unary> | <grouping> | <attr> | <index> | calls
 # 2. *, /
 # 3. +, -
 # 4. < | <= | > | >=
@@ -153,6 +199,8 @@ def name(tokens: Tokens) -> lang.NameExpr:
     return nameExpr
 
 def parser(tokens: Tokens) -> function[[Tokens], Any]:
+    """Dispatcher for highest-precedence parsing functions.
+    """
     # Unary expressions
     if expectWord(tokens, '-', 'NOT'):
         return unary
@@ -232,6 +280,8 @@ def assignment(tokens: Tokens) -> lang.Assign:
     return lang.Assign(assignee, expr)
 
 # Statement parsers
+# Statements are detected based on the first keyword of the line.
+# Statements beginning with a name are assumed to be AssignStmts.
 
 def outputStmt(tokens: Tokens) -> lang.Output:
     exprs = [expression(tokens)]
@@ -550,6 +600,8 @@ def statement6(tokens: Tokens) -> lang.Stmt:
 # Main parsing loop
 
 def parse(tokens: Tokens) -> Iterable[lang.Stmt]:
+    """Select a parsing function to use, from the next token, and use it.
+    """
     lastline = tokens[-1].line
     tokens += [lang.Token(lastline, 0, 'EOF', "", None)]
     statements = []

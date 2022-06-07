@@ -1,8 +1,15 @@
+"""The main entry point to the pseudo-9608 package.
+
+Pseudo
+    Interprets code from a file or string
+"""
+
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
 import os, sys
 
+# Log errors to pseudo.log
 import logging
 logging.basicConfig(
     filename='pseudo.log',
@@ -10,25 +17,25 @@ logging.basicConfig(
     format='%(name)s - %(levelname)s - %(message)s',
 )
 
-from . import builtin
-from .lang import Frame
-from .system import system as sysFrame
+from pseudocode import builtin
+from pseudocode.lang import Frame
+from pseudocode.system import system as sysFrame
 
-from . import scanner, parser
-from .resolver import Resolver
-from .interpreter import Interpreter
+from pseudocode import scanner, parser
+from pseudocode.resolver import Resolver
+from pseudocode.interpreter import Interpreter
 
 
 
 class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
-    lines: List[str]
-    frame: Frame
-    error: Optional[builtin.PseudoError]
+    lines: List[str]  # list of code lines as strings
+    frame: Frame  # The return frame from the interpreter
+    error: Optional[builtin.PseudoError]  # Error returned by the interpreter
 
 
 
-__version__ = '0.4.1'
+__version__ = '0.5.0a'
 VERSION = f"Pseudo {__version__}"
 HELP = """
 usage: pseudo [option] ... file
@@ -40,6 +47,11 @@ file   : program read from script file
 
 
 def logException(msg="Unexpected error has occurred") -> None:
+    """Helper function that logs unexpected (Python) exceptions.
+    If logException is invoked, it means Pseudo has encountered an error
+    it should not have. If Pseudo is bug-free, logException should never
+    be invoked at all.
+    """
     # https://docs.python.org/3.8/library/logging.html#logging.Logger.exception
     logging.exception(msg)
     print("Pseudo ERROR: " + msg)
@@ -63,7 +75,22 @@ def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
 
 
 class Pseudo:
-    """A 9608 pseudocode interpreter"""
+    """A 9608 pseudocode interpreter.
+
+    Pseudo encapsulates the pipelines of the code interpreting process:
+    1. Scanning
+       The code string is tokenised into a sequence of tokens.
+    2. Parsing
+       Tokens are parsed into a sequence of Statements, which can in turn
+       contain Expressions.
+    3. Resolving
+       Statements and Expressions are type-checked, and name lookups are
+       resolved to their containing frames.
+    4. Interpreting
+       Expressions are evaluated to retrieve values, and statements are
+       executed to invoke their effects.
+    """
+
     def __init__(self) -> None:
         self.frame: Frame = Frame(
             typesys=sysFrame.types,
@@ -75,17 +102,26 @@ class Pseudo:
         }
 
     def registerHandlers(self, **kwargs: function) -> None:
+        """Pseudo may register custom handlers e.g. for testing purposes.
+        Handlers are registered using a str key.
+
+        The following handlers are currently supported:
+        - output()
+        """
         for key, handler in kwargs.items():
             if key not in self.handlers:
                 raise KeyError(f"Invalid handler key {repr(key)}")
             self.handlers[key] = handler
 
     def runFile(self, srcfile: str) -> Result:
+        """Executes code from the file with the provided srcfile path.
+        """
         with open(srcfile, 'r') as f:
             src = f.read()
         return self.run(src)
     
     def run(self, src: str) -> Result:
+        """Executes code represented by the src string."""
         result: Result = {
             'lines': [],
             'frame': self.frame,
@@ -133,6 +169,12 @@ class Pseudo:
 # https://gist.github.com/bojanrajkovic/831993
 
 def main():
+    """This is the entry point which shell scripts should invoke.
+
+    It encapsulates the following invocation modes:
+    1. REPL mode
+    2. Script mode
+    """
     # REPL mode
     if len(sys.argv) == 1:
         pseudo = Pseudo()

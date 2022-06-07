@@ -1,3 +1,10 @@
+"""resolver
+
+verify(frame: Frame, statements: list) -> None
+    Resolves expressions in statements, declares variables and types
+    in the list of statements
+"""
+
 from typing import Optional, Union, Literal
 from typing import Iterable, Iterator, Collection
 from typing import Tuple
@@ -24,6 +31,9 @@ def expectTypeElseError(
         )
 
 def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
+    """Takes an iterable of (start, end) tuple pairs.
+    Returns an iterator for cartesian product of indexes.
+    """
     ranges = [
         range(start, end + 1)
         for (start, end) in indexes
@@ -35,8 +45,7 @@ def resolveName(
     exprOrStmt: Union[lang.Expr, lang.Stmt],
     attr: Optional[str]=None,
 ) -> lang.GetName:
-    """
-    Takes in an UnresolvedName, and returns a GetName with an
+    """Takes in an UnresolvedName, and returns a GetName with an
     appropriate frame.
     """
     if isinstance(exprOrStmt, lang.Stmt) and not attr:
@@ -58,9 +67,8 @@ def resolveNamesInExpr(
     frame: lang.Frame,
     exprOrStmt: Union[lang.Expr, lang.Stmt],
 ) -> None:
-    """
-    Checks the exprOrstmt's slots for UnresolvedName, and replaces them
-    with GetNames.
+    """Checks the exprOrstmt's slots for UnresolvedName, and replaces
+    them with GetNames.
     """
     for attr in exprOrStmt.__slots__:
         if isinstance(getattr(exprOrStmt, attr), lang.UnresolvedName):
@@ -70,8 +78,7 @@ def resolveExprs(
     frame: lang.Frame,
     exprs: Iterable[lang.Expr],
 ) -> Tuple[lang.Expr, ...]:
-    """
-    Resolve an iterable of Exprs.
+    """Resolve an iterable of Exprs.
     UnresolvedNames are resolved into GetNames.
 
     Return
@@ -94,8 +101,8 @@ def resolveArgsParams(
     *,
     token: lang.Token,
 ) -> None:
-    """
-    resolveArgsParams() only type-checks the args and stmts of the call.
+    """resolveArgsParams() only type-checks the args and stmts of the
+    call.
     It does not resolve the callable. This should be carried out first
     (e.g. in a wrapper function) before resolveArgsParams() is invoked.
     """
@@ -113,9 +120,8 @@ def resolveArgsParams(
 
 
 class Resolver:
-    """
-    Resolves a list of statements with the given frame.
-    """
+    """Resolves a list of statements with the given frame."""
+
     def __init__(
         self,
         frame: lang.Frame,
@@ -141,6 +147,7 @@ def declareByref(
     frame: lang.Frame,
     declare: lang.Declare,
 ) -> None:
+    """Declares BYREF variable in the given frame."""
     assert frame.outer, "Declared name in a frame with no outer"
     name: lang.NameKey = str(declare.name)
     expectTypeElseError(
@@ -154,6 +161,7 @@ def declareByval(
     frame: Union[lang.Frame, lang.ObjectTemplate],
     declare: lang.Declare,
 ) -> None:
+    """Declares BYVALUE variable in the given frame."""
     if (
         isinstance(frame, lang.ObjectTemplate)
         and declare.type == 'ARRAY'
@@ -177,7 +185,7 @@ def resolveDeclare(
     declare: lang.Declare,
     passby: Literal['BYVALUE', 'BYREF']='BYVALUE',
 ) -> lang.Type:
-    """Declare variable in frame"""
+    """Declare variable in frame with dispatcher."""
     if passby == 'BYVALUE':
         declareByval(frame, declare)
     else:
@@ -314,18 +322,15 @@ def resolveIndex(
     return array.elementType
 
 def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
-    """
-    Returns the type of value that name is mapped to in frame.
-    """
+    """Returns the type of value that name is mapped to in frame."""
     return expr.frame.getType(str(expr.name))
 
 def resolveProcCall(
     frame: lang.Frame,
     expr: lang.Call,
 ) -> lang.Type:
-    """
-    Resolve a procedure call.
-    Statement verification is done in verifyProcedure, not here.
+    """Resolve a procedure call.
+    Statement verification should be done in verifyProcedure, not here.
     """
     resolveNamesInExpr(frame, expr)
     assert isinstance(expr.callable, lang.GetName), \
@@ -351,9 +356,8 @@ def resolveFuncCall(
     frame: lang.Frame,
     expr: lang.Call,
 ) -> lang.Type:
-    """
-    Resolve a function call.
-    Statement verification is done in verifyFunction, not here.
+    """Resolve a function call.
+    Statement verification should be done in verifyFunction, not here.
     """
     resolveNamesInExpr(frame, expr)
     assert isinstance(expr.callable, lang.GetName), \
@@ -379,6 +383,7 @@ def resolve(
     frame: lang.Frame,
     expr: lang.Expr,
 ) -> lang.Type:
+    """Dispatcher for Expr resolvers."""
     if isinstance(expr, lang.Literal):
         return resolveLiteral(frame, expr)
     if isinstance(expr, lang.Declare):
@@ -410,6 +415,7 @@ def verifyStmts(
     stmts: Iterable[lang.Stmt],
     returnType: Optional[lang.Type]=None,
 ) -> None:
+    """Verify a list of statements."""
     for stmt in stmts:
         verify(frame, stmt)
         if returnType and isinstance(stmt, lang.Return):
@@ -455,6 +461,9 @@ def transformDeclares(
     declares: Iterable[lang.Declare],
     passby: lang.Passby,
 ) -> Tuple[lang.TypedValue, ...]:
+    """Takes in a list of Declares. Returns a list of TypedValues.
+    Used to declare names in a frame/object.
+    """
     params: Tuple[lang.TypedValue, ...] = tuple()
     for declaration in declares:
         resolveDeclare(frame, declaration, passby=passby)
@@ -462,6 +471,7 @@ def transformDeclares(
     return params
 
 def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+    """Declare a Procedure in the given frame."""
     resolveNamesInExpr(frame, stmt)
     local = lang.Frame(typesys=frame.types, outer=frame)
     params = transformDeclares(local, stmt.params, stmt.passby)
@@ -479,6 +489,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
     verifyStmts(local, stmt.stmts)
 
 def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+    """Declare a Function in the given frame."""
     resolveNamesInExpr(frame, stmt)
     local = lang.Frame(typesys=frame.types, outer=frame)
     params = transformDeclares(local, stmt.params, stmt.passby)
@@ -501,6 +512,7 @@ def verifyDeclareType(
     frame: lang.Frame,
     stmt: lang.TypeStmt,
 ) -> None:
+    """Declare a custom Type in the given frame's TypeSystem."""
     frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=frame.types)
     for expr in stmt.exprs:
@@ -508,6 +520,7 @@ def verifyDeclareType(
     frame.types.setTemplate(str(stmt.name), objTemplate)
 
 def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
+    """Dispatcher for Stmt verifiers."""
     if isinstance(stmt, lang.Output):
         verifyOutput(frame, stmt)
     elif isinstance(stmt, lang.Input):
