@@ -8,6 +8,7 @@ verify(frame: Frame, statements: list) -> None
 from typing import Optional, Union, Literal
 from typing import Iterable, Iterator, Collection
 from typing import Tuple
+from dataclasses import dataclass
 from itertools import product
 
 from . import builtin, lang
@@ -23,6 +24,9 @@ def expectTypeElseError(
     *expected: lang.Type,
     token: lang.Token,
 ) -> None:
+    """Takes in a type, followed by one or more expected types.
+    Raises an error if the given type is not in the expected types.
+    """
     if exprtype not in expected:
         # Stringify expected types
         typesStr = f"({', '.join(expected)})"
@@ -119,16 +123,12 @@ def resolveArgsParams(
 
 
 
+@dataclass
 class Resolver:
     """Resolves a list of statements with the given frame."""
-
-    def __init__(
-        self,
-        frame: lang.Frame,
-        statements: Iterable[lang.Stmt],
-    ) -> None:
-        self.frame = frame
-        self.statements = statements
+    __slots__ = ('frame', 'statements')
+    frame: lang.Frame
+    statements: Iterable[lang.Stmt]
 
     def inspect(self) -> None:
         verifyStmts(self.frame, self.statements)

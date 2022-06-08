@@ -7,6 +7,7 @@ execute(frame: Frame, statements: list) -> None
 from typing import Optional, Union
 from typing import Iterable, Callable as function
 from typing import overload
+from dataclasses import dataclass
 
 from . import builtin, lang, system
 
@@ -54,16 +55,13 @@ def undeclaredElseError(
 
 
 
+@dataclass
 class Interpreter:
     """Interprets a list of statements with a given frame."""
+    __slots__ = ('frame', 'statements', 'outputHandler')
     outputHandler: function = print
-    def __init__(
-        self,
-        frame: lang.Frame,
-        statements: Iterable[lang.Stmt],
-    ) -> None:
-        self.frame = frame
-        self.statements = statements
+    frame: lang.Frame
+    statements: Iterable[lang.Stmt]
 
     def registerOutputHandler(self, handler: function) -> None:
         """Register handler as the function to use to handle any output
