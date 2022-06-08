@@ -444,7 +444,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
         passby: lang.Passby = 'BYVALUE'
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
-            passby = passbyToken.word
+            passby = passbyToken.word  # type: ignore
         expr = declare(tokens)
         params += [expr]
         while matchWord(tokens, ','):
