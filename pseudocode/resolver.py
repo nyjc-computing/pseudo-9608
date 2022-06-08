@@ -309,7 +309,7 @@ def _(expr: lang.Call, frame: lang.Frame) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     assert isinstance(expr.callable, lang.GetName), \
         "Unresolved Callable"
-    callableType = resolveGetName(expr.callable, frame)
+    callableType = resolve(expr.callable, frame)
     callFrame = expr.callable.frame
     callable = callFrame.getValue(str(expr.callable.name))
     if not (
