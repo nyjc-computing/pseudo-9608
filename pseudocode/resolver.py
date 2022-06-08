@@ -136,7 +136,7 @@ class Resolver:
 
 
     
-# Resolvers
+# Resolver helpers
 
 def resolveLiteral(
     literal: lang.Literal,
@@ -181,10 +181,60 @@ def declareByval(
         assert isinstance(frame, lang.Frame), "Frame expected"
         frame.setValue(name, array)
 
-def resolveUnary(
-    expr: lang.Unary,
+def resolveProcCall(
+    expr: lang.Call,
     frame: lang.Frame,
 ) -> lang.Type:
+    """Resolve a procedure call.
+    Statement verification should be done in verifyProcedure, not here.
+    """
+    resolveNamesInExpr(expr, frame)
+    assert isinstance(expr.callable, lang.GetName), \
+        f"Callable {expr.callable} unresolved"
+    callableType = resolveGetName(expr.callable, frame)
+    expectTypeElseError(
+        callableType, 'NULL', token=expr.callable.token
+    )
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(str(expr.callable.name))
+    if not isinstance(callable, lang.Procedure):
+        raise builtin.LogicError(
+            "Not PROCEDURE", token=expr.callable.token
+        )
+    expr.args = resolveExprs(expr.args, frame)
+    resolveArgsParams(
+        expr.args, callable.params, frame,
+        token=expr.token
+    )
+    return callableType
+
+@singledispatch
+def resolve(expr, frame):
+    """Dispatcher for Expr resolvers."""
+    raise TypeError(f"No resolver found for {expr}")
+
+@resolve.register
+def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
+    return resolveLiteral(expr, frame)
+
+@resolve.register
+def _(
+    expr: lang.Declare,
+    frame: Union[lang.Frame, lang.ObjectTemplate],
+    *,
+    passby: lang.Passby='BYVALUE',
+) -> lang.Type:
+    """Declare variable in frame with dispatcher."""
+    if passby == 'BYVALUE':
+        declareByval(expr, frame)
+    else:
+        assert isinstance(frame, lang.Frame), \
+            "Declared BYREF in invalid Frame"
+        declareByref(expr, frame)
+    return expr.type
+
+@resolve.register
+def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     rType = resolve(expr.right, frame)
     if expr.oper is builtin.sub:
@@ -199,10 +249,8 @@ def resolveUnary(
         return 'BOOLEAN'
     raise ValueError(f"Unexpected oper {expr.oper}")
 
-def resolveBinary(
-    expr: lang.Binary,
-    frame: lang.Frame,
-) -> lang.Type:
+@resolve.register
+def _(expr: lang.Binary, frame: lang.Frame) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     lType = resolve(expr.left, frame)
     rType = resolve(expr.right, frame)
@@ -251,42 +299,41 @@ def resolveBinary(
         return 'REAL'
     raise ValueError("No return for Binary")
 
-def resolveAssign(
-    expr: lang.Assign,
-    frame: lang.Frame,
-) -> lang.Type:
+@resolve.register
+def _(expr: lang.Assign, frame: lang.Frame) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     assnType = resolve(expr.assignee, frame)
     exprType = resolve(expr.expr, frame)
-    expectTypeElseError(
-        exprType, assnType, token=expr.token
-    )
-    # Return statement for resolve()
+    expectTypeElseError(exprType, assnType, token=expr.token)
     return assnType
 
-def resolveAttr(
-    expr: lang.GetAttr,
-    frame: lang.Frame,
-) -> lang.Type:
-    """Resolves a GetAttr Expr to return an attribute's type"""
+@resolve.register
+def _(expr: lang.Call, frame: lang.Frame) -> lang.Type:
+    """Resolve a function call.
+    Statement verification should be done in verifyFunction, not here.
+    """
     resolveNamesInExpr(expr, frame)
-    assert not isinstance(expr.object, lang.UnresolvedName), \
-        "Object unresolved"
-    objType = resolve(expr.object, frame)
-    # Check objType existence in typesystem
-    if not frame.types.has(objType):
-        raise builtin.LogicError("Undeclared type", expr.token)
-    # Check attribute existence in object template
-    obj = frame.types.cloneType(objType).value
-    assert isinstance(obj, lang.Object), "Invalid Object"
-    if not obj.has(str(expr.name)):
-        raise builtin.LogicError("Undeclared attribute", expr.token)
-    return obj.getType(str(expr.name))
+    assert isinstance(expr.callable, lang.GetName), \
+        "Unresolved Callable"
+    callableType = resolveGetName(expr.callable, frame)
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(str(expr.callable.name))
+    if not (
+        isinstance(callable, lang.Function)
+        or isinstance(callable, lang.Builtin)
+    ):
+        raise builtin.LogicError(
+            "Not FUNCTION", token=expr.callable.token
+        )
+    expr.args = resolveExprs(expr.args, frame)
+    resolveArgsParams(
+        expr.args, callable.params, frame,
+        token=expr.token
+    )
+    return callableType
 
-def resolveIndex(
-    expr: lang.GetIndex,
-    frame: lang.Frame,
-) -> lang.Type:
+@resolve.register
+def _(expr: lang.GetIndex, frame: lang.Frame) -> lang.Type:
     """Resolves a GetIndex Expr to return an array element's type"""
     def intsElseError(frame, *indexes):
         for indexExpr in indexes:
@@ -309,119 +356,27 @@ def resolveIndex(
     assert (isinstance(array, lang.Array)), "Invalid ARRAY"
     return array.elementType
 
-def resolveGetName(
-    expr: lang.GetName,
-    frame: lang.Frame,
-) -> lang.Type:
-    """Returns the type of value that name is mapped to in frame."""
-    return expr.frame.getType(str(expr.name))
-
-def resolveProcCall(
-    expr: lang.Call,
-    frame: lang.Frame,
-) -> lang.Type:
-    """Resolve a procedure call.
-    Statement verification should be done in verifyProcedure, not here.
-    """
-    resolveNamesInExpr(expr, frame)
-    assert isinstance(expr.callable, lang.GetName), \
-        f"Callable {expr.callable} unresolved"
-    callableType = resolveGetName(expr.callable, frame)
-    expectTypeElseError(
-        callableType, 'NULL', token=expr.callable.token
-    )
-    callFrame = expr.callable.frame
-    callable = callFrame.getValue(str(expr.callable.name))
-    if not isinstance(callable, lang.Procedure):
-        raise builtin.LogicError(
-            "Not PROCEDURE", token=expr.callable.token
-        )
-    expr.args = resolveExprs(expr.args, frame)
-    resolveArgsParams(
-        expr.args, callable.params, frame,
-        token=expr.token
-    )
-    return callableType
-
-def resolveFuncCall(
-    expr: lang.Call,
-    frame: lang.Frame,
-) -> lang.Type:
-    """Resolve a function call.
-    Statement verification should be done in verifyFunction, not here.
-    """
-    resolveNamesInExpr(expr, frame)
-    assert isinstance(expr.callable, lang.GetName), \
-        "Callable unresolved"
-    callableType = resolveGetName(expr.callable, frame)
-    callFrame = expr.callable.frame
-    callable = callFrame.getValue(str(expr.callable.name))
-    if not (
-        isinstance(callable, lang.Function)
-        or isinstance(callable, lang.Builtin)
-    ):
-        raise builtin.LogicError(
-            "Not FUNCTION", token=expr.callable.token
-        )
-    expr.args = resolveExprs(expr.args, frame)
-    resolveArgsParams(
-        expr.args, callable.params, frame,
-        token=expr.token
-    )
-    return callableType
-
-@singledispatch
-def resolve(expr, frame):
-    """Dispatcher for Expr resolvers."""
-    raise TypeError(f"No resolver found for {expr}")
-
-@resolve.register
-def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
-    return resolveLiteral(expr, frame)
-
-@resolve.register
-def _(
-    expr: lang.Declare,
-    frame: Union[lang.Frame, lang.ObjectTemplate],
-    *,
-    passby: lang.Passby='BYVALUE',
-) -> lang.Type:
-    """Declare variable in frame with dispatcher."""
-    if passby == 'BYVALUE':
-        declareByval(expr, frame)
-    else:
-        assert isinstance(frame, lang.Frame), \
-            "Declared BYREF in invalid Frame"
-        declareByref(expr, frame)
-    return expr.type
-
-@resolve.register
-def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
-    return resolveUnary(expr, frame)
-
-@resolve.register
-def _(expr: lang.Binary, frame: lang.Frame) -> lang.Type:
-    return resolveBinary(expr, frame)
-
-@resolve.register
-def _(expr: lang.Assign, frame: lang.Frame) -> lang.Type:
-    return resolveAssign(expr, frame)
-
-@resolve.register
-def _(expr: lang.Call, frame: lang.Frame) -> lang.Type:
-    return resolveFuncCall(expr, frame)
-
-@resolve.register
-def _(expr: lang.GetIndex, frame: lang.Frame) -> lang.Type:
-    return resolveIndex(expr, frame)
-
 @resolve.register
 def _(expr: lang.GetAttr, frame: lang.Frame) -> lang.Type:
-    return resolveAttr(expr, frame)
+    """Resolves a GetAttr Expr to return an attribute's type"""
+    resolveNamesInExpr(expr, frame)
+    assert not isinstance(expr.object, lang.UnresolvedName), \
+        "Object unresolved"
+    objType = resolve(expr.object, frame)
+    # Check objType existence in typesystem
+    if not frame.types.has(objType):
+        raise builtin.LogicError("Undeclared type", expr.token)
+    # Check attribute existence in object template
+    obj = frame.types.cloneType(objType).value
+    assert isinstance(obj, lang.Object), "Invalid Object"
+    if not obj.has(str(expr.name)):
+        raise builtin.LogicError("Undeclared attribute", expr.token)
+    return obj.getType(str(expr.name))
 
 @resolve.register
 def _(expr: lang.GetName, frame: lang.Frame) -> lang.Type:
-    return resolveGetName(expr, frame)
+    """Returns the type of value that name is mapped to in frame."""
+    return expr.frame.getType(str(expr.name))
 
     
 
