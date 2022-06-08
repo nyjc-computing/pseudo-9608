@@ -44,7 +44,7 @@ Args = Collection["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
-Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
+Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable", "File"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
 # NameExprs are GetExprs that use a NameKey
 NameKeyExpr = Union["UnresolvedName", "GetName"]
@@ -801,6 +801,7 @@ class TypeStmt(Stmt):
 
 class FileStmt(Stmt):
     """Base class for Stmts involving Files."""
+    filename: "Expr"
 
 @dataclass
 class OpenFile(FileStmt):

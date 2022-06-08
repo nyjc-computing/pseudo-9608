@@ -119,7 +119,7 @@ def evalGet(
     expr: lang.NameExpr,
     frame: lang.Frame,
     **kwargs,
-) -> lang.Value:
+):
     """Returns the name's associated value in a Frame."""
     assert not isinstance(expr, lang.UnresolvedName), "Unexpected UnresolvedName"
     if isinstance(expr, lang.GetName):
@@ -159,7 +159,7 @@ def evalCallable(
     args: lang.Args,
     frame: lang.Frame,
     **kwargs,
-) -> lang.Value: ...
+) -> Union[lang.PyLiteral, lang.Object, lang.Array]: ...
 def evalCallable(
     callable: Union[lang.Builtin, lang.Callable],
     args: lang.Args,
@@ -189,7 +189,7 @@ def evalCallable(
 def evalAssign(
     expr: lang.Assign,
     frame: lang.Frame,
-) -> lang.Value:
+) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     value = evaluate(expr.expr, frame)
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
