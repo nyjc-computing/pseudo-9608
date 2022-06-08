@@ -24,11 +24,11 @@ Builtin, Function, Procedure
 File
     An open file
 """
-from typing import Optional, Union, TypedDict
+from typing import Any, Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, IO
-from abc import abstractmethod
+from dataclasses import dataclass
 from itertools import product
 
 # Pseudocode types
@@ -59,28 +59,21 @@ class TypeMetadata(TypedDict, total=False):
     
 
 # ----------------------------------------------------------------------
+@dataclass(eq=False, frozen=True)
 class Token:
     """Tokens encapsulate data needed by the parser to construct Exprs
     and Stmts.
     It also encapsulates code information for error reporting.
     """
-
-    def __init__(
-        self,
-        line: int,
-        column: int,
-        type: Type,
-        word,
-        value,
-    ) -> None:
-        self.line = line
-        self.column = column
-        self.type = type
-        self.word = word
-        self.value = value
+    __slots__ = ('line', 'column', 'type', 'word', 'value')
+    line: int
+    column: int
+    type: Type
+    word: str
+    value: Any
 
     def __repr__(self) -> str:
-        lineinfo = f"[Line {self.line} column {self.col}]"
+        lineinfo = f"[Line {self.line} column {self.column}]"
         return f"{lineinfo} <{self.value}> {repr(self.word)}"
 
 
@@ -110,24 +103,21 @@ class Name:
 
 
 
+@dataclass
 class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
     Each TypedValue has a type and a value.
     """
-
-    def __init__(
-        self,
-        type: Type,
-        value: Optional[Value],
-    ) -> None:
-        self.type = type
-        self.value = value
+    __slots__ = ('type', 'value')
+    type: Type
+    value: Optional[Value]
 
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
 
 
 
+@dataclass
 class TypeTemplate:
     """Represents a type template in 9608 pseudocode.
     A type template can be cloned to create a TypedValue slot
@@ -138,17 +128,9 @@ class TypeTemplate:
     clone()
         Returns a TypedValue of the same type
     """
-
-    def __init__(
-        self,
-        type: Type,
-        value: Optional["ObjectTemplate"],
-    ) -> None:
-        self.type = type
-        self.value = value
-
-    def __repr__(self) -> str:
-        return f"<{self.type}: {type(self.value)}>"
+    __slots__ = ('type', 'value')
+    type: Type
+    value: Optional["ObjectTemplate"]
 
     def clone(self) -> "TypedValue":
         """
@@ -453,6 +435,7 @@ class Array(PseudoValue):
 
 
 
+@dataclass
 class Builtin(PseudoValue):
     """Represents a system function in pseudo.
 
@@ -463,24 +446,13 @@ class Builtin(PseudoValue):
     - func
         the Python function to call when invoked
     """
-
     __slots__ = ('params', 'func')
-    def __init__(
-        self,
-        params: Collection[Param],
-        func: function,
-    ) -> None:
-        self.params = params
-        self.func = func
-
-    def __repr__(self) -> str:
-        attrstr = ", ".join([
-            repr(getattr(self, attr)) for attr in self.__slots__
-        ])
-        return f'{type(self).__name__}({attrstr})'
+    params: Collection[Param]
+    func: function
 
 
 
+@dataclass
 class Callable(PseudoValue):
     """Base class for Function and Procedure.
     Represents a Callable in pseudo.
@@ -496,21 +468,9 @@ class Callable(PseudoValue):
     """
 
     __slots__ = ('frame', 'params', 'stmts')
-    def __init__(
-        self,
-        frame: "Frame",
-        params: Collection[Param],
-        stmts: Iterable["Stmt"],
-    ) -> None:
-        self.frame = frame
-        self.params = params
-        self.stmts = stmts
-
-    def __repr__(self) -> str:
-        attrstr = ", ".join([
-            repr(getattr(self, attr)) for attr in self.__slots__
-        ])
-        return f'{type(self).__name__}({attrstr})'
+    frame: "Frame"
+    params: Collection[Param]
+    stmts: Iterable["Stmt"]
 
 
 
@@ -524,6 +484,7 @@ class Procedure(Callable):
 
 
 
+@dataclass
 class File(PseudoValue):
     """Represents a file object in pseudo.
     Files can be opened in READ, WRITE, or APPEND mode.
@@ -537,20 +498,10 @@ class File(PseudoValue):
     - iohandler
         An object for accessing the file
     """
-
     __slots__ = ('name', 'mode', 'iohandler')
-    def __init__(
-        self,
-        name: NameKey,
-        mode: str,
-        iohandler: IO,
-    ) -> None:
-        self.name = name
-        self.mode = mode
-        self.iohandler = iohandler
-
-    def __repr__(self) -> str:
-        return f"<{self.mode}: {self.name}>"
+    name: NameKey
+    mode: str
+    iohandler: IO
 
 
 
@@ -560,126 +511,88 @@ class Expr:
     An Expr must return an associated token for error-reporting
     purposes.
 
-    Methods
-    -------
-    token() -> Token
+    Attributes
+    ----------
+    token: Token
         Returns the token asociated with the expr
     """
 
     __slots__: Iterable[str] = tuple()
-    def __repr__(self) -> str:
-        attrstr = ", ".join([
-            repr(getattr(self, attr)) for attr in self.__slots__
-        ])
-        return f'{type(self).__name__}({attrstr})'
 
-    @abstractmethod
+    @property
     def token(self) -> "Token":
         raise NotImplementedError
 
 
 
+@dataclass
 class Literal(Expr):
     """A Literal represents any value coming directly from the source
     code.
     """
-
-    __slots__ = ('type', 'value', '_token')
-    def __init__(self, type: Type, value: PyLiteral, *, token: "Token") -> None:
-        self.type = type
-        self.value = value
-        self._token = token
-
-    def token(self) -> "Token":
-        return self._token
+    __slots__ = ('type', 'value', 'token')
+    type: Type
+    value: PyLiteral
+    token: Token
 
 
 
+@dataclass
 class Declare(Expr):
     """A Declare Expr associates a Name with its declared Type."""
-
     __slots__ = ('name', 'type', 'metadata')
-    def __init__(
-        self,
-        name: Name,
-        type: Type,
-        metadata: Mapping,
-    ) -> None:
-        self.name = name
-        self.type = type
-        self.metadata = metadata
+    name: Name
+    type: Type
+    metadata: Mapping
 
+    @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
+@dataclass
 class Assign(Expr):
     """An Assign Expr represents an assignment operation.
     The Expr's evaluated value should be assigned to the Name/Index
     represented by the assignee.
     """
-
     __slots__ = ('assignee', 'expr')
-    def __init__(
-        self,
-        assignee: GetExpr,
-        expr: "Expr",
-    ) -> None:
-        self.assignee = assignee
-        self.expr = expr
+    assignee: GetExpr
+    expr: "Expr"
 
+    @property
     def token(self):
-        return self.assignee.token()
+        return self.assignee.token
 
 
 
+@dataclass
 class Unary(Expr):
     """A Unary Expr represents the invocation of a unary callable with a
     single operand.
     """
-
-    __slots__ = ('oper', 'right', '_token')
-    def __init__(
-        self,
-        oper: function,
-        right: "Expr",
-        *,
-        token: "Token",
-    ) -> None:
-        self.oper = oper
-        self.right = right
-        self._token = token
-
-    def token(self):
-        return self._token
+    __slots__ = ('oper', 'right', 'token')
+    oper: function
+    right: "Expr"
+    token: Token
 
 
 
+@dataclass
 class Binary(Expr):
     """A Binary Expr represents the invocation of a binary callable
     with two operands.
     """
-
-    __slots__ = ('left', 'oper', 'right', '_token')
-    def __init__(
-        self,
-        left: "Expr",
-        oper: function,
-        right: "Expr",
-        *,
-        token: "Token",
-    ) -> None:
-        self.left = left
-        self.oper = oper
-        self.right = right
-        self._token = token
-
-    def token(self):
-        return self._token
+    __slots__ = ('left', 'oper', 'right', 'token')
+    left: "Expr"
+    oper: function
+    right: "Expr"
+    token: Token
 
 
 
+@dataclass
 class UnresolvedName(Expr):
     """An UnresolvedName is a Name which has been parsed, and whose
     context is not yet determined.
@@ -689,89 +602,69 @@ class UnresolvedName(Expr):
     appropriate Get Expr should be used to contain the name and context
     instead.
     """
-
     __slots__ = ('name',)
-    def __init__(
-        self,
-        name: Name,
-    ) -> None:
-        self.name = name
+    name: Name
 
+    @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
+@dataclass
 class GetName(Expr):
     """A GetName Expr represents a Name with a Frame context.
     """
-
     __slots__ = ('frame', 'name')
-    def __init__(
-        self,
-        frame: "Frame",
-        name: Name,
-    ) -> None:
-        self.frame = frame
-        self.name = name
+    frame: "Frame"
+    name: Name
 
+    @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
+@dataclass
 class GetIndex(Expr):
     """A GetName Expr represents a Index with an Array context.
     """
-
     __slots__ = ('array', 'index')
-    def __init__(
-        self,
-        array: NameExpr,
-        index: IndexExpr,
-    ) -> None:
-        self.array = array
-        self.index = index
+    array: NameExpr
+    index: IndexExpr
 
+    @property
     def token(self):
-        return self.index[0].token()
+        return self.index[0].token
 
 
 
+@dataclass
 class GetAttr(Expr):
     """A GetName Expr represents a Name with an Object context.
     """
-
     __slots__ = ('object', 'name')
-    def __init__(
-        self,
-        object: NameExpr,
-        name: Name,
-    ) -> None:
-        self.object = object
-        self.name = name
+    object: NameExpr
+    name: Name
 
+    @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
+@dataclass
 class Call(Expr):
     """A Call Expr represents the invocation of a Callable (Function or
     Procedure) with arguments.
     """
-
     __slots__ = ('callable', 'args')
-    def __init__(
-        self,
-        callable: NameKeyExpr,
-        args: Args,
-    ) -> None:
-        self.callable = callable
-        self.args = args
+    callable: NameKeyExpr
+    args: Args
 
+    @property 
     def token(self):
-        return self.callable.token()
+        return self.callable.token
 
 
 
@@ -782,93 +675,69 @@ class Stmt:
     """
 
     __slots__: Iterable[str] = tuple()
-    def __repr__(self) -> str:
-        attrstr = ", ".join([
-            repr(getattr(self, attr)) for attr in self.__slots__
-        ])
-        return f'{type(self).__name__}({attrstr})'
 
 
 
 class ExprStmt(Stmt):
     """Base class for statements that contain only a single Expr.
     """
-
     __slots__ = ('expr',)
 
+@dataclass
 class Return(ExprStmt):
     """Return encapsulates the value to be returned from a Function.
     """
+    expr: "Expr"
 
-    def __init__(self, expr: "Expr") -> None:
-        self.expr = expr
-
+@dataclass
 class AssignStmt(ExprStmt):
     """AssignStmt encapsulates an Assign Expr.
     """
+    expr: "Assign"
 
-    def __init__(self, expr: "Assign") -> None:
-        self.expr = expr
-
+@dataclass
 class DeclareStmt(ExprStmt):
     """DeclareStmt encapsulates a Declare Expr.
     """
+    expr: "Declare"
 
-    def __init__(self, expr: "Declare") -> None:
-        self.expr = expr
-
+@dataclass
 class CallStmt(ExprStmt):
     """CallStmt encapsulates a Call Expr.
     """
-
-    def __init__(self, expr: "Call") -> None:
-        self.expr = expr
+    expr: "Call"
 
 
 
+@dataclass
 class Output(Stmt):
     """Output encapsulates values to be displayed in a terminal/console.
     """
-
     __slots__ = ('exprs',)
-    def __init__(
-        self,
-        exprs: Iterable["Expr"],
-    ) -> None:
-        self.exprs = exprs
+    exprs: Iterable["Expr"]
 
 
 
+@dataclass
 class Input(Stmt):
     """Output encapsulates a GetExpr to which user input should be
     assigned.
     """
-
     __slots__ = ('keyExpr',)
-    def __init__(
-        self,
-        key: GetExpr,
-    ) -> None:
-        self.key = key
+    key: GetExpr
 
 
 
+@dataclass
 class Conditional(Stmt):
     """Conditional encapsulates a mapping of values to statements.
     A provided condition cond, when evaluated to a value, results in
     the associated statement(s) being executed.
     """
-
     __slots__ = ('cond', 'stmtMap', 'fallback')
-    def __init__(
-        self,
-        cond: "Expr",
-        stmtMap: Mapping[PyLiteral, Iterable["Stmt"]],
-        fallback: Optional[Iterable["Stmt"]],
-    ) -> None:
-        self.cond = cond
-        self.stmtMap = stmtMap
-        self.fallback = fallback
+    cond: "Expr"
+    stmtMap: Mapping[PyLiteral, Iterable["Stmt"]]
+    fallback: Optional[Iterable["Stmt"]]
 
 class Case(Conditional): ...
 
@@ -880,67 +749,40 @@ class Loop(Stmt):
     """Loop encapsulates statements to be executed repeatedly until its
     cond evaluates to a False value.
     """
-
     __slots__ = ('init', 'cond', 'stmts')
-    def __init__(
-        self,
-        init: Optional["Stmt"],
-        cond: "Expr",
-        stmts: Iterable["Stmt"],
-    ) -> None:
-        self.init = init
-        self.cond = cond
-        self.stmts = stmts
+    init: Optional["Stmt"]
+    cond: "Expr"
+    stmts: Iterable["Stmt"]
 
+@dataclass
 class While(Loop):
     """While represents a pre-condition Loop, executed only if the cond
     evaluates to True.
     """
+    init: Optional["Stmt"]
+    cond: "Expr"
+    stmts: Iterable["Stmt"]
 
-    def __init__(
-        self,
-        init: Optional["Stmt"],
-        cond: "Expr",
-        stmts: Iterable["Stmt"],
-    ) -> None:
-        self.init = init
-        self.cond = cond
-        self.stmts = stmts
-
+@dataclass
 class Repeat(Loop):
     """Repeat represents a post-condition Loop, executed at least once,
     and then again only if the cond evaluates to True.
     """
-
-    def __init__(
-        self,
-        init: None,
-        cond: "Expr",
-        stmts: Iterable["Stmt"],
-    ) -> None:
-        self.init = init
-        self.cond = cond
-        self.stmts = stmts
+    init: None
+    cond: "Expr"
+    stmts: Iterable["Stmt"]
 
 
 
+@dataclass
 class ProcFunc(Stmt):
-    """ProcFunc encapsulates a declared Procedure or Function."""
-    
+    """ProcFunc encapsulates a declared Procedure or Function."""    
     __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
-    def __init__(
-        self,
-        name: Name,
-        passby: LiteralType['BYVALUE', 'BYREF'],
-        params: Iterable[Declare],
-        stmts: Iterable["Stmt"],
-        returnType: Type,
-    ) -> None:
-        self.name = name
-        self.passby = passby
-        self.params = params
-        self.stmts = stmts
-        self.returnType = returnType
+    name: Name
+    passby: LiteralType['BYVALUE', 'BYREF']
+    params: Iterable[Declare]
+    stmts: Iterable["Stmt"]
+    returnType: Type
 
 class ProcedureStmt(ProcFunc): ...
 
@@ -948,57 +790,37 @@ class FunctionStmt(ProcFunc): ...
 
 
 
+@dataclass
 class TypeStmt(Stmt):
-    """TypeStmt encapsulates a declared custom Type."""
-    
+    """TypeStmt encapsulates a declared custom Type."""    
     __slots__ = ('name', 'exprs')
-    def __init__(
-        self,
-        name: Name,
-        exprs: Iterable["Declare"],
-    ) -> None:
-        self.name = name
-        self.exprs = exprs
+    name: Name
+    exprs: Iterable["Declare"]
 
 
 
 class FileStmt(Stmt):
     """Base class for Stmts involving Files."""
 
+@dataclass
 class OpenFile(FileStmt):
     __slots__ = ('filename', 'mode')
-    def __init__(
-        self,
-        filename: "Expr",
-        mode: str,
-    ) -> None:
-        self.filename = filename
-        self.mode = mode
+    filename: "Expr"
+    mode: str
 
+@dataclass
 class ReadFile(FileStmt):
     __slots__ = ('filename', 'target')
-    def __init__(
-        self,
-        filename: "Expr",
-        target: GetExpr,
-    ) -> None:
-        self.filename = filename
-        self.target = target
+    filename: "Expr"
+    target: GetExpr
 
+@dataclass
 class WriteFile(FileStmt):
     __slots__ = ('filename', 'data')
-    def __init__(
-        self,
-        filename: "Expr",
-        data: "Expr",
-    ) -> None:
-        self.filename = filename
-        self.data = data
+    filename: "Expr"
+    data: "Expr"
 
+@dataclass
 class CloseFile(FileStmt):
     __slots__ = ('filename',)
-    def __init__(
-        self,
-        filename: "Expr",
-    ) -> None:
-        self.filename = filename
+    filename: "Expr"

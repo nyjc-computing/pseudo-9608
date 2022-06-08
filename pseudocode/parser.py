@@ -412,7 +412,7 @@ def forStmt(tokens: Tokens) -> lang.While:
     matchWordElseError(tokens, 'TO')
     parse = parser(tokens)
     end: lang.Expr = parse(tokens)
-    step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token())
+    step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token)
     if matchWord(tokens, 'STEP'):
         parse = parser(tokens)
         step = parse(tokens)
@@ -422,7 +422,7 @@ def forStmt(tokens: Tokens) -> lang.While:
         stmts += [statement5(tokens)]
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
-    cond = lang.Binary(init.assignee, builtin.lte, end, token=init.token())
+    cond = lang.Binary(init.assignee, builtin.lte, end, token=init.token)
     # Add increment statement
     incr = lang.Assign(
         init.assignee,
@@ -430,7 +430,7 @@ def forStmt(tokens: Tokens) -> lang.While:
             init.assignee,
             builtin.add,
             step,
-            token=step.token(),
+            token=step.token,
         ),
     )
     initStmt = lang.AssignStmt(init)
@@ -444,7 +444,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
         passby: lang.Passby = 'BYVALUE'
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
-            passby = passbyToken.word
+            passby = passbyToken.word  # type: ignore
         expr = declare(tokens)
         params += [expr]
         while matchWord(tokens, ','):
