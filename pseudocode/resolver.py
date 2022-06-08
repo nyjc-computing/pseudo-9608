@@ -372,6 +372,24 @@ def _(expr: lang.GetName, frame: lang.Frame) -> lang.Type:
     """Returns the type of value that name is mapped to in frame."""
     return expr.frame.getType(str(expr.name))
 
+
+
+# Verifier helpers
+
+def transformDeclares(
+    declares: Iterable[lang.Declare],
+    passby: lang.Passby,
+    frame: lang.Frame,
+) -> Tuple[lang.TypedValue, ...]:
+    """Takes in a list of Declares. Returns a list of TypedValues.
+    Used to declare names in a frame/object.
+    """
+    params: Tuple[lang.TypedValue, ...] = tuple()
+    for declaration in declares:
+        resolve(declaration, frame, passby=passby)
+        params += (frame.get(str(declaration.name)),)
+    return params
+
     
 
 # Verifiers
@@ -390,23 +408,22 @@ def verifyStmts(
                 token=stmt.expr.token
             )
 
-def verifyOutput(
-    stmt: lang.Output,
-    frame: lang.Frame,
-) -> None:
+@singledispatch
+def verify(stmt, frame):
+    """Dispatcher for Stmt verifiers."""
+    raise TypeError(f"No verifier found for {stmt}")
+
+@verify.register
+def _(stmt: lang.Output, frame: lang.Frame) -> None:
     stmt.exprs = resolveExprs(stmt.exprs, frame)
 
-def verifyInput(
-    stmt: lang.Input,
-    frame: lang.Frame,
-) -> None:
+@verify.register
+def _(stmt: lang.Input, frame: lang.Frame) -> None:
     resolveNamesInExpr(stmt, frame)
     resolve(stmt.key, frame)
 
-def verifyCase(
-    stmt: lang.Conditional,
-    frame: lang.Frame,
-) -> None:
+@verify.register
+def _(stmt: lang.Case, frame: lang.Frame) -> None:
     resolveNamesInExpr(stmt, frame)
     resolve(stmt.cond, frame)
     for statements in stmt.stmtMap.values():
@@ -414,10 +431,8 @@ def verifyCase(
     if stmt.fallback:
         verifyStmts(stmt.fallback, frame)
 
-def verifyIf(
-    stmt: lang.Conditional,
-    frame: lang.Frame,
-) -> None:
+@verify.register
+def _(stmt: lang.If, frame: lang.Frame) -> None:
     resolveNamesInExpr(stmt, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
@@ -426,35 +441,20 @@ def verifyIf(
     if stmt.fallback:
         verifyStmts(stmt.fallback, frame)
 
-def verifyLoop(
-    stmt: lang.Loop,
-    frame: lang.Frame,
-) -> None:
+@verify.register
+def _(stmt: lang.Loop, frame: lang.Frame) -> None:
     resolveNamesInExpr(stmt, frame)
     if stmt.init:
         verify(stmt.init, frame)
     condType = resolve(stmt.cond, frame)
-    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
+    expectTypeElseError(
+        condType, 'BOOLEAN',
+        token=stmt.cond.token
+    )
     verifyStmts(stmt.stmts, frame)
 
-def transformDeclares(
-    declares: Iterable[lang.Declare],
-    passby: lang.Passby,
-    frame: lang.Frame,
-) -> Tuple[lang.TypedValue, ...]:
-    """Takes in a list of Declares. Returns a list of TypedValues.
-    Used to declare names in a frame/object.
-    """
-    params: Tuple[lang.TypedValue, ...] = tuple()
-    for declaration in declares:
-        resolve(declaration, frame, passby=passby)
-        params += (frame.get(str(declaration.name)),)
-    return params
-
-def verifyProcedure(
-    stmt: lang.ProcFunc,
-    frame: lang.Frame,
-) -> None:
+@verify.register
+def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
     """Declare a Procedure in the given frame."""
     resolveNamesInExpr(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
@@ -472,10 +472,8 @@ def verifyProcedure(
             )
     verifyStmts(stmt.stmts, local)
 
-def verifyFunction(
-    stmt: lang.ProcFunc,
-    frame: lang.Frame,
-) -> None:
+@verify.register
+def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
     """Declare a Function in the given frame."""
     resolveNamesInExpr(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
@@ -495,50 +493,6 @@ def verifyFunction(
         )
     verifyStmts(stmt.stmts, local, stmt.returnType)
 
-def verifyDeclareType(
-    stmt: lang.TypeStmt,
-    frame: lang.Frame,
-) -> None:
-    """Declare a custom Type in the given frame's TypeSystem."""
-    frame.types.declare(str(stmt.name))
-    objTemplate = lang.ObjectTemplate(typesys=frame.types)
-    for expr in stmt.exprs:
-        resolve(expr, objTemplate)
-    frame.types.setTemplate(str(stmt.name), objTemplate)
-
-@singledispatch
-def verify(stmt, frame):
-    """Dispatcher for Stmt verifiers."""
-    raise TypeError(f"No verifier found for {stmt}")
-
-@verify.register
-def _(stmt: lang.Output, frame: lang.Frame) -> None:
-    verifyOutput(stmt, frame)
-
-@verify.register
-def _(stmt: lang.Input, frame: lang.Frame) -> None:
-    verifyInput(stmt, frame)
-
-@verify.register
-def _(stmt: lang.Case, frame: lang.Frame) -> None:
-    verifyCase(stmt, frame)
-
-@verify.register
-def _(stmt: lang.If, frame: lang.Frame) -> None:
-    verifyIf(stmt, frame)
-
-@verify.register
-def _(stmt: lang.Loop, frame: lang.Frame) -> None:
-    verifyLoop(stmt, frame)
-
-@verify.register
-def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
-    verifyProcedure(stmt, frame)
-
-@verify.register
-def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
-    verifyFunction(stmt, frame)
-
 @verify.register
 def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
     resolveNamesInExpr(stmt, frame)
@@ -549,7 +503,12 @@ def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
 
 @verify.register
 def _(stmt: lang.TypeStmt, frame: lang.Frame) -> None:
-    verifyDeclareType(stmt, frame)
+    """Declare a custom Type in the given frame's TypeSystem."""
+    frame.types.declare(str(stmt.name))
+    objTemplate = lang.ObjectTemplate(typesys=frame.types)
+    for expr in stmt.exprs:
+        resolve(expr, objTemplate)
+    frame.types.setTemplate(str(stmt.name), objTemplate)
 
 @verify.register
 def _(stmt: lang.CallStmt, frame: lang.Frame) -> None:
