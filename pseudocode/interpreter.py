@@ -114,29 +114,56 @@ def evalBinary(
     rightval = evaluate(expr.right, frame)
     return expr.oper(leftval, rightval)
 
+@singledispatch
 def evalGet(
     expr: lang.NameExpr,
     frame: lang.Frame,
     **kwargs,
 ):
     """Returns the name's associated value in a Frame."""
-    assert not isinstance(expr, lang.UnresolvedName), "Unexpected UnresolvedName"
-    if isinstance(expr, lang.GetName):
-        return expr.frame.getValue(str(expr.name))
-    if isinstance(expr, lang.GetIndex):
-        array = evalGet(expr.array, frame)
-        assert isinstance(array, lang.Array), "Invalid Array"
-        indexes = evalIndex(expr.index, frame)
-        return array.getValue(indexes)
-    if isinstance(expr, lang.GetAttr):
-        obj = evalGet(expr.object, frame)
-        assert isinstance(obj, lang.Object), "Invalid Object"
-        return obj.getValue(str(expr.name))
-    if isinstance(expr, lang.Call):
-        callable = evalGet(expr.callable, frame)
-        assert isinstance(callable, lang.Function), \
-            f"Invalid Function {callable}"
-        return evalCallable(callable, expr.args, frame)
+    raise TypeError("Unexpected {expr} in evalGet")
+
+@evalGet.register
+def _(
+    expr: lang.GetName,
+    frame: lang.Frame,
+    **kwargs,
+) -> Union[lang.PyLiteral, lang.Object, lang.Array, lang.Builtin, lang.Callable]:
+    value = expr.frame.getValue(str(expr.name))
+    assert not isinstance(value, lang.File), "Unexpected File"
+    return value
+
+@evalGet.register
+def _(
+    expr: lang.GetIndex,
+    frame: lang.Frame,
+    **kwargs,
+) -> Union[lang.PyLiteral, lang.Object]:
+    array = evalGet(expr.array, frame)
+    assert isinstance(array, lang.Array), "Invalid Array"
+    indexes = evalIndex(expr.index, frame)
+    return array.getValue(indexes)
+
+@evalGet.register
+def _(
+    expr: lang.GetAttr,
+    frame: lang.Frame,
+    **kwargs,
+) -> Union[lang.PyLiteral, lang.Object]:
+    obj = evalGet(expr.object, frame)
+    assert isinstance(obj, lang.Object), "Invalid Object"
+    return obj.getValue(str(expr.name))
+
+@evalGet.register
+def _(
+    expr: lang.Call,
+    frame: lang.Frame,
+    **kwargs,
+) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+    callable = evalGet(expr.callable, frame)
+    assert isinstance(callable, lang.Function), \
+        f"Invalid Function {callable}"
+    return evalCallable(callable, expr.args, frame)
 
 @singledispatch
 def evalCallable(callable, args, frame, **kwargs):
