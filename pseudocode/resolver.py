@@ -138,12 +138,6 @@ class Resolver:
     
 # Resolver helpers
 
-def resolveLiteral(
-    literal: lang.Literal,
-    frame: lang.Frame,
-) -> lang.Type:
-    return literal.type
-
 def declareByref(
     declare: lang.Declare,
     frame: lang.Frame,
@@ -191,7 +185,7 @@ def resolveProcCall(
     resolveNamesInExpr(expr, frame)
     assert isinstance(expr.callable, lang.GetName), \
         f"Callable {expr.callable} unresolved"
-    callableType = resolveGetName(expr.callable, frame)
+    callableType = resolve(expr.callable, frame)
     expectTypeElseError(
         callableType, 'NULL', token=expr.callable.token
     )
@@ -215,7 +209,7 @@ def resolve(expr, frame):
 
 @resolve.register
 def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
-    return resolveLiteral(expr, frame)
+    return expr.type
 
 @resolve.register
 def _(
@@ -438,7 +432,7 @@ def transformDeclares(
     """
     params: Tuple[lang.TypedValue, ...] = tuple()
     for declaration in declares:
-        resolveDeclare(declaration, frame, passby=passby)
+        resolve(declaration, frame, passby=passby)
         params += (frame.get(str(declaration.name)),)
     return params
 
@@ -488,7 +482,7 @@ def verifyDeclareType(
     frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=frame.types)
     for expr in stmt.exprs:
-        resolveDeclare(expr, objTemplate)
+        resolve(expr, objTemplate)
     frame.types.setTemplate(str(stmt.name), objTemplate)
 
 def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
@@ -538,9 +532,9 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
         resolveProcCall(stmt.expr, frame)
     elif isinstance(stmt, lang.AssignStmt):
         assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
-        resolveAssign(stmt.expr, frame)
+        resolve(stmt.expr, frame)
     elif isinstance(stmt, lang.DeclareStmt):
         assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
-        resolveDeclare(stmt.expr, frame)
+        resolve(stmt.expr, frame)
     assert not isinstance(stmt, lang.Return), \
         "Unhandled Return in verify()"
