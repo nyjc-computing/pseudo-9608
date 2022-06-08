@@ -283,10 +283,14 @@ class Object(PseudoValue):
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> Value:
+    def getValue(self, name: NameKey) -> Union[PyLiteral, "Object"]:
         returnval = self.data[name].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned variable {name!r}")
+        assert not isinstance(returnval, Array), "Unexpected Array"
+        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
+        assert not isinstance(returnval, Callable), "Unexpected Callable"
+        assert not isinstance(returnval, File), "Unexpected File"
         return returnval
 
     def get(self, name: NameKey) -> "TypedValue":
@@ -421,10 +425,14 @@ class Array(PseudoValue):
     def getType(self, index: IndexKey) -> Type:
         return self.data[index].type
 
-    def getValue(self, index: IndexKey) -> Value:
+    def getValue(self, index: IndexKey) -> Union[PyLiteral, Object]:
         returnval = self.data[index].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned index {index!r}")
+        assert not isinstance(returnval, Array), "Unexpected Array"
+        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
+        assert not isinstance(returnval, Callable), "Unexpected Callable"
+        assert not isinstance(returnval, File), "Unexpected File"
         return returnval
 
     def get(self, index: IndexKey) -> "TypedValue":
