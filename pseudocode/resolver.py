@@ -512,17 +512,14 @@ def _(stmt: lang.TypeStmt, frame: lang.Frame) -> None:
 
 @verify.register
 def _(stmt: lang.CallStmt, frame: lang.Frame) -> None:
-    assert isinstance(stmt.expr, lang.Call), "Invalid Call"
     resolveProcCall(stmt.expr, frame)
 
 @verify.register
 def _(stmt: lang.AssignStmt, frame: lang.Frame) -> None:
-    assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
     resolve(stmt.expr, frame)
 
 @verify.register
 def _(stmt: lang.DeclareStmt, frame: lang.Frame) -> None:
-    assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
     resolve(stmt.expr, frame)
 
 @verify.register
