@@ -89,7 +89,6 @@ def evalIndex(
     indexes: lang.IndexKey = tuple()
     for expr in indexExpr:
         index = evaluate(expr, frame)
-        assert isinstance(index, int), "Invalid index (must be int)"
         indexes += (index,)
     return indexes
 
@@ -128,7 +127,6 @@ def _(
 ) -> lang.PyLiteral:
     if callable.func is system.EOF:
         name = evaluate(args[0], frame)  # type: ignore
-        assert isinstance(name, str), "Invalid name"
         file = frame.getValue(name)
         assert isinstance(file, lang.File), "Invalid File"
         return callable.func(file.iohandler)
@@ -177,12 +175,10 @@ def evalAssign(
         frameMap.setValue(name, value)
     elif isinstance(expr.assignee, lang.GetIndex):
         array = evaluate(expr.assignee.array, frame)
-        assert isinstance(array, lang.Array), "Invalid Array"
         index = evalIndex(expr.assignee.index, frame)
         array.setValue(index, value)
     elif isinstance(expr.assignee, lang.GetAttr):
         obj = evaluate(expr.assignee.object, frame)
-        assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(expr.assignee.name)
         obj.setValue(name, value)
     else:
@@ -221,23 +217,17 @@ def _(expr: lang.GetName, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang
 @evaluate.register
 def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object]:
     array = evaluate(expr.array, frame)
-    assert isinstance(array, lang.Array), "Invalid Array"
     indexes = evalIndex(expr.index, frame)
     return array.getValue(indexes)
     
 @evaluate.register
 def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object]:
     obj = evaluate(expr.object, frame)
-    assert isinstance(obj, lang.Object), "Invalid Object"
     return obj.getValue(str(expr.name))
     
 @evaluate.register
 def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
     callable = evaluate(expr.callable, frame)
-    assert (
-        isinstance(callable, lang.Builtin)
-        or isinstance(callable, lang.Function)
-    ), f"Invalid Builtin/Function {callable}"
     return evalCallable(callable, expr.args, frame)
 
 # Executors
@@ -302,12 +292,10 @@ def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
         stmt.key.frame.setValue(str(stmt.key.name), input())
     elif isinstance(stmt.key, lang.GetIndex):
         array = evaluate(stmt.key.array, frame)
-        assert isinstance(array, lang.Array), "Invalid Array"
         index = evalIndex(stmt.key.index, frame)
         array.setValue(index, input())
     elif isinstance(stmt.key, lang.GetAttr):
         obj = evaluate(stmt.key.object, frame)
-        assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(stmt.key.name)
         obj.setValue(name, input())
     raise builtin.RuntimeError(
@@ -317,8 +305,6 @@ def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.Case, frame: lang.Frame, **kwargs) -> None:
     cond = evaluate(stmt.cond, frame)
-    assert not isinstance(cond, lang.PyLiteral), \
-        f"Invalid cond {cond}"
     if cond in stmt.stmtMap:
         executeStmts(stmt.stmtMap[cond], frame, **kwargs)
     elif stmt.fallback:
@@ -348,7 +334,6 @@ def _(stmt: lang.Repeat, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.OpenFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
-    assert isinstance(filename, str), f"Invalid filename {filename}"
     undeclaredElseError(
         frame, filename, "File already opened", 
         token=stmt.filename.token
@@ -366,7 +351,6 @@ def _(stmt: lang.OpenFile, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.ReadFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
-    assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
         frame, filename, "File not open", token=stmt.filename.token
     )
@@ -387,7 +371,6 @@ def _(stmt: lang.ReadFile, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.WriteFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
-    assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
         frame, filename, "File not open", token=stmt.filename.token
     )
@@ -413,7 +396,6 @@ def _(stmt: lang.WriteFile, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.CloseFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
-    assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
         frame, filename, "File not open", token=stmt.filename.token
     )
@@ -428,8 +410,6 @@ def _(stmt: lang.CloseFile, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
     callable = evaluate(stmt.expr.callable, frame)
-    assert isinstance(callable, lang.Procedure), \
-        f"Invalid Procedure {callable}"
     evalCallable(callable, stmt.expr.args, frame, **kwargs)
     
 @execute.register
