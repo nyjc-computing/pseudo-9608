@@ -1,11 +1,11 @@
 """resolver
 
-verify(frame: Frame, statements: list) -> None
+verify(statements: list, frame: Frame) -> None
     Resolves expressions in statements, declares variables and types
     in the list of statements
 """
 
-from typing import Optional, Union, Literal
+from typing import Optional, Union
 from typing import Iterable, Iterator, Collection
 from typing import Tuple
 from functools import singledispatch
@@ -132,7 +132,7 @@ class Resolver:
     statements: Iterable[lang.Stmt]
 
     def inspect(self) -> None:
-        verifyStmts(self.frame, self.statements)
+        verifyStmts(self.statements, self.frame)
 
 
     
@@ -377,55 +377,70 @@ def _(expr: lang.GetName, frame: lang.Frame) -> lang.Type:
 # Verifiers
 
 def verifyStmts(
-    frame: lang.Frame,
     stmts: Iterable[lang.Stmt],
+    frame: lang.Frame,
     returnType: Optional[lang.Type]=None,
 ) -> None:
     """Verify a list of statements."""
     for stmt in stmts:
-        verify(frame, stmt)
+        verify(stmt, frame)
         if returnType and isinstance(stmt, lang.Return):
             expectTypeElseError(
                 resolve(stmt.expr, frame), returnType,
                 token=stmt.expr.token
             )
 
-def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
+def verifyOutput(
+    stmt: lang.Output,
+    frame: lang.Frame,
+) -> None:
     stmt.exprs = resolveExprs(stmt.exprs, frame)
 
-def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
+def verifyInput(
+    stmt: lang.Input,
+    frame: lang.Frame,
+) -> None:
     resolveNamesInExpr(stmt, frame)
     resolve(stmt.key, frame)
 
-def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
+def verifyCase(
+    stmt: lang.Conditional,
+    frame: lang.Frame,
+) -> None:
     resolveNamesInExpr(stmt, frame)
     resolve(stmt.cond, frame)
     for statements in stmt.stmtMap.values():
-        verifyStmts(frame, statements)
+        verifyStmts(statements, frame)
     if stmt.fallback:
-        verifyStmts(frame, stmt.fallback)
+        verifyStmts(stmt.fallback, frame)
 
-def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
+def verifyIf(
+    stmt: lang.Conditional,
+    frame: lang.Frame,
+) -> None:
     resolveNamesInExpr(stmt, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
     for statements in stmt.stmtMap.values():
-        verifyStmts(frame, statements)
+        verifyStmts(statements, frame)
     if stmt.fallback:
-        verifyStmts(frame, stmt.fallback)
+        verifyStmts(stmt.fallback, frame)
 
-def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
+def verifyLoop(
+    stmt: lang.Loop,
+    frame: lang.Frame,
+) -> None:
     resolveNamesInExpr(stmt, frame)
     if stmt.init:
-        verify(frame, stmt.init)
+        verify(stmt.init, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
-    verifyStmts(frame, stmt.stmts)
+    verifyStmts(stmt.stmts, frame)
 
 def transformDeclares(
-    frame: lang.Frame,
     declares: Iterable[lang.Declare],
     passby: lang.Passby,
+    frame: lang.Frame,
 ) -> Tuple[lang.TypedValue, ...]:
     """Takes in a list of Declares. Returns a list of TypedValues.
     Used to declare names in a frame/object.
@@ -436,11 +451,14 @@ def transformDeclares(
         params += (frame.get(str(declaration.name)),)
     return params
 
-def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+def verifyProcedure(
+    stmt: lang.ProcFunc,
+    frame: lang.Frame,
+) -> None:
     """Declare a Procedure in the given frame."""
     resolveNamesInExpr(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
-    params = transformDeclares(local, stmt.params, stmt.passby)
+    params = transformDeclares(stmt.params, stmt.passby, local)
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(str(stmt.name), 'NULL')
     frame.setValue(str(stmt.name), lang.Procedure(
@@ -452,13 +470,16 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
                 "Unexpected RETURN in PROCEDURE",
                 procstmt.expr.token
             )
-    verifyStmts(local, stmt.stmts)
+    verifyStmts(stmt.stmts, local)
 
-def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+def verifyFunction(
+    stmt: lang.ProcFunc,
+    frame: lang.Frame,
+) -> None:
     """Declare a Function in the given frame."""
     resolveNamesInExpr(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
-    params = transformDeclares(local, stmt.params, stmt.passby)
+    params = transformDeclares(stmt.params, stmt.passby, local)
     # Assign function in frame first, to make recursive calls work
     frame.declare(str(stmt.name), stmt.returnType)
     frame.setValue(str(stmt.name), lang.Function(
@@ -472,11 +493,11 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         raise builtin.LogicError(
             "No RETURN in function", stmt.name.token
         )
-    verifyStmts(local, stmt.stmts, stmt.returnType)
+    verifyStmts(stmt.stmts, local, stmt.returnType)
 
 def verifyDeclareType(
-    frame: lang.Frame,
     stmt: lang.TypeStmt,
+    frame: lang.Frame,
 ) -> None:
     """Declare a custom Type in the given frame's TypeSystem."""
     frame.types.declare(str(stmt.name))
@@ -485,56 +506,66 @@ def verifyDeclareType(
         resolve(expr, objTemplate)
     frame.types.setTemplate(str(stmt.name), objTemplate)
 
-def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
+@singledispatch
+def verify(stmt, frame):
     """Dispatcher for Stmt verifiers."""
-    if isinstance(stmt, lang.Output):
-        verifyOutput(frame, stmt)
-    elif isinstance(stmt, lang.Input):
-        verifyInput(frame, stmt)
-    elif isinstance(stmt, lang.Case):
-        verifyCase(frame, stmt)
-    elif isinstance(stmt, lang.If):
-        verifyIf(frame, stmt)
-    elif isinstance(stmt, lang.Loop):
-        verifyLoop(frame, stmt)
-    elif isinstance(stmt, lang.ProcedureStmt):
-        verifyProcedure(frame, stmt)
-    elif isinstance(stmt, lang.FunctionStmt):
-        verifyFunction(frame, stmt)
-    elif isinstance(stmt, lang.OpenFile):
-        resolveNamesInExpr(stmt, frame)
-        expectTypeElseError(
-            resolve(stmt.filename, frame), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.ReadFile):
-        resolveNamesInExpr(stmt, frame)
-        expectTypeElseError(
-            resolve(stmt.filename, frame), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.WriteFile):
-        resolveNamesInExpr(stmt, frame)
-        expectTypeElseError(
-            resolve(stmt.filename, frame), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.CloseFile):
-        resolveNamesInExpr(stmt, frame)
-        expectTypeElseError(
-            resolve(stmt.filename, frame), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.TypeStmt):
-        verifyDeclareType(frame, stmt)
-    elif isinstance(stmt, lang.CallStmt):
-        assert isinstance(stmt.expr, lang.Call), "Invalid Call"
-        resolveProcCall(stmt.expr, frame)
-    elif isinstance(stmt, lang.AssignStmt):
-        assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
-        resolve(stmt.expr, frame)
-    elif isinstance(stmt, lang.DeclareStmt):
-        assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
-        resolve(stmt.expr, frame)
-    assert not isinstance(stmt, lang.Return), \
-        "Unhandled Return in verify()"
+    raise TypeError(f"No verifier found for {stmt}")
+
+@verify.register
+def _(stmt: lang.Output, frame: lang.Frame) -> None:
+    verifyOutput(stmt, frame)
+
+@verify.register
+def _(stmt: lang.Input, frame: lang.Frame) -> None:
+    verifyInput(stmt, frame)
+
+@verify.register
+def _(stmt: lang.Case, frame: lang.Frame) -> None:
+    verifyCase(stmt, frame)
+
+@verify.register
+def _(stmt: lang.If, frame: lang.Frame) -> None:
+    verifyIf(stmt, frame)
+
+@verify.register
+def _(stmt: lang.Loop, frame: lang.Frame) -> None:
+    verifyLoop(stmt, frame)
+
+@verify.register
+def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
+    verifyProcedure(stmt, frame)
+
+@verify.register
+def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
+    verifyFunction(stmt, frame)
+
+@verify.register
+def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
+    resolveNamesInExpr(stmt, frame)
+    expectTypeElseError(
+        resolve(stmt.filename, frame), 'STRING',
+        token=stmt.filename.token
+    )
+
+@verify.register
+def _(stmt: lang.TypeStmt, frame: lang.Frame) -> None:
+    verifyDeclareType(stmt, frame)
+
+@verify.register
+def _(stmt: lang.CallStmt, frame: lang.Frame) -> None:
+    assert isinstance(stmt.expr, lang.Call), "Invalid Call"
+    resolveProcCall(stmt.expr, frame)
+
+@verify.register
+def _(stmt: lang.AssignStmt, frame: lang.Frame) -> None:
+    assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
+    resolve(stmt.expr, frame)
+
+@verify.register
+def _(stmt: lang.DeclareStmt, frame: lang.Frame) -> None:
+    assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
+    resolve(stmt.expr, frame)
+
+@verify.register
+def _(stmt: lang.Return, frame: lang.Frame) -> None:
+    raise ValueError("Unhandled Return in verify()")
