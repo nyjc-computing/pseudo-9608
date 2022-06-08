@@ -7,6 +7,7 @@ execute(frame: Frame, statements: list) -> None
 from typing import Optional, Union
 from typing import Iterable, Callable as function
 from typing import overload
+from functools import singledispatch
 from dataclasses import dataclass, field
 
 from . import builtin, lang, system
@@ -71,8 +72,8 @@ class Interpreter:
 
     def interpret(self) -> None:
         executeStmts(
-            self.frame,
             self.statements,
+            self.frame,
             output=self.outputHandler,
         )
 
@@ -82,86 +83,114 @@ class Interpreter:
 # Evaluation functions return the evaluated value of Exprs.
 
 def evalIndex(
-    frame: lang.Frame,
     indexExpr: lang.IndexExpr,
+    frame: lang.Frame,
 ) -> lang.IndexKey:
     """Returns the evaluated value of an Array's index."""
     indexes: lang.IndexKey = tuple()
     for expr in indexExpr:
-        index = evaluate(frame, expr)
+        index = evaluate(expr, frame)
         assert isinstance(index, int), "Invalid index (must be int)"
         indexes += (index,)
     return indexes
 
 def evalLiteral(
-    frame: lang.Frame,
     literal: lang.Literal,
+    frame: lang.Frame,
 ) -> lang.PyLiteral:
     return literal.value
 
-def evalUnary(frame: lang.Frame, expr: lang.Unary) -> lang.PyLiteral:
-    rightval = evaluate(frame, expr.right)
+def evalUnary(
+    expr: lang.Unary,
+    frame: lang.Frame,
+) -> lang.PyLiteral:
+    rightval = evaluate(expr.right, frame)
     return expr.oper(rightval)
 
-def evalBinary(frame: lang.Frame, expr: lang.Binary) -> lang.PyLiteral:
-    leftval = evaluate(frame, expr.left)
-    rightval = evaluate(frame, expr.right)
+def evalBinary(
+    expr: lang.Binary,
+    frame: lang.Frame,
+) -> lang.PyLiteral:
+    leftval = evaluate(expr.left, frame)
+    rightval = evaluate(expr.right, frame)
     return expr.oper(leftval, rightval)
 
-def evalGet(frame: lang.Frame, expr: lang.NameExpr, **kwargs) -> lang.Value:
+def evalGet(
+    expr: lang.NameExpr,
+    frame: lang.Frame,
+    **kwargs,
+) -> lang.Value:
     """Returns the name's associated value in a Frame."""
     assert not isinstance(expr, lang.UnresolvedName), "Unexpected UnresolvedName"
     if isinstance(expr, lang.GetName):
         return expr.frame.getValue(str(expr.name))
     if isinstance(expr, lang.GetIndex):
-        array = evalGet(frame, expr.array)
+        array = evalGet(expr.array, frame)
         assert isinstance(array, lang.Array), "Invalid Array"
-        indexes = evalIndex(frame, expr.index)
+        indexes = evalIndex(expr.index, frame)
         return array.getValue(indexes)
     if isinstance(expr, lang.GetAttr):
-        obj = evalGet(frame, expr.object)
+        obj = evalGet(expr.object, frame)
         assert isinstance(obj, lang.Object), "Invalid Object"
         return obj.getValue(str(expr.name))
     if isinstance(expr, lang.Call):
-        callable = evalGet(frame, expr.callable)
+        callable = evalGet(expr.callable, frame)
         assert isinstance(callable, lang.Function), \
             f"Invalid Function {callable}"
-        return evalCallable(frame, callable, expr.args)
+        return evalCallable(callable, expr.args, frame)
 
 @overload
-def evalCallable(frame: lang.Frame, callable: lang.Builtin, args: lang.Args, **kwargs) -> lang.PyLiteral: ...
-@overload
-def evalCallable(frame: lang.Frame, callable: lang.Procedure, args: lang.Args, **kwargs) -> None: ...
-@overload
-def evalCallable(frame: lang.Frame, callable: lang.Function, args: lang.Args, **kwargs) -> lang.Value: ...
 def evalCallable(
+    callable: lang.Builtin,
+    args: lang.Args,
     frame: lang.Frame,
+    **kwargs,
+) -> lang.PyLiteral: ...
+@overload
+def evalCallable(
+    callable: lang.Procedure,
+    args: lang.Args,
+    frame: lang.Frame,
+    **kwargs,
+) -> None: ...
+@overload
+def evalCallable(
+    callable: lang.Function,
+    args: lang.Args,
+    frame: lang.Frame,
+    **kwargs,
+) -> lang.Value: ...
+def evalCallable(
     callable: Union[lang.Builtin, lang.Callable],
     args: lang.Args,
+    frame: lang.Frame,
     **kwargs,
 ):
     """Returns the evaluated value of a Builtin/Callable."""
     if isinstance(callable, lang.Builtin):
         if callable.func is system.EOF:
-            name = evaluate(frame, args[0])  # type: ignore
+            name = evaluate(args[0], frame)  # type: ignore
             assert isinstance(name, str), "Invalid name"
             file = frame.getValue(name)
             assert isinstance(file, lang.File), "Invalid File"
             return callable.func(file.iohandler)
-        argvals = [evaluate(frame, arg) for arg in args]
+        argvals = [evaluate(arg, frame) for arg in args]
         return callable.func(*argvals)
     elif isinstance(callable, lang.Callable):
         # Assign args to param slots
         for arg, slot in zip(args, callable.params):
-            argval = evaluate(frame, arg)
+            argval = evaluate(arg, frame)
             slot.value = argval
-        returnval = executeStmts(frame, callable.stmts, **kwargs)
+        returnval = executeStmts(callable.stmts, frame, **kwargs)
         if isinstance(callable, lang.Function):
             assert returnval, f"None returned from {callable}"
             return returnval
 
-def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
-    value = evaluate(frame, expr.expr)
+def evalAssign(
+    expr: lang.Assign,
+    frame: lang.Frame,
+) -> lang.Value:
+    value = evaluate(expr.expr, frame)
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
     """
@@ -170,12 +199,12 @@ def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
         name = str(expr.assignee.name)
         frameMap.setValue(name, value)
     elif isinstance(expr.assignee, lang.GetIndex):
-        array = evalGet(frame, expr.assignee.array)
+        array = evalGet(expr.assignee.array, frame)
         assert isinstance(array, lang.Array), "Invalid Array"
-        index = evalIndex(frame, expr.assignee.index)
+        index = evalIndex(expr.assignee.index, frame)
         array.setValue(index, value)
     elif isinstance(expr.assignee, lang.GetAttr):
-        obj = evalGet(frame, expr.assignee.object)
+        obj = evalGet(expr.assignee.object, frame)
         assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(expr.assignee.name)
         obj.setValue(name, value)
@@ -186,79 +215,79 @@ def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
     return value
 
 def evaluate(
-    frame: lang.Frame,
     expr: lang.Expr,
+    frame: lang.Frame,
     **kwargs,
 ) -> lang.Value:
     """Dispatcher for Expr evaluators."""
     if isinstance(expr, lang.Literal):
-        return evalLiteral(frame, expr)
+        return evalLiteral(expr, frame)
     if isinstance(expr, lang.Unary):
-        return evalUnary(frame, expr)
+        return evalUnary(expr, frame)
     if isinstance(expr, lang.Binary):
-        return evalBinary(frame, expr)
+        return evalBinary(expr, frame)
     if isinstance(expr, lang.Assign):
-        return evalAssign(frame, expr)
+        return evalAssign(expr, frame)
     if isinstance(expr, lang.GetName):
-        return evalGet(frame, expr)
+        return evalGet(expr, frame)
     if isinstance(expr, lang.GetIndex):
-        return evalGet(frame, expr)
+        return evalGet(expr, frame)
     if isinstance(expr, lang.GetAttr):
-        return evalGet(frame, expr)
+        return evalGet(expr, frame)
     if isinstance(expr, lang.Call):
-        callable = evalGet(frame, expr.callable)
+        callable = evalGet(expr.callable, frame)
         assert (
             isinstance(callable, lang.Builtin)
             or isinstance(callable, lang.Function)
         ), \
             f"Invalid Builtin/Function {callable}"
-        return evalCallable(frame, callable, expr.args)
+        return evalCallable(callable, expr.args, frame)
     else:
         raise TypeError(f"Unexpected expr {expr}")
 
 # Executors
 
 def executeStmts(
-    frame: lang.Frame,
     stmts: Iterable[lang.Stmt],
+    frame: lang.Frame,
     **kwargs,
 ) -> Optional[lang.Value]:
     """Execute a list of statements."""
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
-            return execReturn(frame, stmt, **kwargs)
+            return execReturn(stmt, frame, **kwargs)
         else:
-            execute(frame, stmt, **kwargs)
+            execute(stmt, frame, **kwargs)
     return None
 
 def execOutput(
-    frame: lang.Frame,
     stmt: lang.Output,
+    frame: lang.Frame,
     *,
     output: function,
     **kwargs,
 ) -> None:
     for expr in stmt.exprs:
-        value = evaluate(frame, expr)
+        value = evaluate(expr, frame)
         if type(value) is bool:
             value = str(value).upper()
         output(str(value), end='')
     output('')  # Add \n
 
 def execInput(
-    frame: lang.Frame,
     stmt: lang.Input,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
     if isinstance(stmt.key, lang.GetName):
         stmt.key.frame.setValue(str(stmt.key.name), input())
     elif isinstance(stmt.key, lang.GetIndex):
-        array = evalGet(frame, stmt.key.array)
+        array = evalGet(stmt.key.array, frame)
         assert isinstance(array, lang.Array), "Invalid Array"
-        index = evalIndex(frame, stmt.key.index)
+        index = evalIndex(stmt.key.index, frame)
         array.setValue(index, input())
     elif isinstance(stmt.key, lang.GetAttr):
-        obj = evalGet(frame, stmt.key.object)
+        obj = evalGet(stmt.key.object, frame)
         assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(stmt.key.name)
         obj.setValue(name, input())
@@ -267,53 +296,54 @@ def execInput(
     )
 
 def execCase(
-    frame: lang.Frame,
     stmt: lang.Conditional,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    cond = evaluate(frame, stmt.cond)
-    assert not isinstance(cond, lang.PseudoValue), f"Invalid cond {cond}"
+    cond = evaluate(stmt.cond, frame)
+    assert not isinstance(cond, lang.PseudoValue), \
+        f"Invalid cond {cond}"
     if cond in stmt.stmtMap:
-        executeStmts(frame, stmt.stmtMap[cond], **kwargs)
+        executeStmts(stmt.stmtMap[cond], frame, **kwargs)
     elif stmt.fallback:
-        executeStmts(frame, stmt.fallback, **kwargs)
+        executeStmts(stmt.fallback, frame, **kwargs)
 
 def execIf(
-    frame: lang.Frame,
     stmt: lang.Conditional,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    cond = evaluate(frame, stmt.cond)
+    cond = evaluate(stmt.cond, frame)
     if cond in stmt.stmtMap:
-        executeStmts(frame, stmt.stmtMap[True], **kwargs)
+        executeStmts(stmt.stmtMap[True], frame, **kwargs)
     elif stmt.fallback:
-        executeStmts(frame, stmt.fallback, **kwargs)
+        executeStmts(stmt.fallback, frame, **kwargs)
 
 def execWhile(
-    frame: lang.Frame,
     stmt: lang.Loop,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
     if stmt.init:
-        execute(frame, stmt.init, **kwargs)
-    while evaluate(frame, stmt.cond) is True:
-        executeStmts(frame, stmt.stmts, **kwargs)
+        execute(stmt.init, frame, **kwargs)
+    while evaluate(stmt.cond, frame) is True:
+        executeStmts(stmt.stmts, frame, **kwargs)
 
 def execRepeat(
-    frame: lang.Frame,
     stmt: lang.Loop,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    executeStmts(frame, stmt.stmts)
-    while evaluate(frame, stmt.cond) is False:
-        executeStmts(frame, stmt.stmts)
+    executeStmts(stmt.stmts, frame)
+    while evaluate(stmt.cond, frame) is False:
+        executeStmts(stmt.stmts, frame)
 
 def execOpenFile(
-    frame: lang.Frame,
     stmt: lang.OpenFile,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    filename = evaluate(frame, stmt.filename)
+    filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     undeclaredElseError(
         frame, filename, "File already opened", 
@@ -330,11 +360,11 @@ def execOpenFile(
     )
 
 def execReadFile(
-    frame: lang.Frame,
     stmt: lang.ReadFile,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    filename = evaluate(frame, stmt.filename)
+    filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
         frame, filename, "File not open", token=stmt.filename.token
@@ -345,7 +375,7 @@ def execReadFile(
         frame.getType(filename), 'FILE', token=stmt.filename.token
     )
     expectTypeElseError(file.mode, 'READ', token=stmt.filename.token)
-    varname = evaluate(frame, stmt.target)
+    varname = evaluate(stmt.target, frame)
     assert isinstance(varname, str), f"Expected str, got {varname!r}"
     declaredElseError(frame, varname, token=stmt.target.token)
     # TODO: Catch and handle Python file io errors
@@ -354,11 +384,11 @@ def execReadFile(
     frame.setValue(varname, line)
 
 def execWriteFile(
-    frame: lang.Frame,
     stmt: lang.WriteFile,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    filename = evaluate(frame, stmt.filename)
+    filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
         frame, filename, "File not open", token=stmt.filename.token
@@ -371,7 +401,7 @@ def execWriteFile(
     expectTypeElseError(
         file.mode, 'WRITE', 'APPEND', token=stmt.filename.token
     )
-    writedata = evaluate(frame, stmt.data)
+    writedata = evaluate(stmt.data, frame)
     if type(writedata) is bool:
         writedata = str(writedata).upper()
     else:
@@ -383,11 +413,11 @@ def execWriteFile(
     file.iohandler.write(writedata)
 
 def execCloseFile(
-    frame: lang.Frame,
     stmt: lang.CloseFile,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    filename = evaluate(frame, stmt.filename)
+    filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
         frame, filename, "File not open", token=stmt.filename.token
@@ -401,77 +431,77 @@ def execCloseFile(
     frame.delete(filename)
 
 def execFile(
-    frame: lang.Frame,
     stmt: lang.FileStmt,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
     """Dispatcher for File executors."""
     if isinstance(stmt, lang.OpenFile):
-        execOpenFile(frame, stmt, **kwargs)
+        execOpenFile(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.ReadFile):
-        execReadFile(frame, stmt, **kwargs)
+        execReadFile(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.WriteFile):
-        execWriteFile(frame, stmt, **kwargs)
+        execWriteFile(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.CloseFile):
-        execCloseFile(frame, stmt, **kwargs)
+        execCloseFile(stmt, frame, **kwargs)
 
 def execCall(
-    frame: lang.Frame,
     stmt: lang.CallStmt,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    callable = evalGet(frame, stmt.expr.callable)
+    callable = evalGet(stmt.expr.callable, frame)
     assert isinstance(callable, lang.Procedure), \
         f"Invalid Procedure {callable}"
-    evalCallable(frame, callable, stmt.expr.args, **kwargs)
+    evalCallable(callable, stmt.expr.args, frame, **kwargs)
 
 def execAssign(
-    frame: lang.Frame,
     stmt: lang.AssignStmt,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
-    evaluate(frame, stmt.expr, **kwargs)
+    evaluate(stmt.expr, frame, **kwargs)
 
 def execReturn(
-    frame: lang.Frame,
     stmt: lang.Return,
+    frame: lang.Frame,
     **kwargs,
 ) -> lang.Value:
-    return evaluate(frame, stmt.expr, **kwargs)
+    return evaluate(stmt.expr, frame, **kwargs)
 
 
 
 def execute(
-    frame: lang.Frame,
     stmt: lang.Stmt,
+    frame: lang.Frame,
     **kwargs,
 ) -> None:
     """Dispatcher for statement executors."""
     if isinstance(stmt, lang.Output):
-        execOutput(frame, stmt, **kwargs)
+        execOutput(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.Input):
-        execInput(frame, stmt, **kwargs)
+        execInput(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.Case):
-        execCase(frame, stmt, **kwargs)
+        execCase(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.If):
-        execIf(frame, stmt, **kwargs)
+        execIf(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.While):
-        execWhile(frame, stmt, **kwargs)
+        execWhile(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.Repeat):
-        execRepeat(frame, stmt, **kwargs)
+        execRepeat(stmt, frame, **kwargs)
     elif (
         isinstance(stmt, lang.OpenFile)
         or isinstance(stmt, lang.ReadFile)
         or isinstance(stmt, lang.WriteFile)
         or isinstance(stmt, lang.CloseFile)
     ):
-        execFile(frame, stmt, **kwargs)
+        execFile(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.CallStmt):
-        execCall(frame, stmt, **kwargs)
+        execCall(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.AssignStmt):
-        execAssign(frame, stmt, **kwargs)
+        execAssign(stmt, frame, **kwargs)
     elif isinstance(stmt, lang.Return):
-        execReturn(frame, stmt, **kwargs)
+        execReturn(stmt, frame, **kwargs)
     elif (
         isinstance(stmt, lang.DeclareStmt)
         or isinstance(stmt, lang.TypeStmt)
