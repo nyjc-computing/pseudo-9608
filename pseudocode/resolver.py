@@ -181,20 +181,6 @@ def declareByval(
         assert isinstance(frame, lang.Frame), "Frame expected"
         frame.setValue(name, array)
 
-def resolveDeclare(
-    declare: lang.Declare,
-    frame: Union[lang.Frame, lang.ObjectTemplate],
-    passby: Literal['BYVALUE', 'BYREF']='BYVALUE',
-) -> lang.Type:
-    """Declare variable in frame with dispatcher."""
-    if passby == 'BYVALUE':
-        declareByval(declare, frame)
-    else:
-        assert isinstance(frame, lang.Frame), \
-            "Declared BYREF in invalid Frame"
-        declareByref(declare, frame)
-    return declare.type
-
 def resolveUnary(
     expr: lang.Unary,
     frame: lang.Frame,
@@ -396,11 +382,18 @@ def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
 @resolve.register
 def _(
     expr: lang.Declare,
-    frame: lang.Frame,
+    frame: Union[lang.Frame, lang.ObjectTemplate],
     *,
     passby: lang.Passby='BYVALUE',
 ) -> lang.Type:
-    return resolveDeclare(expr, frame, passby=passby)
+    """Declare variable in frame with dispatcher."""
+    if passby == 'BYVALUE':
+        declareByval(expr, frame)
+    else:
+        assert isinstance(frame, lang.Frame), \
+            "Declared BYREF in invalid Frame"
+        declareByref(expr, frame)
+    return expr.type
 
 @resolve.register
 def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
