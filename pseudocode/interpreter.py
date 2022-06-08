@@ -114,56 +114,56 @@ def evalBinary(
     rightval = evaluate(expr.right, frame)
     return expr.oper(leftval, rightval)
 
-@singledispatch
-def evalGet(
-    expr: lang.NameExpr,
-    frame: lang.Frame,
-    **kwargs,
-):
-    """Returns the name's associated value in a Frame."""
-    raise TypeError("Unexpected {expr} in evalGet")
+# @singledispatch
+# def evalGet(
+#     expr: lang.NameExpr,
+#     frame: lang.Frame,
+#     **kwargs,
+# ):
+#     """Returns the name's associated value in a Frame."""
+#     raise TypeError("Unexpected {expr} in evalGet")
 
-@evalGet.register
-def _(
-    expr: lang.GetName,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array, lang.Builtin, lang.Callable]:
-    value = expr.frame.getValue(str(expr.name))
-    assert not isinstance(value, lang.File), "Unexpected File"
-    return value
+# @evalGet.register
+# def _(
+#     expr: lang.GetName,
+#     frame: lang.Frame,
+#     **kwargs,
+# ) -> Union[lang.PyLiteral, lang.Object, lang.Array, lang.Builtin, lang.Callable]:
+#     value = expr.frame.getValue(str(expr.name))
+#     assert not isinstance(value, lang.File), "Unexpected File"
+#     return value
 
-@evalGet.register
-def _(
-    expr: lang.GetIndex,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object]:
-    array = evalGet(expr.array, frame)
-    assert isinstance(array, lang.Array), "Invalid Array"
-    indexes = evalIndex(expr.index, frame)
-    return array.getValue(indexes)
+# @evalGet.register
+# def _(
+#     expr: lang.GetIndex,
+#     frame: lang.Frame,
+#     **kwargs,
+# ) -> Union[lang.PyLiteral, lang.Object]:
+#     array = evalGet(expr.array, frame)
+#     assert isinstance(array, lang.Array), "Invalid Array"
+#     indexes = evalIndex(expr.index, frame)
+#     return array.getValue(indexes)
 
-@evalGet.register
-def _(
-    expr: lang.GetAttr,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object]:
-    obj = evalGet(expr.object, frame)
-    assert isinstance(obj, lang.Object), "Invalid Object"
-    return obj.getValue(str(expr.name))
+# @evalGet.register
+# def _(
+#     expr: lang.GetAttr,
+#     frame: lang.Frame,
+#     **kwargs,
+# ) -> Union[lang.PyLiteral, lang.Object]:
+#     obj = evalGet(expr.object, frame)
+#     assert isinstance(obj, lang.Object), "Invalid Object"
+#     return obj.getValue(str(expr.name))
 
-@evalGet.register
-def _(
-    expr: lang.Call,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
-    callable = evalGet(expr.callable, frame)
-    assert isinstance(callable, lang.Function), \
-        f"Invalid Function {callable}"
-    return evalCallable(callable, expr.args, frame)
+# @evalGet.register
+# def _(
+#     expr: lang.Call,
+#     frame: lang.Frame,
+#     **kwargs,
+# ) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+#     callable = evalGet(expr.callable, frame)
+#     assert isinstance(callable, lang.Function), \
+#         f"Invalid Function {callable}"
+#     return evalCallable(callable, expr.args, frame)
 
 @singledispatch
 def evalCallable(callable, args, frame, **kwargs):
@@ -227,12 +227,12 @@ def evalAssign(
         name = str(expr.assignee.name)
         frameMap.setValue(name, value)
     elif isinstance(expr.assignee, lang.GetIndex):
-        array = evalGet(expr.assignee.array, frame)
+        array = evaluate(expr.assignee.array, frame)
         assert isinstance(array, lang.Array), "Invalid Array"
         index = evalIndex(expr.assignee.index, frame)
         array.setValue(index, value)
     elif isinstance(expr.assignee, lang.GetAttr):
-        obj = evalGet(expr.assignee.object, frame)
+        obj = evaluate(expr.assignee.object, frame)
         assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(expr.assignee.name)
         obj.setValue(name, value)
@@ -264,16 +264,23 @@ def _(expr: lang.Assign, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.
     return evalAssign(expr, frame)
 
 @evaluate.register
-def _(expr: lang.GetName, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.PseudoValue, lang.Callable]:
-    return evalGet(expr, frame)
+def _(expr: lang.GetName, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array, lang.Builtin, lang.Callable]:
+    value = expr.frame.getValue(str(expr.name))
+    assert not isinstance(value, lang.File), "Unexpected File"
+    return value
 
 @evaluate.register
-def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
-    return evalGet(expr, frame)
+def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object]:
+    array = evaluate(expr.array, frame)
+    assert isinstance(array, lang.Array), "Invalid Array"
+    indexes = evalIndex(expr.index, frame)
+    return array.getValue(indexes)
     
 @evaluate.register
 def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object]:
-    return evalGet(expr, frame)
+    obj = evaluate(expr.object, frame)
+    assert isinstance(obj, lang.Object), "Invalid Object"
+    return obj.getValue(str(expr.name))
     
 @evaluate.register
 def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
@@ -321,12 +328,12 @@ def execInput(
     if isinstance(stmt.key, lang.GetName):
         stmt.key.frame.setValue(str(stmt.key.name), input())
     elif isinstance(stmt.key, lang.GetIndex):
-        array = evalGet(stmt.key.array, frame)
+        array = evaluate(stmt.key.array, frame)
         assert isinstance(array, lang.Array), "Invalid Array"
         index = evalIndex(stmt.key.index, frame)
         array.setValue(index, input())
     elif isinstance(stmt.key, lang.GetAttr):
-        obj = evalGet(stmt.key.object, frame)
+        obj = evaluate(stmt.key.object, frame)
         assert isinstance(obj, lang.Object), "Invalid Object"
         name = str(stmt.key.name)
         obj.setValue(name, input())
@@ -489,7 +496,7 @@ def execCall(
     frame: lang.Frame,
     **kwargs,
 ) -> None:
-    callable = evalGet(stmt.expr.callable, frame)
+    callable = evaluate(stmt.expr.callable, frame)
     assert isinstance(callable, lang.Procedure), \
         f"Invalid Procedure {callable}"
     evalCallable(callable, stmt.expr.args, frame, **kwargs)
