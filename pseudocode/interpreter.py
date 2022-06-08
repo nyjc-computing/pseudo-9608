@@ -214,36 +214,47 @@ def evalAssign(
         )
     return value
 
-def evaluate(
-    expr: lang.Expr,
-    frame: lang.Frame,
-    **kwargs,
-) -> lang.Value:
+@singledispatch
+def evaluate(expr, frame, **kwargs):
     """Dispatcher for Expr evaluators."""
-    if isinstance(expr, lang.Literal):
-        return evalLiteral(expr, frame)
-    if isinstance(expr, lang.Unary):
-        return evalUnary(expr, frame)
-    if isinstance(expr, lang.Binary):
-        return evalBinary(expr, frame)
-    if isinstance(expr, lang.Assign):
-        return evalAssign(expr, frame)
-    if isinstance(expr, lang.GetName):
-        return evalGet(expr, frame)
-    if isinstance(expr, lang.GetIndex):
-        return evalGet(expr, frame)
-    if isinstance(expr, lang.GetAttr):
-        return evalGet(expr, frame)
-    if isinstance(expr, lang.Call):
-        callable = evalGet(expr.callable, frame)
-        assert (
-            isinstance(callable, lang.Builtin)
-            or isinstance(callable, lang.Function)
-        ), \
-            f"Invalid Builtin/Function {callable}"
-        return evalCallable(callable, expr.args, frame)
-    else:
-        raise TypeError(f"Unexpected expr {expr}")
+    raise TypeError(f"Unexpected expr {expr}")
+
+@evaluate.register
+def _(expr: lang.Literal, frame: lang.Frame, **kw) -> lang.PyLiteral:
+    return evalLiteral(expr, frame)
+
+@evaluate.register
+def _(expr: lang.Unary, frame: lang.Frame, **kw) -> lang.PyLiteral:
+    return evalUnary(expr, frame)
+
+@evaluate.register
+def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.PyLiteral:
+    return evalBinary(expr, frame)
+
+@evaluate.register
+def _(expr: lang.Assign, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+    return evalAssign(expr, frame)
+
+@evaluate.register
+def _(expr: lang.GetName, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.PseudoValue, lang.Callable]:
+    return evalGet(expr, frame)
+
+@evaluate.register
+def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+    return evalGet(expr, frame)
+    
+@evaluate.register
+def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object]:
+    return evalGet(expr, frame)
+    
+@evaluate.register
+def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+    callable = evaluate(expr.callable, frame)
+    assert (
+        isinstance(callable, lang.Builtin)
+        or isinstance(callable, lang.Function)
+    ), f"Invalid Builtin/Function {callable}"
+    return evalCallable(callable, expr.args, frame)
 
 # Executors
 

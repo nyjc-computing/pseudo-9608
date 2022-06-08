@@ -203,12 +203,12 @@ def resolveProcCall(
     return callableType
 
 @singledispatch
-def resolve(expr, frame):
+def resolve(expr, frame, **kw):
     """Dispatcher for Expr resolvers."""
     raise TypeError(f"No resolver found for {expr}")
 
 @resolve.register
-def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.Literal, frame: lang.Frame, **kw) -> lang.Type:
     return expr.type
 
 @resolve.register
@@ -228,7 +228,7 @@ def _(
     return expr.type
 
 @resolve.register
-def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.Unary, frame: lang.Frame, **kw) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     rType = resolve(expr.right, frame)
     if expr.oper is builtin.sub:
@@ -244,7 +244,7 @@ def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
     raise ValueError(f"Unexpected oper {expr.oper}")
 
 @resolve.register
-def _(expr: lang.Binary, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     lType = resolve(expr.left, frame)
     rType = resolve(expr.right, frame)
@@ -294,7 +294,7 @@ def _(expr: lang.Binary, frame: lang.Frame) -> lang.Type:
     raise ValueError("No return for Binary")
 
 @resolve.register
-def _(expr: lang.Assign, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.Assign, frame: lang.Frame, **kw) -> lang.Type:
     resolveNamesInExpr(expr, frame)
     assnType = resolve(expr.assignee, frame)
     exprType = resolve(expr.expr, frame)
@@ -302,7 +302,7 @@ def _(expr: lang.Assign, frame: lang.Frame) -> lang.Type:
     return assnType
 
 @resolve.register
-def _(expr: lang.Call, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.Call, frame: lang.Frame, **kw) -> lang.Type:
     """Resolve a function call.
     Statement verification should be done in verifyFunction, not here.
     """
@@ -327,7 +327,7 @@ def _(expr: lang.Call, frame: lang.Frame) -> lang.Type:
     return callableType
 
 @resolve.register
-def _(expr: lang.GetIndex, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> lang.Type:
     """Resolves a GetIndex Expr to return an array element's type"""
     def intsElseError(frame, *indexes):
         for indexExpr in indexes:
@@ -351,7 +351,7 @@ def _(expr: lang.GetIndex, frame: lang.Frame) -> lang.Type:
     return array.elementType
 
 @resolve.register
-def _(expr: lang.GetAttr, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
     resolveNamesInExpr(expr, frame)
     assert not isinstance(expr.object, lang.UnresolvedName), \
@@ -368,7 +368,7 @@ def _(expr: lang.GetAttr, frame: lang.Frame) -> lang.Type:
     return obj.getType(str(expr.name))
 
 @resolve.register
-def _(expr: lang.GetName, frame: lang.Frame) -> lang.Type:
+def _(expr: lang.GetName, frame: lang.Frame, **kw) -> lang.Type:
     """Returns the type of value that name is mapped to in frame."""
     return expr.frame.getType(str(expr.name))
 
