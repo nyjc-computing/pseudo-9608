@@ -394,8 +394,13 @@ def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
     return resolveLiteral(expr, frame)
 
 @resolve.register
-def _(expr: lang.Declare, frame: lang.Frame) -> lang.Type:
-    return resolveDeclare(expr, frame)
+def _(
+    expr: lang.Declare,
+    frame: lang.Frame,
+    *,
+    passby: lang.Passby='BYVALUE',
+) -> lang.Type:
+    return resolveDeclare(expr, frame, passby=passby)
 
 @resolve.register
 def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
