@@ -379,7 +379,7 @@ def resolveFuncCall(
     )
     return callableType
 
-resolver: Mapping[lang.Expr, function[[lang.Frame, lang.Expr], lang.Type]] = {
+resolver: Mapping = {
     lang.Literal: resolveLiteral,
     lang.Declare: resolveDeclare,
     lang.Unary: resolveUnary,
