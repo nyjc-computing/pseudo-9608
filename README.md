@@ -3,7 +3,7 @@
 
 Pseudo is an interpreter for 9608 pseudocode, a pseudocode syntax used in Cambridge International AS & A Level Computer Science.
 
-The latest version is 0.4.1.
+The latest version is 0.5.0a.
 
 ## Setup
 
