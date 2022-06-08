@@ -384,18 +384,6 @@ def resolveFuncCall(
     )
     return callableType
 
-resolver: Mapping = {
-    lang.Literal: resolveLiteral,
-    lang.Declare: resolveDeclare,
-    lang.Unary: resolveUnary,
-    lang.Binary: resolveBinary,
-    lang.Assign: resolveAssign,
-    lang.Call: resolveFuncCall,
-    lang.GetIndex: resolveIndex,
-    lang.GetAttr: resolveAttr,
-    lang.GetName: resolveGetName,
-}
-
 @singledispatch
 def resolve(expr, frame):
     """Dispatcher for Expr resolvers."""
