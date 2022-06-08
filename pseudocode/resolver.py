@@ -6,7 +6,7 @@ verify(frame: Frame, statements: list) -> None
 """
 
 from typing import Optional, Union, Literal
-from typing import Iterable, Iterator, Mapping, Collection
+from typing import Iterable, Iterator, Collection
 from typing import Tuple
 from functools import singledispatch
 from dataclasses import dataclass
