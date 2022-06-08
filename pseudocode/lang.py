@@ -548,7 +548,7 @@ class Declare(Expr):
 
     @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
@@ -564,7 +564,7 @@ class Assign(Expr):
 
     @property
     def token(self):
-        return self.assignee.token()
+        return self.assignee.token
 
 
 
@@ -608,7 +608,7 @@ class UnresolvedName(Expr):
 
     @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
@@ -622,7 +622,7 @@ class GetName(Expr):
 
     @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
@@ -636,7 +636,7 @@ class GetIndex(Expr):
 
     @property
     def token(self):
-        return self.index[0].token()
+        return self.index[0].token
 
 
 
@@ -650,7 +650,7 @@ class GetAttr(Expr):
 
     @property
     def token(self):
-        return self.name.token()
+        return self.name.token
 
 
 
@@ -665,7 +665,7 @@ class Call(Expr):
 
     @property 
     def token(self):
-        return self.callable.token()
+        return self.callable.token
 
 
 
