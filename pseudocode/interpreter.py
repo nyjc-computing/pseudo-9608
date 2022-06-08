@@ -184,7 +184,7 @@ def evalAssign(frame: lang.Frame, expr: lang.Assign) -> lang.Value:
         obj.setValue(name, value)
     else:
         raise builtin.RuntimeError(
-            "Invalid Input assignee", token=expr.assignee.token()
+            "Invalid Input assignee", token=expr.assignee.token
         )
     return value
 
@@ -266,7 +266,7 @@ def execInput(
         name = str(stmt.key.name)
         obj.setValue(name, input())
     raise builtin.RuntimeError(
-        "Invalid Input assignee", token=stmt.key.token()
+        "Invalid Input assignee", token=stmt.key.token
     )
 
 def execCase(
@@ -320,7 +320,7 @@ def execOpenFile(
     assert isinstance(filename, str), f"Invalid filename {filename}"
     undeclaredElseError(
         frame, filename, "File already opened", 
-        token=stmt.filename.token()
+        token=stmt.filename.token
     )
     frame.declare(filename, 'FILE')
     frame.setValue(
@@ -340,17 +340,17 @@ def execReadFile(
     filename = evaluate(frame, stmt.filename)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
-        frame, filename, "File not open", token=stmt.filename.token()
+        frame, filename, "File not open", token=stmt.filename.token
     )
     file = frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
     expectTypeElseError(
-        frame.getType(filename), 'FILE', token=stmt.filename.token()
+        frame.getType(filename), 'FILE', token=stmt.filename.token
     )
-    expectTypeElseError(file.mode, 'READ', token=stmt.filename.token())
+    expectTypeElseError(file.mode, 'READ', token=stmt.filename.token)
     varname = evaluate(frame, stmt.target)
     assert isinstance(varname, str), f"Expected str, got {varname!r}"
-    declaredElseError(frame, varname, token=stmt.target.token())
+    declaredElseError(frame, varname, token=stmt.target.token)
     # TODO: Catch and handle Python file io errors
     line = file.iohandler.readline().rstrip()
     # TODO: Type conversion
@@ -364,15 +364,15 @@ def execWriteFile(
     filename = evaluate(frame, stmt.filename)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
-        frame, filename, "File not open", token=stmt.filename.token()
+        frame, filename, "File not open", token=stmt.filename.token
     )
     file = frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
     expectTypeElseError(
-        frame.getType(filename), 'FILE', token=stmt.filename.token()
+        frame.getType(filename), 'FILE', token=stmt.filename.token
     )
     expectTypeElseError(
-        file.mode, 'WRITE', 'APPEND', token=stmt.filename.token()
+        file.mode, 'WRITE', 'APPEND', token=stmt.filename.token
     )
     writedata = evaluate(frame, stmt.data)
     if type(writedata) is bool:
@@ -393,12 +393,12 @@ def execCloseFile(
     filename = evaluate(frame, stmt.filename)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
-        frame, filename, "File not open", token=stmt.filename.token()
+        frame, filename, "File not open", token=stmt.filename.token
     )
     file = frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
     expectTypeElseError(
-        frame.getType(filename), 'FILE', token=stmt.filename.token()
+        frame.getType(filename), 'FILE', token=stmt.filename.token
     )
     file.iohandler.close()
     frame.delete(filename)

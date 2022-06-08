@@ -56,7 +56,7 @@ def resolveName(
     unresolved: lang.UnresolvedName = expr
     exprFrame = frame.lookup(str(unresolved.name))
     if exprFrame is None:
-        raise builtin.LogicError("Undeclared", unresolved.token())
+        raise builtin.LogicError("Undeclared", unresolved.token)
     getNameExpr = lang.GetName(exprFrame, unresolved.name)
     if attr:
         setattr(exprOrStmt, attr, getNameExpr)
@@ -114,7 +114,7 @@ def resolveArgsParams(
     for arg, param in zip(args, params):
         # param is a TypedValue slot from either local or frame
         expectTypeElseError(
-            resolve(frame, arg), param.type, token=arg.token()
+            resolve(frame, arg), param.type, token=arg.token
         )
 
 
@@ -152,7 +152,7 @@ def declareByref(
     name: lang.NameKey = str(declare.name)
     expectTypeElseError(
         declare.type, frame.outer.getType(name),
-        token=declare.token()
+        token=declare.token
     )
     # Reference frame vars in local
     frame.set(name, frame.outer.get(name))
@@ -167,7 +167,7 @@ def declareByval(
         and declare.type == 'ARRAY'
     ):
         raise builtin.LogicError(
-            "ARRAY in TYPE not supported", declare.token()
+            "ARRAY in TYPE not supported", declare.token
         )
     name: lang.NameKey = str(declare.name)
     frame.declare(name, declare.type)
@@ -202,12 +202,12 @@ def resolveUnary(
     rType = resolve(frame, expr.right)
     if expr.oper is builtin.sub:
         expectTypeElseError(
-            rType, *builtin.NUMERIC, token=expr.right.token()
+            rType, *builtin.NUMERIC, token=expr.right.token
         )
         return rType
     if expr.oper is builtin.NOT:
         expectTypeElseError(
-            rType, 'BOOLEAN', token=expr.right.token()
+            rType, 'BOOLEAN', token=expr.right.token
         )
         return 'BOOLEAN'
     raise ValueError(f"Unexpected oper {expr.oper}")
@@ -220,15 +220,15 @@ def resolveBinary(
     lType = resolve(frame, expr.left)
     rType = resolve(frame, expr.right)
     if expr.oper in (builtin.AND, builtin.OR):
-        expectTypeElseError(lType, 'BOOLEAN', token=expr.left.token())
-        expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token())
+        expectTypeElseError(lType, 'BOOLEAN', token=expr.left.token)
+        expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token)
         return 'BOOLEAN'
     if expr.oper in (builtin.ne, builtin.eq):
         expectTypeElseError(
-            lType, *builtin.EQUATABLE, token=expr.left.token()
+            lType, *builtin.EQUATABLE, token=expr.left.token
         )
         expectTypeElseError(
-            rType, *builtin.EQUATABLE, token=expr.right.token()
+            rType, *builtin.EQUATABLE, token=expr.right.token
         )
         if not (
             (lType == 'BOOLEAN' and rType == 'BOOLEAN')
@@ -236,25 +236,25 @@ def resolveBinary(
         ):
             raise builtin.LogicError(
                 f"Illegal comparison of {lType} and {rType}",
-                token=expr.token(),
+                token=expr.token,
             )
         return 'BOOLEAN'
     if expr.oper in (builtin.gt, builtin.gte, builtin.lt, builtin.lte):
         expectTypeElseError(
-            lType, *builtin.NUMERIC, token=expr.left.token()
+            lType, *builtin.NUMERIC, token=expr.left.token
         )
         expectTypeElseError(
-            rType, *builtin.NUMERIC, token=expr.right.token()
+            rType, *builtin.NUMERIC, token=expr.right.token
         )
         return 'BOOLEAN'
     if expr.oper in (
         builtin.add, builtin.sub, builtin.mul, builtin.div
     ):
         expectTypeElseError(
-            lType, *builtin.NUMERIC, token=expr.left.token()
+            lType, *builtin.NUMERIC, token=expr.left.token
         )
         expectTypeElseError(
-            rType, *builtin.NUMERIC, token=expr.right.token()
+            rType, *builtin.NUMERIC, token=expr.right.token
         )
         if (
             (expr.oper is not builtin.div)
@@ -272,7 +272,7 @@ def resolveAssign(
     assnType = resolve(frame, expr.assignee)
     exprType = resolve(frame, expr.expr)
     expectTypeElseError(
-        exprType, assnType, token=expr.token()
+        exprType, assnType, token=expr.token
     )
     # Return statement for resolve()
     return assnType
@@ -288,12 +288,12 @@ def resolveAttr(
     objType = resolve(frame, expr.object)
     # Check objType existence in typesystem
     if not frame.types.has(objType):
-        raise builtin.LogicError("Undeclared type", expr.token())
+        raise builtin.LogicError("Undeclared type", expr.token)
     # Check attribute existence in object template
     obj = frame.types.cloneType(objType).value
     assert isinstance(obj, lang.Object), "Invalid Object"
     if not obj.has(str(expr.name)):
-        raise builtin.LogicError("Undeclared attribute", expr.token())
+        raise builtin.LogicError("Undeclared attribute", expr.token)
     return obj.getType(str(expr.name))
 
 def resolveIndex(
@@ -305,7 +305,7 @@ def resolveIndex(
         for indexExpr in indexes:
             nameType = resolve(frame, indexExpr)
             expectTypeElseError(
-                nameType, 'INTEGER', token=indexExpr.token()
+                nameType, 'INTEGER', token=indexExpr.token
             )
     expr.index = resolveExprs(frame, expr.index)
     # Array indexes must be integer
@@ -315,7 +315,7 @@ def resolveIndex(
     assert isinstance(expr.array, lang.GetName), "Array unresolved"
     expectTypeElseError(
         ## Expect array
-        resolve(frame, expr.array), 'ARRAY', token=expr.token())
+        resolve(frame, expr.array), 'ARRAY', token=expr.token)
     array = expr.array.frame.getValue(str(expr.array.name))
     # For mypy type-checking
     assert (isinstance(array, lang.Array)), "Invalid ARRAY"
@@ -337,18 +337,18 @@ def resolveProcCall(
         f"Callable {expr.callable} unresolved"
     callableType = resolveGetName(frame, expr.callable)
     expectTypeElseError(
-        callableType, 'NULL', token=expr.callable.token()
+        callableType, 'NULL', token=expr.callable.token
     )
     callFrame = expr.callable.frame
     callable = callFrame.getValue(str(expr.callable.name))
     if not isinstance(callable, lang.Procedure):
         raise builtin.LogicError(
-            "Not PROCEDURE", token=expr.callable.token()
+            "Not PROCEDURE", token=expr.callable.token
         )
     expr.args = resolveExprs(frame, expr.args)
     resolveArgsParams(
         frame, expr.args, callable.params,
-        token=expr.token()
+        token=expr.token
     )
     return callableType
 
@@ -370,12 +370,12 @@ def resolveFuncCall(
         or isinstance(callable, lang.Builtin)
     ):
         raise builtin.LogicError(
-            "Not FUNCTION", token=expr.callable.token()
+            "Not FUNCTION", token=expr.callable.token
         )
     expr.args = resolveExprs(frame, expr.args)
     resolveArgsParams(
         frame, expr.args, callable.params,
-        token=expr.token()
+        token=expr.token
     )
     return callableType
 
@@ -421,7 +421,7 @@ def verifyStmts(
         if returnType and isinstance(stmt, lang.Return):
             expectTypeElseError(
                 resolve(frame, stmt.expr), returnType,
-                token=stmt.expr.token()
+                token=stmt.expr.token
             )
 
 def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
@@ -442,7 +442,7 @@ def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
 def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
     resolveNamesInExpr(frame, stmt)
     condType = resolve(frame, stmt.cond)
-    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
+    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
     for statements in stmt.stmtMap.values():
         verifyStmts(frame, statements)
     if stmt.fallback:
@@ -453,7 +453,7 @@ def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
     if stmt.init:
         verify(frame, stmt.init)
     condType = resolve(frame, stmt.cond)
-    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token())
+    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
     verifyStmts(frame, stmt.stmts)
 
 def transformDeclares(
@@ -484,7 +484,7 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         if isinstance(procstmt, lang.Return):
             raise builtin.LogicError(
                 "Unexpected RETURN in PROCEDURE",
-                procstmt.expr.token()
+                procstmt.expr.token
             )
     verifyStmts(local, stmt.stmts)
 
@@ -504,7 +504,7 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         for stmt in stmt.stmts
     ]):
         raise builtin.LogicError(
-            "No RETURN in function", stmt.name.token()
+            "No RETURN in function", stmt.name.token
         )
     verifyStmts(local, stmt.stmts, stmt.returnType)
 
@@ -539,25 +539,25 @@ def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
         resolveNamesInExpr(frame, stmt)
         expectTypeElseError(
             resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token()
+            token=stmt.filename.token
         )
     elif isinstance(stmt, lang.ReadFile):
         resolveNamesInExpr(frame, stmt)
         expectTypeElseError(
             resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token()
+            token=stmt.filename.token
         )
     elif isinstance(stmt, lang.WriteFile):
         resolveNamesInExpr(frame, stmt)
         expectTypeElseError(
             resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token()
+            token=stmt.filename.token
         )
     elif isinstance(stmt, lang.CloseFile):
         resolveNamesInExpr(frame, stmt)
         expectTypeElseError(
             resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token()
+            token=stmt.filename.token
         )
     elif isinstance(stmt, lang.TypeStmt):
         verifyDeclareType(frame, stmt)
