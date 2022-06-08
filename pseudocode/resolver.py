@@ -396,14 +396,48 @@ resolver: Mapping = {
     lang.GetName: resolveGetName,
 }
 
+@singledispatch
 def resolve(expr, frame):
     """Dispatcher for Expr resolvers."""
-    exprtype = type(expr)
-    if exprtype not in resolver:
-        raise TypeError(f"Encountered {expr} in resolve()")
-    return resolver[exprtype](expr, frame)
+    raise TypeError(f"No resolver found for {expr}")
 
+@resolve.register
+def _(expr: lang.Literal, frame: lang.Frame) -> lang.Type:
+    return resolveLiteral(expr, frame)
 
+@resolve.register
+def _(expr: lang.Declare, frame: lang.Frame) -> lang.Type:
+    return resolveDeclare(expr, frame)
+
+@resolve.register
+def _(expr: lang.Unary, frame: lang.Frame) -> lang.Type:
+    return resolveUnary(expr, frame)
+
+@resolve.register
+def _(expr: lang.Binary, frame: lang.Frame) -> lang.Type:
+    return resolveBinary(expr, frame)
+
+@resolve.register
+def _(expr: lang.Assign, frame: lang.Frame) -> lang.Type:
+    return resolveAssign(expr, frame)
+
+@resolve.register
+def _(expr: lang.Call, frame: lang.Frame) -> lang.Type:
+    return resolveFuncCall(expr, frame)
+
+@resolve.register
+def _(expr: lang.GetIndex, frame: lang.Frame) -> lang.Type:
+    return resolveIndex(expr, frame)
+
+@resolve.register
+def _(expr: lang.GetAttr, frame: lang.Frame) -> lang.Type:
+    return resolveAttr(expr, frame)
+
+@resolve.register
+def _(expr: lang.GetName, frame: lang.Frame) -> lang.Type:
+    return resolveGetName(expr, frame)
+
+    
 
 # Verifiers
 
