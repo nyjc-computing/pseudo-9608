@@ -6,8 +6,8 @@ verify(frame: Frame, statements: list) -> None
 """
 
 from typing import Optional, Union, Literal
-from typing import Iterable, Iterator, Collection
-from typing import Tuple
+from typing import Iterable, Iterator, Mapping, Collection
+from typing import Tuple, Callable as function
 from dataclasses import dataclass
 from itertools import product
 
@@ -379,32 +379,27 @@ def resolveFuncCall(
     )
     return callableType
 
+resolver: Mapping[lang.Expr, function[[lang.Frame, lang.Expr], lang.Type]] = {
+    lang.Literal: resolveLiteral,
+    lang.Declare: resolveDeclare,
+    lang.Unary: resolveUnary,
+    lang.Binary: resolveBinary,
+    lang.Assign: resolveAssign,
+    lang.Call: resolveFuncCall,
+    lang.GetIndex: resolveIndex,
+    lang.GetAttr: resolveAttr,
+    lang.GetName: resolveGetName,
+}
+
 def resolve(
     frame: lang.Frame,
     expr: lang.Expr,
 ) -> lang.Type:
     """Dispatcher for Expr resolvers."""
-    if isinstance(expr, lang.Literal):
-        return resolveLiteral(frame, expr)
-    if isinstance(expr, lang.Declare):
-        return resolveDeclare(frame, expr)
-    if isinstance(expr, lang.Unary):
-        return resolveUnary(frame, expr)
-    if isinstance(expr, lang.Binary):
-        return resolveBinary(frame, expr)
-    if isinstance(expr, lang.Assign):
-        return resolveAssign(frame, expr)
-    if isinstance(expr, lang.Call):
-        return resolveFuncCall(frame, expr)
-    if isinstance(expr, lang.GetIndex):
-        return resolveIndex(frame, expr)
-    if isinstance(expr, lang.GetAttr):
-        return resolveAttr(frame, expr)
-    if isinstance(expr, lang.GetName):
-        return resolveGetName(frame, expr)
-    if isinstance(expr, lang.UnresolvedName):
+    exprtype = type(expr)
+    if exprtype not in resolver:
         raise TypeError(f"Encountered {expr} in resolve()")
-    raise ValueError(f"Unresolvable {expr}")
+    return resolver[exprtype](frame, expr)
 
 
 
