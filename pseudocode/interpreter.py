@@ -255,7 +255,34 @@ def executeStmts(
             execute(stmt, frame, **kwargs)
     return None
 
-def execOutput(
+def execReturn(
+    stmt: lang.Return,
+    frame: lang.Frame,
+    **kwargs,
+) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+    """Return statements should be explicitly checked for and the
+    return value passed back. They should not be dispatched through
+    execute().
+    """
+    return evaluate(stmt.expr, frame, **kwargs)
+
+
+
+@singledispatch
+def execute(
+    stmt: lang.Stmt,
+    frame: lang.Frame,
+    **kwargs,
+) -> None:
+    """Dispatcher for statement executors."""
+    raise TypeError(f"Invalid Stmt {stmt}")
+
+@execute.register
+def _(stmt: lang.Return, frame: lang.Frame, **kwargs) -> None:
+    raise TypeError("Return Stmts should not be dispatched from execute()")
+    
+@execute.register
+def _(
     stmt: lang.Output,
     frame: lang.Frame,
     *,
@@ -269,11 +296,8 @@ def execOutput(
         output(str(value), end='')
     output('')  # Add \n
 
-def execInput(
-    stmt: lang.Input,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+@execute.register
+def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
     if isinstance(stmt.key, lang.GetName):
         stmt.key.frame.setValue(str(stmt.key.name), input())
     elif isinstance(stmt.key, lang.GetIndex):
@@ -290,54 +314,39 @@ def execInput(
         "Invalid Input assignee", token=stmt.key.token
     )
 
-def execCase(
-    stmt: lang.Conditional,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+@execute.register
+def _(stmt: lang.Case, frame: lang.Frame, **kwargs) -> None:
     cond = evaluate(stmt.cond, frame)
-    assert not isinstance(cond, lang.PseudoValue), \
+    assert not isinstance(cond, lang.PyLiteral), \
         f"Invalid cond {cond}"
     if cond in stmt.stmtMap:
         executeStmts(stmt.stmtMap[cond], frame, **kwargs)
     elif stmt.fallback:
         executeStmts(stmt.fallback, frame, **kwargs)
 
-def execIf(
-    stmt: lang.Conditional,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+@execute.register
+def _(stmt: lang.If, frame: lang.Frame, **kwargs) -> None:
     cond = evaluate(stmt.cond, frame)
     if cond in stmt.stmtMap:
         executeStmts(stmt.stmtMap[True], frame, **kwargs)
     elif stmt.fallback:
         executeStmts(stmt.fallback, frame, **kwargs)
-
-def execWhile(
-    stmt: lang.Loop,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+    
+@execute.register
+def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> None:
     if stmt.init:
         execute(stmt.init, frame, **kwargs)
     while evaluate(stmt.cond, frame) is True:
         executeStmts(stmt.stmts, frame, **kwargs)
-
-def execRepeat(
-    stmt: lang.Loop,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+    
+@execute.register
+def _(stmt: lang.Repeat, frame: lang.Frame, **kwargs) -> None:
     executeStmts(stmt.stmts, frame)
     while evaluate(stmt.cond, frame) is False:
         executeStmts(stmt.stmts, frame)
 
-def execOpenFile(
-    stmt: lang.OpenFile,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+@execute.register
+def _(stmt: lang.OpenFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     undeclaredElseError(
@@ -353,12 +362,9 @@ def execOpenFile(
             open(filename, stmt.mode[0].lower())
         ),
     )
-
-def execReadFile(
-    stmt: lang.ReadFile,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+    
+@execute.register
+def _(stmt: lang.ReadFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
@@ -377,12 +383,9 @@ def execReadFile(
     line = file.iohandler.readline().rstrip()
     # TODO: Type conversion
     frame.setValue(varname, line)
-
-def execWriteFile(
-    stmt: lang.WriteFile,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+    
+@execute.register
+def _(stmt: lang.WriteFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
@@ -406,12 +409,9 @@ def execWriteFile(
         writedata += '\n'
     # TODO: Catch and handle Python file io errors
     file.iohandler.write(writedata)
-
-def execCloseFile(
-    stmt: lang.CloseFile,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+    
+@execute.register
+def _(stmt: lang.CloseFile, frame: lang.Frame, **kwargs) -> None:
     filename = evaluate(stmt.filename, frame)
     assert isinstance(filename, str), f"Invalid filename {filename}"
     declaredElseError(
@@ -424,96 +424,17 @@ def execCloseFile(
     )
     file.iohandler.close()
     frame.delete(filename)
-
-def execFile(
-    stmt: lang.FileStmt,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
-    """Dispatcher for File executors."""
-    if isinstance(stmt, lang.OpenFile):
-        execOpenFile(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.ReadFile):
-        execReadFile(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.WriteFile):
-        execWriteFile(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.CloseFile):
-        execCloseFile(stmt, frame, **kwargs)
-
-def execCall(
-    stmt: lang.CallStmt,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+    
+@execute.register
+def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
     callable = evaluate(stmt.expr.callable, frame)
     assert isinstance(callable, lang.Procedure), \
         f"Invalid Procedure {callable}"
     evalCallable(callable, stmt.expr.args, frame, **kwargs)
-
-def execAssign(
-    stmt: lang.AssignStmt,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
-    evaluate(stmt.expr, frame, **kwargs)
-
-def execReturn(
-    stmt: lang.Return,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
-    return evaluate(stmt.expr, frame, **kwargs)
-
-
-
-@singledispatch
-def execute(
-    stmt: lang.Stmt,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
-    """Dispatcher for statement executors."""
-    raise TypeError(f"Invalid Stmt {stmt}")
-
-@execute.register
-def _(stmt: lang.Output, frame: lang.Frame, **kwargs) -> None:
-    execOutput(stmt, frame, **kwargs)
-
-@execute.register
-def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
-    execInput(stmt, frame, **kwargs)
-
-@execute.register
-def _(stmt: lang.Case, frame: lang.Frame, **kwargs) -> None:
-    execCase(stmt, frame, **kwargs)
-
-@execute.register
-def _(stmt: lang.If, frame: lang.Frame, **kwargs) -> None:
-    execIf(stmt, frame, **kwargs)
-    
-@execute.register
-def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> None:
-    execWhile(stmt, frame, **kwargs)
-    
-@execute.register
-def _(stmt: lang.Repeat, frame: lang.Frame, **kwargs) -> None:
-    execRepeat(stmt, frame, **kwargs)
-    
-@execute.register
-def _(stmt: lang.FileStmt, frame: lang.Frame, **kwargs) -> None:
-    execFile(stmt, frame, **kwargs)
-    
-@execute.register
-def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
-    execCall(stmt, frame, **kwargs)
     
 @execute.register
 def _(stmt: lang.AssignStmt, frame: lang.Frame, **kwargs) -> None:
-    execAssign(stmt, frame, **kwargs)
-    
-@execute.register
-def _(stmt: lang.Return, frame: lang.Frame, **kwargs) -> None:
-    raise TypeError("Return Stmts should not be dispatched from execute()")
+    evaluate(stmt.expr, frame, **kwargs)
     
 @execute.register
 def _(stmt: lang.DeclareStmt, frame: lang.Frame, **kwargs) -> None:
