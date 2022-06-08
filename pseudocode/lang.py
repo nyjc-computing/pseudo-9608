@@ -301,7 +301,7 @@ class Object(PseudoValue):
 
 
 
-class Frame(Object):
+class Frame:
     """Frames differ from Objects in that they can be chained (with a
     reference to an outer Frame, names can be reassigned to a different
     TypedValue, and slots can be deleted after declaration.
@@ -323,8 +323,37 @@ class Frame(Object):
         typesys: "TypeSystem",
         outer: "Frame"=None,
     ) -> None:
-        super().__init__(typesys=typesys)
+        self.data: MutableMapping[NameKey, "TypedValue"] = {}
+        self.types = typesys
         self.outer = outer
+
+    def __repr__(self) -> str:
+        nameTypePairs = [
+            f"{name}: {self.getType(name)}"
+            for name in self.data
+        ]
+        return f"{{{', '.join(nameTypePairs)}}}"
+
+    def has(self, name: NameKey) -> bool:
+        return name in self.data
+
+    def declare(self, name: NameKey, type: str) -> None:
+        self.data[name] = self.types.cloneType(type)
+
+    def getType(self, name: NameKey) -> Type:
+        return self.data[name].type
+
+    def getValue(self, name: NameKey) -> Value:
+        returnval = self.data[name].value
+        if returnval is None:
+            raise ValueError(f"Accessed unassigned variable {name!r}")
+        return returnval
+
+    def get(self, name: NameKey) -> "TypedValue":
+        return self.data[name]
+
+    def setValue(self, name: NameKey, value: Value) -> None:
+        self.data[name].value = value
 
     def set(self, name: NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
