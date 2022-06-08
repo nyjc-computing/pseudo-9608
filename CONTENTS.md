@@ -69,3 +69,4 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [26c Release: Logging](https://github.com/nyjc-computing/pseudo-9608/pull/80)
 - [26d Release: Readme](https://github.com/nyjc-computing/pseudo-9608/pull/81/)
 - [27 Documentation](https://github.com/nyjc-computing/pseudo-9608/pull/82)
+- [28a Shrinkwrap: dataclasses](https://github.com/nyjc-computing/pseudo-9608/pull/83)
