@@ -44,7 +44,7 @@ Args = Collection["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
-Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
+Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable", "File"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
 # NameExprs are GetExprs that use a NameKey
 NameKeyExpr = Union["UnresolvedName", "GetName"]
@@ -283,10 +283,14 @@ class Object(PseudoValue):
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> Value:
+    def getValue(self, name: NameKey) -> Union[PyLiteral, "Object"]:
         returnval = self.data[name].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned variable {name!r}")
+        assert not isinstance(returnval, Array), "Unexpected Array"
+        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
+        assert not isinstance(returnval, Callable), "Unexpected Callable"
+        assert not isinstance(returnval, File), "Unexpected File"
         return returnval
 
     def get(self, name: NameKey) -> "TypedValue":
@@ -297,7 +301,7 @@ class Object(PseudoValue):
 
 
 
-class Frame(Object):
+class Frame:
     """Frames differ from Objects in that they can be chained (with a
     reference to an outer Frame, names can be reassigned to a different
     TypedValue, and slots can be deleted after declaration.
@@ -319,8 +323,37 @@ class Frame(Object):
         typesys: "TypeSystem",
         outer: "Frame"=None,
     ) -> None:
-        super().__init__(typesys=typesys)
+        self.data: MutableMapping[NameKey, "TypedValue"] = {}
+        self.types = typesys
         self.outer = outer
+
+    def __repr__(self) -> str:
+        nameTypePairs = [
+            f"{name}: {self.getType(name)}"
+            for name in self.data
+        ]
+        return f"{{{', '.join(nameTypePairs)}}}"
+
+    def has(self, name: NameKey) -> bool:
+        return name in self.data
+
+    def declare(self, name: NameKey, type: str) -> None:
+        self.data[name] = self.types.cloneType(type)
+
+    def getType(self, name: NameKey) -> Type:
+        return self.data[name].type
+
+    def getValue(self, name: NameKey) -> Value:
+        returnval = self.data[name].value
+        if returnval is None:
+            raise ValueError(f"Accessed unassigned variable {name!r}")
+        return returnval
+
+    def get(self, name: NameKey) -> "TypedValue":
+        return self.data[name]
+
+    def setValue(self, name: NameKey, value: Value) -> None:
+        self.data[name].value = value
 
     def set(self, name: NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
@@ -421,10 +454,14 @@ class Array(PseudoValue):
     def getType(self, index: IndexKey) -> Type:
         return self.data[index].type
 
-    def getValue(self, index: IndexKey) -> Value:
+    def getValue(self, index: IndexKey) -> Union[PyLiteral, Object]:
         returnval = self.data[index].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned index {index!r}")
+        assert not isinstance(returnval, Array), "Unexpected Array"
+        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
+        assert not isinstance(returnval, Callable), "Unexpected Callable"
+        assert not isinstance(returnval, File), "Unexpected File"
         return returnval
 
     def get(self, index: IndexKey) -> "TypedValue":
@@ -801,6 +838,7 @@ class TypeStmt(Stmt):
 
 class FileStmt(Stmt):
     """Base class for Stmts involving Files."""
+    filename: "Expr"
 
 @dataclass
 class OpenFile(FileStmt):

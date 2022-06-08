@@ -1,13 +1,14 @@
 """resolver
 
-verify(frame: Frame, statements: list) -> None
+verify(statements: list, frame: Frame) -> None
     Resolves expressions in statements, declares variables and types
     in the list of statements
 """
 
-from typing import Optional, Union, Literal
+from typing import Optional, Union
 from typing import Iterable, Iterator, Collection
 from typing import Tuple
+from functools import singledispatch
 from dataclasses import dataclass
 from itertools import product
 
@@ -45,8 +46,8 @@ def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
     return product(*ranges)
 
 def resolveName(
-    frame: lang.Frame,
     exprOrStmt: Union[lang.Expr, lang.Stmt],
+    frame: lang.Frame,
     attr: Optional[str]=None,
 ) -> lang.GetName:
     """Takes in an UnresolvedName, and returns a GetName with an
@@ -68,19 +69,19 @@ def resolveName(
     return getNameExpr
 
 def resolveNamesInExpr(
-    frame: lang.Frame,
     exprOrStmt: Union[lang.Expr, lang.Stmt],
+    frame: lang.Frame,
 ) -> None:
     """Checks the exprOrstmt's slots for UnresolvedName, and replaces
     them with GetNames.
     """
     for attr in exprOrStmt.__slots__:
         if isinstance(getattr(exprOrStmt, attr), lang.UnresolvedName):
-            resolveName(frame, exprOrStmt, attr)
+            resolveName(exprOrStmt, frame, attr)
 
 def resolveExprs(
-    frame: lang.Frame,
     exprs: Iterable[lang.Expr],
+    frame: lang.Frame,
 ) -> Tuple[lang.Expr, ...]:
     """Resolve an iterable of Exprs.
     UnresolvedNames are resolved into GetNames.
@@ -93,15 +94,15 @@ def resolveExprs(
     newexprs: Tuple[lang.Expr, ...] = tuple()
     for expr in exprs:
         if isinstance(expr, lang.UnresolvedName):
-            expr = resolveName(frame, expr)
-        resolve(frame, expr)
+            expr = resolveName(expr, frame)
+        resolve(expr, frame)
         newexprs += (expr,)
     return newexprs
 
 def resolveArgsParams(
-    frame: lang.Frame,
     args: lang.Args,
     params: Collection[lang.Param],
+    frame: lang.Frame,
     *,
     token: lang.Token,
 ) -> None:
@@ -118,7 +119,7 @@ def resolveArgsParams(
     for arg, param in zip(args, params):
         # param is a TypedValue slot from either local or frame
         expectTypeElseError(
-            resolve(frame, arg), param.type, token=arg.token
+            resolve(arg, frame), param.type, token=arg.token
         )
 
 
@@ -131,21 +132,15 @@ class Resolver:
     statements: Iterable[lang.Stmt]
 
     def inspect(self) -> None:
-        verifyStmts(self.frame, self.statements)
+        verifyStmts(self.statements, self.frame)
 
 
     
-# Resolvers
-
-def resolveLiteral(
-    frame: lang.Frame,
-    literal: lang.Literal,
-) -> lang.Type:
-    return literal.type
+# Resolver helpers
 
 def declareByref(
-    frame: lang.Frame,
     declare: lang.Declare,
+    frame: lang.Frame,
 ) -> None:
     """Declares BYREF variable in the given frame."""
     assert frame.outer, "Declared name in a frame with no outer"
@@ -158,8 +153,8 @@ def declareByref(
     frame.set(name, frame.outer.get(name))
 
 def declareByval(
-    frame: Union[lang.Frame, lang.ObjectTemplate],
     declare: lang.Declare,
+    frame: Union[lang.Frame, lang.ObjectTemplate],
 ) -> None:
     """Declares BYVALUE variable in the given frame."""
     if (
@@ -180,26 +175,62 @@ def declareByval(
         assert isinstance(frame, lang.Frame), "Frame expected"
         frame.setValue(name, array)
 
-def resolveDeclare(
+def resolveProcCall(
+    expr: lang.Call,
+    frame: lang.Frame,
+) -> lang.Type:
+    """Resolve a procedure call.
+    Statement verification should be done in verifyProcedure, not here.
+    """
+    resolveNamesInExpr(expr, frame)
+    assert isinstance(expr.callable, lang.GetName), \
+        f"Callable {expr.callable} unresolved"
+    callableType = resolve(expr.callable, frame)
+    expectTypeElseError(
+        callableType, 'NULL', token=expr.callable.token
+    )
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(str(expr.callable.name))
+    if not isinstance(callable, lang.Procedure):
+        raise builtin.LogicError(
+            "Not PROCEDURE", token=expr.callable.token
+        )
+    expr.args = resolveExprs(expr.args, frame)
+    resolveArgsParams(
+        expr.args, callable.params, frame,
+        token=expr.token
+    )
+    return callableType
+
+@singledispatch
+def resolve(expr, frame, **kw):
+    """Dispatcher for Expr resolvers."""
+    raise TypeError(f"No resolver found for {expr}")
+
+@resolve.register
+def _(expr: lang.Literal, frame: lang.Frame, **kw) -> lang.Type:
+    return expr.type
+
+@resolve.register
+def _(
+    expr: lang.Declare,
     frame: Union[lang.Frame, lang.ObjectTemplate],
-    declare: lang.Declare,
-    passby: Literal['BYVALUE', 'BYREF']='BYVALUE',
+    *,
+    passby: lang.Passby='BYVALUE',
 ) -> lang.Type:
     """Declare variable in frame with dispatcher."""
     if passby == 'BYVALUE':
-        declareByval(frame, declare)
+        declareByval(expr, frame)
     else:
         assert isinstance(frame, lang.Frame), \
             "Declared BYREF in invalid Frame"
-        declareByref(frame, declare)
-    return declare.type
+        declareByref(expr, frame)
+    return expr.type
 
-def resolveUnary(
-    frame: lang.Frame,
-    expr: lang.Unary,
-) -> lang.Type:
-    resolveNamesInExpr(frame, expr)
-    rType = resolve(frame, expr.right)
+@resolve.register
+def _(expr: lang.Unary, frame: lang.Frame, **kw) -> lang.Type:
+    resolveNamesInExpr(expr, frame)
+    rType = resolve(expr.right, frame)
     if expr.oper is builtin.sub:
         expectTypeElseError(
             rType, *builtin.NUMERIC, token=expr.right.token
@@ -212,13 +243,11 @@ def resolveUnary(
         return 'BOOLEAN'
     raise ValueError(f"Unexpected oper {expr.oper}")
 
-def resolveBinary(
-    frame: lang.Frame,
-    expr: lang.Binary,
-) -> lang.Type:
-    resolveNamesInExpr(frame, expr)
-    lType = resolve(frame, expr.left)
-    rType = resolve(frame, expr.right)
+@resolve.register
+def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.Type:
+    resolveNamesInExpr(expr, frame)
+    lType = resolve(expr.left, frame)
+    rType = resolve(expr.right, frame)
     if expr.oper in (builtin.AND, builtin.OR):
         expectTypeElseError(lType, 'BOOLEAN', token=expr.left.token)
         expectTypeElseError(rType, 'BOOLEAN', token=expr.right.token)
@@ -264,28 +293,70 @@ def resolveBinary(
         return 'REAL'
     raise ValueError("No return for Binary")
 
-def resolveAssign(
-    frame: lang.Frame,
-    expr: lang.Assign,
-) -> lang.Type:
-    resolveNamesInExpr(frame, expr)
-    assnType = resolve(frame, expr.assignee)
-    exprType = resolve(frame, expr.expr)
-    expectTypeElseError(
-        exprType, assnType, token=expr.token
-    )
-    # Return statement for resolve()
+@resolve.register
+def _(expr: lang.Assign, frame: lang.Frame, **kw) -> lang.Type:
+    resolveNamesInExpr(expr, frame)
+    assnType = resolve(expr.assignee, frame)
+    exprType = resolve(expr.expr, frame)
+    expectTypeElseError(exprType, assnType, token=expr.token)
     return assnType
 
-def resolveAttr(
-    frame: lang.Frame,
-    expr: lang.GetAttr,
-) -> lang.Type:
+@resolve.register
+def _(expr: lang.Call, frame: lang.Frame, **kw) -> lang.Type:
+    """Resolve a function call.
+    Statement verification should be done in verifyFunction, not here.
+    """
+    resolveNamesInExpr(expr, frame)
+    assert isinstance(expr.callable, lang.GetName), \
+        "Unresolved Callable"
+    callableType = resolve(expr.callable, frame)
+    callFrame = expr.callable.frame
+    callable = callFrame.getValue(str(expr.callable.name))
+    if not (
+        isinstance(callable, lang.Function)
+        or isinstance(callable, lang.Builtin)
+    ):
+        raise builtin.LogicError(
+            "Not FUNCTION", token=expr.callable.token
+        )
+    expr.args = resolveExprs(expr.args, frame)
+    resolveArgsParams(
+        expr.args, callable.params, frame,
+        token=expr.token
+    )
+    return callableType
+
+@resolve.register
+def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> lang.Type:
+    """Resolves a GetIndex Expr to return an array element's type"""
+    def intsElseError(frame, *indexes):
+        for indexExpr in indexes:
+            nameType = resolve(indexExpr, frame)
+            expectTypeElseError(
+                nameType, 'INTEGER', token=indexExpr.token
+            )
+    expr.index = resolveExprs(expr.index, frame)
+    # Array indexes must be integer
+    intsElseError(frame, *expr.index)
+    # Arrays in Objects not yet supported; assume frame
+    resolveNamesInExpr(expr, frame)
+    assert isinstance(expr.array, lang.GetName), "Array unresolved"
+    expectTypeElseError(
+        ## Expect array
+        resolve(expr.array, frame), 'ARRAY', token=expr.token
+    )
+    array = expr.array.frame.getValue(str(expr.array.name))
+    # For mypy type-checking
+    assert (isinstance(array, lang.Array)), "Invalid ARRAY"
+    return array.elementType
+
+@resolve.register
+def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
-    resolveNamesInExpr(frame, expr)
+    resolveNamesInExpr(expr, frame)
     assert not isinstance(expr.object, lang.UnresolvedName), \
         "Object unresolved"
-    objType = resolve(frame, expr.object)
+    objType = resolve(expr.object, frame)
     # Check objType existence in typesystem
     if not frame.types.has(objType):
         raise builtin.LogicError("Undeclared type", expr.token)
@@ -296,185 +367,98 @@ def resolveAttr(
         raise builtin.LogicError("Undeclared attribute", expr.token)
     return obj.getType(str(expr.name))
 
-def resolveIndex(
-    frame: lang.Frame,
-    expr: lang.GetIndex,
-) -> lang.Type:
-    """Resolves a GetIndex Expr to return an array element's type"""
-    def intsElseError(frame, *indexes):
-        for indexExpr in indexes:
-            nameType = resolve(frame, indexExpr)
-            expectTypeElseError(
-                nameType, 'INTEGER', token=indexExpr.token
-            )
-    expr.index = resolveExprs(frame, expr.index)
-    # Array indexes must be integer
-    intsElseError(frame, *expr.index)
-    # Arrays in Objects not yet supported; assume frame
-    resolveNamesInExpr(frame, expr)
-    assert isinstance(expr.array, lang.GetName), "Array unresolved"
-    expectTypeElseError(
-        ## Expect array
-        resolve(frame, expr.array), 'ARRAY', token=expr.token)
-    array = expr.array.frame.getValue(str(expr.array.name))
-    # For mypy type-checking
-    assert (isinstance(array, lang.Array)), "Invalid ARRAY"
-    return array.elementType
-
-def resolveGetName(frame: lang.Frame, expr: lang.GetName) -> lang.Type:
+@resolve.register
+def _(expr: lang.GetName, frame: lang.Frame, **kw) -> lang.Type:
     """Returns the type of value that name is mapped to in frame."""
     return expr.frame.getType(str(expr.name))
 
-def resolveProcCall(
-    frame: lang.Frame,
-    expr: lang.Call,
-) -> lang.Type:
-    """Resolve a procedure call.
-    Statement verification should be done in verifyProcedure, not here.
-    """
-    resolveNamesInExpr(frame, expr)
-    assert isinstance(expr.callable, lang.GetName), \
-        f"Callable {expr.callable} unresolved"
-    callableType = resolveGetName(frame, expr.callable)
-    expectTypeElseError(
-        callableType, 'NULL', token=expr.callable.token
-    )
-    callFrame = expr.callable.frame
-    callable = callFrame.getValue(str(expr.callable.name))
-    if not isinstance(callable, lang.Procedure):
-        raise builtin.LogicError(
-            "Not PROCEDURE", token=expr.callable.token
-        )
-    expr.args = resolveExprs(frame, expr.args)
-    resolveArgsParams(
-        frame, expr.args, callable.params,
-        token=expr.token
-    )
-    return callableType
-
-def resolveFuncCall(
-    frame: lang.Frame,
-    expr: lang.Call,
-) -> lang.Type:
-    """Resolve a function call.
-    Statement verification should be done in verifyFunction, not here.
-    """
-    resolveNamesInExpr(frame, expr)
-    assert isinstance(expr.callable, lang.GetName), \
-        "Callable unresolved"
-    callableType = resolveGetName(frame, expr.callable)
-    callFrame = expr.callable.frame
-    callable = callFrame.getValue(str(expr.callable.name))
-    if not (
-        isinstance(callable, lang.Function)
-        or isinstance(callable, lang.Builtin)
-    ):
-        raise builtin.LogicError(
-            "Not FUNCTION", token=expr.callable.token
-        )
-    expr.args = resolveExprs(frame, expr.args)
-    resolveArgsParams(
-        frame, expr.args, callable.params,
-        token=expr.token
-    )
-    return callableType
-
-def resolve(
-    frame: lang.Frame,
-    expr: lang.Expr,
-) -> lang.Type:
-    """Dispatcher for Expr resolvers."""
-    if isinstance(expr, lang.Literal):
-        return resolveLiteral(frame, expr)
-    if isinstance(expr, lang.Declare):
-        return resolveDeclare(frame, expr)
-    if isinstance(expr, lang.Unary):
-        return resolveUnary(frame, expr)
-    if isinstance(expr, lang.Binary):
-        return resolveBinary(frame, expr)
-    if isinstance(expr, lang.Assign):
-        return resolveAssign(frame, expr)
-    if isinstance(expr, lang.Call):
-        return resolveFuncCall(frame, expr)
-    if isinstance(expr, lang.GetIndex):
-        return resolveIndex(frame, expr)
-    if isinstance(expr, lang.GetAttr):
-        return resolveAttr(frame, expr)
-    if isinstance(expr, lang.GetName):
-        return resolveGetName(frame, expr)
-    if isinstance(expr, lang.UnresolvedName):
-        raise TypeError(f"Encountered {expr} in resolve()")
-    raise ValueError(f"Unresolvable {expr}")
 
 
-
-# Verifiers
-
-def verifyStmts(
-    frame: lang.Frame,
-    stmts: Iterable[lang.Stmt],
-    returnType: Optional[lang.Type]=None,
-) -> None:
-    """Verify a list of statements."""
-    for stmt in stmts:
-        verify(frame, stmt)
-        if returnType and isinstance(stmt, lang.Return):
-            expectTypeElseError(
-                resolve(frame, stmt.expr), returnType,
-                token=stmt.expr.token
-            )
-
-def verifyOutput(frame: lang.Frame, stmt: lang.Output) -> None:
-    stmt.exprs = resolveExprs(frame, stmt.exprs)
-
-def verifyInput(frame: lang.Frame, stmt: lang.Input) -> None:
-    resolveNamesInExpr(frame, stmt)
-    resolve(frame, stmt.key)
-
-def verifyCase(frame: lang.Frame, stmt: lang.Conditional) -> None:
-    resolveNamesInExpr(frame, stmt)
-    resolve(frame, stmt.cond)
-    for statements in stmt.stmtMap.values():
-        verifyStmts(frame, statements)
-    if stmt.fallback:
-        verifyStmts(frame, stmt.fallback)
-
-def verifyIf(frame: lang.Frame, stmt: lang.Conditional) -> None:
-    resolveNamesInExpr(frame, stmt)
-    condType = resolve(frame, stmt.cond)
-    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
-    for statements in stmt.stmtMap.values():
-        verifyStmts(frame, statements)
-    if stmt.fallback:
-        verifyStmts(frame, stmt.fallback)
-
-def verifyLoop(frame: lang.Frame, stmt: lang.Loop) -> None:
-    resolveNamesInExpr(frame, stmt)
-    if stmt.init:
-        verify(frame, stmt.init)
-    condType = resolve(frame, stmt.cond)
-    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
-    verifyStmts(frame, stmt.stmts)
+# Verifier helpers
 
 def transformDeclares(
-    frame: lang.Frame,
     declares: Iterable[lang.Declare],
     passby: lang.Passby,
+    frame: lang.Frame,
 ) -> Tuple[lang.TypedValue, ...]:
     """Takes in a list of Declares. Returns a list of TypedValues.
     Used to declare names in a frame/object.
     """
     params: Tuple[lang.TypedValue, ...] = tuple()
     for declaration in declares:
-        resolveDeclare(frame, declaration, passby=passby)
+        resolve(declaration, frame, passby=passby)
         params += (frame.get(str(declaration.name)),)
     return params
 
-def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+    
+
+# Verifiers
+
+def verifyStmts(
+    stmts: Iterable[lang.Stmt],
+    frame: lang.Frame,
+    returnType: Optional[lang.Type]=None,
+) -> None:
+    """Verify a list of statements."""
+    for stmt in stmts:
+        verify(stmt, frame)
+        if returnType and isinstance(stmt, lang.Return):
+            expectTypeElseError(
+                resolve(stmt.expr, frame), returnType,
+                token=stmt.expr.token
+            )
+
+@singledispatch
+def verify(stmt, frame):
+    """Dispatcher for Stmt verifiers."""
+    raise TypeError(f"No verifier found for {stmt}")
+
+@verify.register
+def _(stmt: lang.Output, frame: lang.Frame) -> None:
+    stmt.exprs = resolveExprs(stmt.exprs, frame)
+
+@verify.register
+def _(stmt: lang.Input, frame: lang.Frame) -> None:
+    resolveNamesInExpr(stmt, frame)
+    resolve(stmt.key, frame)
+
+@verify.register
+def _(stmt: lang.Case, frame: lang.Frame) -> None:
+    resolveNamesInExpr(stmt, frame)
+    resolve(stmt.cond, frame)
+    for statements in stmt.stmtMap.values():
+        verifyStmts(statements, frame)
+    if stmt.fallback:
+        verifyStmts(stmt.fallback, frame)
+
+@verify.register
+def _(stmt: lang.If, frame: lang.Frame) -> None:
+    resolveNamesInExpr(stmt, frame)
+    condType = resolve(stmt.cond, frame)
+    expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
+    for statements in stmt.stmtMap.values():
+        verifyStmts(statements, frame)
+    if stmt.fallback:
+        verifyStmts(stmt.fallback, frame)
+
+@verify.register
+def _(stmt: lang.Loop, frame: lang.Frame) -> None:
+    resolveNamesInExpr(stmt, frame)
+    if stmt.init:
+        verify(stmt.init, frame)
+    condType = resolve(stmt.cond, frame)
+    expectTypeElseError(
+        condType, 'BOOLEAN',
+        token=stmt.cond.token
+    )
+    verifyStmts(stmt.stmts, frame)
+
+@verify.register
+def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
     """Declare a Procedure in the given frame."""
-    resolveNamesInExpr(frame, stmt)
+    resolveNamesInExpr(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
-    params = transformDeclares(local, stmt.params, stmt.passby)
+    params = transformDeclares(stmt.params, stmt.passby, local)
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(str(stmt.name), 'NULL')
     frame.setValue(str(stmt.name), lang.Procedure(
@@ -486,13 +470,14 @@ def verifyProcedure(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
                 "Unexpected RETURN in PROCEDURE",
                 procstmt.expr.token
             )
-    verifyStmts(local, stmt.stmts)
+    verifyStmts(stmt.stmts, local)
 
-def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
+@verify.register
+def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
     """Declare a Function in the given frame."""
-    resolveNamesInExpr(frame, stmt)
+    resolveNamesInExpr(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
-    params = transformDeclares(local, stmt.params, stmt.passby)
+    params = transformDeclares(stmt.params, stmt.passby, local)
     # Assign function in frame first, to make recursive calls work
     frame.declare(str(stmt.name), stmt.returnType)
     frame.setValue(str(stmt.name), lang.Function(
@@ -506,69 +491,37 @@ def verifyFunction(frame: lang.Frame, stmt: lang.ProcFunc) -> None:
         raise builtin.LogicError(
             "No RETURN in function", stmt.name.token
         )
-    verifyStmts(local, stmt.stmts, stmt.returnType)
+    verifyStmts(stmt.stmts, local, stmt.returnType)
 
-def verifyDeclareType(
-    frame: lang.Frame,
-    stmt: lang.TypeStmt,
-) -> None:
+@verify.register
+def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
+    resolveNamesInExpr(stmt, frame)
+    expectTypeElseError(
+        resolve(stmt.filename, frame), 'STRING',
+        token=stmt.filename.token
+    )
+
+@verify.register
+def _(stmt: lang.TypeStmt, frame: lang.Frame) -> None:
     """Declare a custom Type in the given frame's TypeSystem."""
     frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=frame.types)
     for expr in stmt.exprs:
-        resolveDeclare(objTemplate, expr)
+        resolve(expr, objTemplate)
     frame.types.setTemplate(str(stmt.name), objTemplate)
 
-def verify(frame: lang.Frame, stmt: lang.Stmt) -> None:
-    """Dispatcher for Stmt verifiers."""
-    if isinstance(stmt, lang.Output):
-        verifyOutput(frame, stmt)
-    elif isinstance(stmt, lang.Input):
-        verifyInput(frame, stmt)
-    elif isinstance(stmt, lang.Case):
-        verifyCase(frame, stmt)
-    elif isinstance(stmt, lang.If):
-        verifyIf(frame, stmt)
-    elif isinstance(stmt, lang.Loop):
-        verifyLoop(frame, stmt)
-    elif isinstance(stmt, lang.ProcedureStmt):
-        verifyProcedure(frame, stmt)
-    elif isinstance(stmt, lang.FunctionStmt):
-        verifyFunction(frame, stmt)
-    elif isinstance(stmt, lang.OpenFile):
-        resolveNamesInExpr(frame, stmt)
-        expectTypeElseError(
-            resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.ReadFile):
-        resolveNamesInExpr(frame, stmt)
-        expectTypeElseError(
-            resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.WriteFile):
-        resolveNamesInExpr(frame, stmt)
-        expectTypeElseError(
-            resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.CloseFile):
-        resolveNamesInExpr(frame, stmt)
-        expectTypeElseError(
-            resolve(frame, stmt.filename), 'STRING',
-            token=stmt.filename.token
-        )
-    elif isinstance(stmt, lang.TypeStmt):
-        verifyDeclareType(frame, stmt)
-    elif isinstance(stmt, lang.CallStmt):
-        assert isinstance(stmt.expr, lang.Call), "Invalid Call"
-        resolveProcCall(frame, stmt.expr)
-    elif isinstance(stmt, lang.AssignStmt):
-        assert isinstance(stmt.expr, lang.Assign), "Invalid Assign"
-        resolveAssign(frame, stmt.expr)
-    elif isinstance(stmt, lang.DeclareStmt):
-        assert isinstance(stmt.expr, lang.Declare), "Invalid Declare"
-        resolveDeclare(frame, stmt.expr)
-    assert not isinstance(stmt, lang.Return), \
-        "Unhandled Return in verify()"
+@verify.register
+def _(stmt: lang.CallStmt, frame: lang.Frame) -> None:
+    resolveProcCall(stmt.expr, frame)
+
+@verify.register
+def _(stmt: lang.AssignStmt, frame: lang.Frame) -> None:
+    resolve(stmt.expr, frame)
+
+@verify.register
+def _(stmt: lang.DeclareStmt, frame: lang.Frame) -> None:
+    resolve(stmt.expr, frame)
+
+@verify.register
+def _(stmt: lang.Return, frame: lang.Frame) -> None:
+    raise ValueError("Unhandled Return in verify()")
