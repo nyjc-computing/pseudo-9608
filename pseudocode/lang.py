@@ -73,7 +73,7 @@ class Token:
     value: Any
 
     def __repr__(self) -> str:
-        lineinfo = f"[Line {self.line} column {self.col}]"
+        lineinfo = f"[Line {self.line} column {self.column}]"
         return f"{lineinfo} <{self.value}> {repr(self.word)}"
 
 
@@ -750,6 +750,9 @@ class Loop(Stmt):
     cond evaluates to a False value.
     """
     __slots__ = ('init', 'cond', 'stmts')
+    init: Optional["Stmt"]
+    cond: "Expr"
+    stmts: Iterable["Stmt"]
 
 @dataclass
 class While(Loop):
