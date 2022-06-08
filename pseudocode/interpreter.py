@@ -4,9 +4,8 @@ execute(frame: Frame, statements: list) -> None
     Interprets and executes a list of statements
 """
 
-from typing import Optional, Union
-from typing import Iterable, Callable as function
-from typing import overload
+from typing import Union, Callable as function
+from typing import Iterable, Collection
 from functools import singledispatch
 from dataclasses import dataclass, field
 
@@ -139,52 +138,54 @@ def evalGet(
             f"Invalid Function {callable}"
         return evalCallable(callable, expr.args, frame)
 
-@overload
-def evalCallable(
-    callable: lang.Builtin,
-    args: lang.Args,
-    frame: lang.Frame,
-    **kwargs,
-) -> lang.PyLiteral: ...
-@overload
-def evalCallable(
-    callable: lang.Procedure,
-    args: lang.Args,
-    frame: lang.Frame,
-    **kwargs,
-) -> None: ...
-@overload
-def evalCallable(
-    callable: lang.Function,
-    args: lang.Args,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array]: ...
-def evalCallable(
-    callable: Union[lang.Builtin, lang.Callable],
-    args: lang.Args,
-    frame: lang.Frame,
-    **kwargs,
-):
+@singledispatch
+def evalCallable(callable, args, frame, **kwargs):
     """Returns the evaluated value of a Builtin/Callable."""
-    if isinstance(callable, lang.Builtin):
-        if callable.func is system.EOF:
-            name = evaluate(args[0], frame)  # type: ignore
-            assert isinstance(name, str), "Invalid name"
-            file = frame.getValue(name)
-            assert isinstance(file, lang.File), "Invalid File"
-            return callable.func(file.iohandler)
-        argvals = [evaluate(arg, frame) for arg in args]
-        return callable.func(*argvals)
-    elif isinstance(callable, lang.Callable):
-        # Assign args to param slots
-        for arg, slot in zip(args, callable.params):
-            argval = evaluate(arg, frame)
-            slot.value = argval
-        returnval = executeStmts(callable.stmts, frame, **kwargs)
-        if isinstance(callable, lang.Function):
-            assert returnval, f"None returned from {callable}"
-            return returnval
+    raise TypeError("Non-Callable passed in evalCallable")
+
+@evalCallable.register
+def _(
+    callable: lang.Builtin,
+    args: Collection[lang.Expr],
+    frame: lang.Frame,
+    **kwargs,
+) -> lang.PyLiteral:
+    if callable.func is system.EOF:
+        name = evaluate(args[0], frame)  # type: ignore
+        assert isinstance(name, str), "Invalid name"
+        file = frame.getValue(name)
+        assert isinstance(file, lang.File), "Invalid File"
+        return callable.func(file.iohandler)
+    argvals = [evaluate(arg, frame) for arg in args]
+    return callable.func(*argvals)
+
+@evalCallable.register
+def _(
+    callable: lang.Procedure,
+    args: Collection[lang.Expr],
+    frame: lang.Frame,
+    **kwargs,
+) -> None:
+    # Assign args to param slots
+    for arg, slot in zip(args, callable.params):
+        argval = evaluate(arg, frame)
+        slot.value = argval
+    executeStmts(callable.stmts, frame, **kwargs)
+
+@evalCallable.register
+def _(
+    callable: lang.Function,
+    args: Collection[lang.Expr],
+    frame: lang.Frame,
+    **kwargs,
+) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+    # Assign args to param slots
+    for arg, slot in zip(args, callable.params):
+        argval = evaluate(arg, frame)
+        slot.value = argval
+    returnval = executeStmts(callable.stmts, frame, **kwargs)
+    assert returnval, f"None returned from {callable}"
+    return returnval
 
 def evalAssign(
     expr: lang.Assign,
@@ -248,7 +249,7 @@ def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang
     return evalGet(expr, frame)
     
 @evaluate.register
-def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
     callable = evaluate(expr.callable, frame)
     assert (
         isinstance(callable, lang.Builtin)
@@ -262,7 +263,7 @@ def executeStmts(
     stmts: Iterable[lang.Stmt],
     frame: lang.Frame,
     **kwargs,
-) -> Optional[lang.Value]:
+) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
     """Execute a list of statements."""
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
@@ -477,7 +478,7 @@ def execReturn(
     stmt: lang.Return,
     frame: lang.Frame,
     **kwargs,
-) -> lang.Value:
+) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     return evaluate(stmt.expr, frame, **kwargs)
 
 
