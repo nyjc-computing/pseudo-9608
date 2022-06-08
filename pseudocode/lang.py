@@ -28,7 +28,6 @@ from typing import Any, Optional, Union, TypedDict
 from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, IO
-from abc import abstractmethod
 from dataclasses import dataclass
 from itertools import product
 
