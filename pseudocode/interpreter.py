@@ -466,43 +466,67 @@ def execReturn(
 
 
 
+@singledispatch
 def execute(
     stmt: lang.Stmt,
     frame: lang.Frame,
     **kwargs,
 ) -> None:
     """Dispatcher for statement executors."""
-    if isinstance(stmt, lang.Output):
-        execOutput(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.Input):
-        execInput(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.Case):
-        execCase(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.If):
-        execIf(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.While):
-        execWhile(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.Repeat):
-        execRepeat(stmt, frame, **kwargs)
-    elif (
-        isinstance(stmt, lang.OpenFile)
-        or isinstance(stmt, lang.ReadFile)
-        or isinstance(stmt, lang.WriteFile)
-        or isinstance(stmt, lang.CloseFile)
-    ):
-        execFile(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.CallStmt):
-        execCall(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.AssignStmt):
-        execAssign(stmt, frame, **kwargs)
-    elif isinstance(stmt, lang.Return):
-        execReturn(stmt, frame, **kwargs)
-    elif (
-        isinstance(stmt, lang.DeclareStmt)
-        or isinstance(stmt, lang.TypeStmt)
-        or isinstance(stmt, lang.ProcedureStmt)
-        or isinstance(stmt, lang.FunctionStmt)
-    ):
-        pass
-    else:
-        raise ValueError(f"Invalid Stmt {stmt}")
+    raise TypeError(f"Invalid Stmt {stmt}")
+
+@execute.register
+def _(stmt: lang.Output, frame: lang.Frame, **kwargs) -> None:
+    execOutput(stmt, frame, **kwargs)
+
+@execute.register
+def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
+    execInput(stmt, frame, **kwargs)
+
+@execute.register
+def _(stmt: lang.Case, frame: lang.Frame, **kwargs) -> None:
+    execCase(stmt, frame, **kwargs)
+
+@execute.register
+def _(stmt: lang.If, frame: lang.Frame, **kwargs) -> None:
+    execIf(stmt, frame, **kwargs)
+    
+@execute.register
+def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> None:
+    execWhile(stmt, frame, **kwargs)
+    
+@execute.register
+def _(stmt: lang.Repeat, frame: lang.Frame, **kwargs) -> None:
+    execRepeat(stmt, frame, **kwargs)
+    
+@execute.register
+def _(stmt: lang.FileStmt, frame: lang.Frame, **kwargs) -> None:
+    execFile(stmt, frame, **kwargs)
+    
+@execute.register
+def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
+    execCall(stmt, frame, **kwargs)
+    
+@execute.register
+def _(stmt: lang.AssignStmt, frame: lang.Frame, **kwargs) -> None:
+    execAssign(stmt, frame, **kwargs)
+    
+@execute.register
+def _(stmt: lang.Return, frame: lang.Frame, **kwargs) -> None:
+    raise TypeError("Return Stmts should not be dispatched from execute()")
+    
+@execute.register
+def _(stmt: lang.DeclareStmt, frame: lang.Frame, **kwargs) -> None:
+    pass
+
+@execute.register
+def _(stmt: lang.TypeStmt, frame: lang.Frame, **kwargs) -> None:
+    pass
+
+@execute.register
+def _(stmt: lang.ProcedureStmt, frame: lang.Frame, **kwargs) -> None:
+    pass
+
+@execute.register
+def _(stmt: lang.FunctionStmt, frame: lang.Frame, **kwargs) -> None:
+    pass
