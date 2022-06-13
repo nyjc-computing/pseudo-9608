@@ -324,12 +324,14 @@ def declare(tokens: Tokens) -> lang.Declare:
             or expectType(tokens, 'name')
         ):
             raise builtin.ParseError("Invalid type", check(tokens))
-        
-    name = identifier(tokens).name  # Extract Name from UnresolvedName
-    matchWordElseError(tokens, ':', msg="after name")
-    expectTypeToken(tokens)
+
+    # name = identifier(tokens).name  # Extract Name from UnresolvedName
+    # matchWordElseError(tokens, ':', msg="after name")
+    # typetoken = consume(tokens)
+    name, typetoken = colonPair(tokens, identifier, consume)
+    expectTypeToken([typetoken])
     metadata: lang.TypeMetadata = {}
-    typetoken = consume(tokens)
+    breakpoint()
     if typetoken.word == 'ARRAY':
         matchWordElseError(tokens, '[')
         metadata['size'] = (colonRange(tokens),)
@@ -340,7 +342,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
     return lang.Declare(
-        name,
+        name.name,
         typetoken.word,
         metadata,
     )
