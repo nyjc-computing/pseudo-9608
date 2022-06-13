@@ -118,9 +118,9 @@ def matchTypeElseError(
     msg = f"Expected {types}" + (f' {msg}' if msg else '')
     raise builtin.ParseError(msg, check(tokens))
 
-def matchWordUntil(tokens, endWord, parse):
+def parseUntilWord(tokens: Tokens, endWords: Iterable[str], parse: function):
     parsedTokens = []
-    while not expectWord(tokens, endWord):
+    while not expectWord(tokens, *endWord):
         parsedTokens += [parse(tokens)]
     return parsedTokens
 
