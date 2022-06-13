@@ -382,13 +382,13 @@ def ifStmt(tokens: Tokens) -> lang.If:
     matchWord(tokens, '\n')  # optional line break
     matchWordElseError(tokens, 'THEN')
     matchWordElseError(tokens, '\n', msg="after THEN")
-    stmts: lang.Cases = {True: []}
-    while not expectWord(tokens, 'ELSE', 'ENDIF'):
-        stmts[True] += [statement1(tokens)]
+    stmts: lang.Cases = {
+        True: parseUntilWord(tokens, ['ELSE', 'ENDIF'], statement1)
+    }
     fallback = None
     if matchWord(tokens, 'ELSE'):
         matchWordElseError(tokens, '\n', msg="after ELSE")
-        fallback = parseUntilWord(tokens, 'ENDIF', statement5)
+        fallback = parseUntilWord(tokens, ['ENDIF'], statement5)
     matchWordElseError(tokens, 'ENDIF', msg="at end of IF")
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.If(cond, stmts, fallback)
@@ -397,17 +397,13 @@ def whileStmt(tokens: Tokens) -> lang.While:
     cond = expression(tokens)
     matchWordElseError(tokens, 'DO', msg="after WHILE condition")
     matchWordElseError(tokens, '\n', msg="after DO")
-    stmts = []
-    while not matchWord(tokens, 'ENDWHILE'):
-        stmts += [statement5(tokens)]
+    stmts = parseUntilWord(tokens, ['ENDWHILE'], statement5)
     matchWordElseError(tokens, '\n', msg="after ENDWHILE")
     return lang.While(None, cond, stmts)
 
 def repeatStmt(tokens: Tokens) -> lang.Repeat:
     matchWordElseError(tokens, '\n', msg="after REPEAT")
-    stmts = []
-    while not matchWord(tokens, 'UNTIL'):
-        stmts += [statement5(tokens)]
+    stmts = parseUntilWord(tokens, ['UNTIL'], statement5)
     cond = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
     return lang.Repeat(None, cond, stmts)
@@ -422,9 +418,7 @@ def forStmt(tokens: Tokens) -> lang.While:
         parse = parser(tokens)
         step = parse(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
-    stmts = []
-    while not matchWord(tokens, 'ENDFOR'):
-        stmts += [statement5(tokens)]
+    stmts = parseUntilWord(tokens, ['ENDFOR'], statement5)
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
     cond = lang.Binary(init.assignee, builtin.lte, end, token=init.token)
@@ -457,9 +451,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
             params += [expr]
         matchWordElseError(tokens, ')')
     matchWordElseError(tokens, '\n', msg="after parameters")
-    stmts = []
-    while not matchWord(tokens, 'ENDPROCEDURE'):
-        stmts += [statement3(tokens)]
+    stmts = parseUntilWord(tokens, ['ENDPROCEDURE'], statement3)
     matchWordElseError(tokens, '\n', msg="after ENDPROCEDURE")
     return lang.ProcedureStmt(name, passby, params, stmts, 'NULL')
 
@@ -483,9 +475,7 @@ def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     matchWordElseError(tokens, 'RETURNS', msg="after parameters")
     typetoken = matchWordElseError(tokens, *builtin.TYPES, msg="Invalid type")
     matchWordElseError(tokens, '\n', msg="at end of FUNCTION")
-    stmts = []
-    while not matchWord(tokens, 'ENDFUNCTION'):
-        stmts += [statement3(tokens)]
+    stmts = parseUntilWord(tokens, ['ENDFUNCTION'], statement3)
     matchWordElseError(tokens, '\n', msg="after ENDFUNCTION")
     return lang.FunctionStmt(
         name,
