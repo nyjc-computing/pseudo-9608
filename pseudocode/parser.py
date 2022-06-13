@@ -125,6 +125,12 @@ def parseUntilWord(tokens: Tokens, endWords: Iterable[str], parse: function):
     
     return parsedTokens
 
+def colonPair(tokens: Tokens, parseLeft: function, parseRight: function):
+    left = parseLeft(tokens)
+    matchWordElseError(tokens, ':')
+    right = parseRight(tokens)
+    return left, right
+
 
 
 # Precedence parsers
@@ -350,8 +356,7 @@ def typeStmt(tokens: Tokens) -> lang.TypeStmt:
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):
         matchWordElseError(tokens, 'DECLARE')
-        exprs += [declare(tokens)]
-        matchWordElseError(tokens, '\n')
+        exprs += [declareStmt(tokens)]
     matchWordElseError(tokens, 'ENDTYPE')
     matchWordElseError(tokens, '\n')
     return lang.TypeStmt(name, exprs)
