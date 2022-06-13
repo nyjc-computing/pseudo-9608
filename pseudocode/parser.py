@@ -328,7 +328,6 @@ def declare(tokens: Tokens) -> lang.Declare:
     name, typetoken = colonPair(tokens, identifier, consume)
     expectTypeToken([typetoken])
     metadata: lang.TypeMetadata = {}
-    breakpoint()
     if typetoken.word == 'ARRAY':
         matchWordElseError(tokens, '[')
         metadata['size'] = (colonRange(tokens),)
@@ -372,9 +371,8 @@ def caseStmt(tokens: Tokens) -> lang.Case:
     matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts: lang.Cases = {}
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
-        val: lang.PyLiteral = literal(tokens).value
-        matchWordElseError(tokens, ':', msg="after CASE value")
-        stmts[val] = [statement1(tokens)]
+        caseToken, stmt = colonPair(tokens, literal, statement1)
+        stmts[caseToken.value] = [stmt]
     fallback = None
     if matchWord(tokens, 'OTHERWISE'):
         fallback = [statement6(tokens)]
