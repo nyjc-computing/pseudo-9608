@@ -120,8 +120,9 @@ def matchTypeElseError(
 
 def parseUntilWord(tokens: Tokens, endWords: Iterable[str], parse: function):
     parsedTokens = []
-    while not expectWord(tokens, *endWord):
+    while not matchWord(tokens, *endWords):
         parsedTokens += [parse(tokens)]
+    
     return parsedTokens
 
 
