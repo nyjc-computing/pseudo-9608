@@ -369,10 +369,12 @@ def caseStmt(tokens: Tokens) -> lang.Case:
     parse = parser(tokens)
     cond: lang.Expr = parse(tokens)
     matchWordElseError(tokens, '\n', msg="after CASE OF")
-    stmts: lang.Cases = {}
+    def valueStmt(tokens):
+        return colonPair(tokens, literal, statement1)
+    tempstmts = []
     while not expectWord(tokens, 'OTHERWISE', 'ENDCASE'):
-        caseToken, stmt = colonPair(tokens, literal, statement1)
-        stmts[caseToken.value] = [stmt]
+        tempstmts += [valueStmt(tokens)]
+    stmts: lang.Cases = dict(tempstmts)
     fallback = None
     if matchWord(tokens, 'OTHERWISE'):
         fallback = [statement6(tokens)]
