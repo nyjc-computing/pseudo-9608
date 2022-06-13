@@ -388,10 +388,7 @@ def ifStmt(tokens: Tokens) -> lang.If:
     fallback = None
     if matchWord(tokens, 'ELSE'):
         matchWordElseError(tokens, '\n', msg="after ELSE")
-        false = []
-        while not expectWord(tokens, 'ENDIF'):
-            false += [statement5(tokens)]
-        fallback = false
+        fallback = parseUntilWord(tokens, 'ENDIF', statement5)
     matchWordElseError(tokens, 'ENDIF', msg="at end of IF")
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.If(cond, stmts, fallback)
