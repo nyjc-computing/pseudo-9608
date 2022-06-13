@@ -118,6 +118,14 @@ def matchTypeElseError(
     msg = f"Expected {types}" + (f' {msg}' if msg else '')
     raise builtin.ParseError(msg, check(tokens))
 
+def matchWordUntil(tokens, endWord, parse):
+    parsedTokens = []
+    while not expectWord(tokens, endWord):
+        parsedTokens += [parse(tokens)]
+    return parsedTokens
+
+
+
 # Precedence parsers
 # The expression parsers use the recrusive descent parsing technique to
 # handle expression precedence.
