@@ -230,11 +230,9 @@ def indexExpr(
     tokens: Tokens,
     arrayExpr: lang.NameExpr,
 ) -> lang.GetIndex:
-    parse = parser(tokens)
-    indexes: lang.IndexExpr = (parse(tokens),)
+    indexes: lang.IndexExpr = (parser(tokens)(tokens),)
     while matchWord(tokens, ','):
-        parse = parser(tokens)
-        indexes += (parse(tokens),)
+        indexes += (parser(tokens)(tokens),)
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, indexes)
 
@@ -279,8 +277,7 @@ def muldiv(tokens: Tokens) -> lang.Expr:
     expr: lang.Expr = parse(tokens)
     while expectWord(tokens, '*', '/'):
         oper = consume(tokens)
-        parse = parser(tokens)
-        right: lang.Expr = parse(tokens)
+        right: lang.Expr = parser(tokens)(tokens)
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
@@ -408,8 +405,7 @@ def assignStmt(tokens: Tokens) -> lang.AssignStmt:
 
 def caseStmt(tokens: Tokens) -> lang.Case:
     matchWordElseError(tokens, 'OF', msg="after CASE")
-    parse = parser(tokens)
-    cond: lang.Expr = parse(tokens)
+    cond: lang.Expr = parser(tokens)(tokens)
     matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts: lang.Cases = dict(
         parseUntilWord(
@@ -458,12 +454,10 @@ def repeatStmt(tokens: Tokens) -> lang.Repeat:
 def forStmt(tokens: Tokens) -> lang.While:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
-    parse = parser(tokens)
-    end: lang.Expr = parse(tokens)
+    end: lang.Expr = parser(tokens)(tokens)
     step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token)
     if matchWord(tokens, 'STEP'):
-        parse = parser(tokens)
-        step = parse(tokens)
+        step = parser(tokens)(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
     stmts = parseUntilWord(tokens, ['ENDFOR'], statement5)
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
@@ -503,8 +497,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     return lang.ProcedureStmt(name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens: Tokens) -> lang.CallStmt:
-    parse = parser(tokens)
-    callable: lang.Call = parse(tokens)
+    callable: lang.Call = parser(tokens)(tokens)
     matchWordElseError(tokens, '\n')
     return lang.CallStmt(callable)
 
@@ -538,8 +531,7 @@ def returnStmt(tokens: Tokens) -> lang.Return:
     return lang.Return(expr)
 
 def openfileStmt(tokens: Tokens) -> lang.OpenFile:
-    parse = parser(tokens)
-    filename: lang.Expr = parse(tokens)
+    filename: lang.Expr = parser(tokens)(tokens)
     matchWordElseError(tokens, 'FOR', msg="after file identifier")
     mode = matchWordElseError(
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
@@ -548,24 +540,21 @@ def openfileStmt(tokens: Tokens) -> lang.OpenFile:
     return lang.OpenFile(filename, mode.word)
 
 def readfileStmt(tokens: Tokens) -> lang.ReadFile:
-    parse = parser(tokens)
-    filename: lang.Expr = parse(tokens)
+    filename: lang.Expr = parser(tokens)(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     varname = identifier(tokens)  # TODO: support other kinds of Gets
     matchWordElseError(tokens, '\n')
     return lang.ReadFile(filename, varname)
 
 def writefileStmt(tokens: Tokens) -> lang.WriteFile:
-    parse = parser(tokens)
-    filename: lang.Expr = parse(tokens)
+    filename: lang.Expr = parser(tokens)(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     data = expression(tokens)
     matchWordElseError(tokens, '\n')
     return lang.WriteFile(filename, data)
 
 def closefileStmt(tokens: Tokens) -> lang.CloseFile:
-    parse = parser(tokens)
-    filename: lang.Expr = parse(tokens)
+    filename: lang.Expr = parser(tokens)(tokens)
     matchWordElseError(tokens, '\n')
     return lang.CloseFile(filename)
 
