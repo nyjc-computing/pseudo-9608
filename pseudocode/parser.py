@@ -121,8 +121,12 @@ def matchTypeElseError(
 def parseUntilWord(
     tokens: Tokens,
     endWords: Iterable[str],
-    parse: function,
+    parse: function[[Tokens], lang.Stmt],
 ) -> List[lang.Stmt]:
+    """
+    Calls a parser until a matching word is found.
+    Returns a list of all parsed statements.
+    """
     parsedTokens = []
     while not matchWord(tokens, *endWords):
         parsedTokens += [parse(tokens)]
@@ -130,16 +134,24 @@ def parseUntilWord(
 
 def buildExprWhileWord(
     tokens: Tokens,
-    build: Mapping[str, function],
+    build: Mapping[str, function[[Tokens, lang.Expr], lang.Expr]],
     expr: function,
 ) -> lang.Expr:
+    """
+    Builds an expression tree from a starting expr, using the parser
+    provided for each matching word.
+    """
     pass
 
 def collectExprsWhileWord(
     tokens: Tokens,
     goWords: Iterable[str],
-    parse: function,
+    parse: function[[Tokens], lang.Expr],
 ) -> List[lang.Expr]:
+    """
+    Parses an expression, then continues parsing for more expressions
+    if a matching word is found.
+    """
     pass
 
 def colonPair(
@@ -147,6 +159,10 @@ def colonPair(
     parseLeft: function,
     parseRight: function,
 ) -> Tuple:
+    """
+    Matches a <left> : <right> colon pair.
+    Returns a (left, right) tuple.
+    """
     left = parseLeft(tokens)
     matchWordElseError(tokens, ':')
     right = parseRight(tokens)
