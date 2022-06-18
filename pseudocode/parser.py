@@ -127,21 +127,24 @@ def parseUntilWord(
     Calls a parser until a matching word is found.
     Returns a list of all parsed statements.
     """
-    parsedTokens = []
+    parsedStmts = []
     while not matchWord(tokens, *endWords):
-        parsedTokens += [parse(tokens)]
-    return parsedTokens
+        parsedStmts += [parse(tokens)]
+    return parsedStmts
 
 def buildExprWhileWord(
     tokens: Tokens,
     build: Mapping[str, function[[Tokens, lang.Expr], lang.Expr]],
-    expr: function,
+    expr: lang.Expr,
 ) -> lang.Expr:
     """
     Builds an expression tree from a starting expr, using the parser
     provided for each matching word.
     """
-    pass
+    while expectWord(tokens, *build.keys()):
+        builder = build[check(tokens)]
+        expr = builder(tokens, expr)
+    return expr
 
 def collectExprsWhileWord(
     tokens: Tokens,
@@ -152,7 +155,9 @@ def collectExprsWhileWord(
     Parses an expression, then continues parsing for more expressions
     if a matching word is found.
     """
-    pass
+    parsedExprs = [parse(tokens)]
+    while matchWord(tokens, *goWords):
+        parsedExprs += [parse(tokens)]
 
 def colonPair(
     tokens: Tokens,
