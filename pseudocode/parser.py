@@ -122,7 +122,7 @@ def parseUntilWord(
     tokens: Tokens,
     endWords: Iterable[str],
     parse: function,
-):
+) -> List[lang.Stmt]:
     parsedTokens = []
     while not matchWord(tokens, *endWords):
         parsedTokens += [parse(tokens)]
@@ -132,21 +132,21 @@ def buildExprWhileWord(
     tokens: Tokens,
     build: Mapping[str, function],
     expr: function,
-):
+) -> lang.Expr:
     pass
 
 def collectExprsWhileWord(
     tokens: Tokens,
     goWords: Iterable[str],
     parse: function,
-):
+) -> List[lang.Expr]:
     pass
 
 def colonPair(
     tokens: Tokens,
     parseLeft: function,
     parseRight: function,
-):
+) -> Tuple:
     left = parseLeft(tokens)
     matchWordElseError(tokens, ':')
     right = parseRight(tokens)
