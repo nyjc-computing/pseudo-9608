@@ -118,14 +118,35 @@ def matchTypeElseError(
     msg = f"Expected {types}" + (f' {msg}' if msg else '')
     raise builtin.ParseError(msg, check(tokens))
 
-def parseUntilWord(tokens: Tokens, endWords: Iterable[str], parse: function):
+def parseUntilWord(
+    tokens: Tokens,
+    endWords: Iterable[str],
+    parse: function,
+):
     parsedTokens = []
     while not matchWord(tokens, *endWords):
         parsedTokens += [parse(tokens)]
-    
     return parsedTokens
 
-def colonPair(tokens: Tokens, parseLeft: function, parseRight: function):
+def buildExprWhileWord(
+    tokens: Tokens,
+    build: Mapping[str, function],
+    expr: function,
+):
+    pass
+
+def collectExprsWhileWord(
+    tokens: Tokens,
+    goWords: Iterable[str],
+    parse: function,
+):
+    pass
+
+def colonPair(
+    tokens: Tokens,
+    parseLeft: function,
+    parseRight: function,
+):
     left = parseLeft(tokens)
     matchWordElseError(tokens, ':')
     right = parseRight(tokens)
