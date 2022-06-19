@@ -200,8 +200,7 @@ def literal(tokens: Tokens) -> lang.Literal:
 
 def unary(tokens: Tokens) -> lang.Unary:
     oper = consume(tokens)
-    parse = parser(tokens)
-    right: lang.Expr = parse(tokens)
+    right: lang.Expr = value(tokens)
     return lang.Unary(oper.value, right, token=oper)
 
 def grouping(tokens: Tokens) -> lang.Expr:
@@ -230,9 +229,9 @@ def indexExpr(
     tokens: Tokens,
     arrayExpr: lang.NameExpr,
 ) -> lang.GetIndex:
-    indexes: lang.IndexExpr = (parser(tokens)(tokens),)
+    indexes: lang.IndexExpr = (value(tokens),)
     while matchWord(tokens, ','):
-        indexes += (parser(tokens)(tokens),)
+        indexes += (value(tokens),)
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, indexes)
 
@@ -251,24 +250,6 @@ def name(tokens: Tokens) -> lang.NameExpr:
         },
         unresolvedNameOrCall,
     )
-
-def parser(tokens: Tokens) -> function[[Tokens], Any]:
-    """Dispatcher for highest-precedence parsing functions.
-    """
-    # Unary expressions
-    if expectWord(tokens, '-', 'NOT'):
-        return unary
-    #  A grouping
-    if expectWord(tokens, '('):
-        return grouping
-    # A single value
-    if expectType(tokens, *builtin.TYPES):
-        return literal
-    # A name or call or attribute
-    if expectType(tokens, 'name'):
-        return name
-    else:
-        raise builtin.ParseError("Unexpected token", check(tokens))
 
 def value(tokens: Tokens):
     """Dispatcher for highest-precedence parsing functions.
@@ -290,11 +271,10 @@ def value(tokens: Tokens):
 
 def muldiv(tokens: Tokens) -> lang.Expr:
     # *, /
-    parse = parser(tokens)
-    expr: lang.Expr = parse(tokens)
+    expr: lang.Expr = value(tokens)
     while expectWord(tokens, '*', '/'):
         oper = consume(tokens)
-        right: lang.Expr = parser(tokens)(tokens)
+        right: lang.Expr = value(tokens)
         expr = lang.Binary(expr, oper.value, right, token=oper)
     return expr
 
@@ -421,7 +401,7 @@ def assignStmt(tokens: Tokens) -> lang.AssignStmt:
 
 def caseStmt(tokens: Tokens) -> lang.Case:
     matchWordElseError(tokens, 'OF', msg="after CASE")
-    cond: lang.Expr = parser(tokens)(tokens)
+    cond: lang.Expr = value(tokens)
     matchWordElseError(tokens, '\n', msg="after CASE OF")
     stmts: lang.Cases = dict(
         parseUntilWord(
@@ -470,10 +450,10 @@ def repeatStmt(tokens: Tokens) -> lang.Repeat:
 def forStmt(tokens: Tokens) -> lang.While:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
-    end: lang.Expr = parser(tokens)(tokens)
+    end: lang.Expr = value(tokens)
     step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token)
     if matchWord(tokens, 'STEP'):
-        step = parser(tokens)(tokens)
+        step = value(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
     stmts = parseUntilWord(tokens, ['ENDFOR'], statement5)
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
@@ -509,7 +489,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     return lang.ProcedureStmt(name, passby, params, stmts, 'NULL')
 
 def callStmt(tokens: Tokens) -> lang.CallStmt:
-    callable: lang.Call = parser(tokens)(tokens)
+    callable: lang.Call = value(tokens)
     matchWordElseError(tokens, '\n')
     return lang.CallStmt(callable)
 
@@ -539,7 +519,7 @@ def returnStmt(tokens: Tokens) -> lang.Return:
     return lang.Return(expr)
 
 def openfileStmt(tokens: Tokens) -> lang.OpenFile:
-    filename: lang.Expr = parser(tokens)(tokens)
+    filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, 'FOR', msg="after file identifier")
     mode = matchWordElseError(
         tokens, 'READ', 'WRITE', 'APPEND', msg="Invalid file mode"
@@ -548,21 +528,21 @@ def openfileStmt(tokens: Tokens) -> lang.OpenFile:
     return lang.OpenFile(filename, mode.word)
 
 def readfileStmt(tokens: Tokens) -> lang.ReadFile:
-    filename: lang.Expr = parser(tokens)(tokens)
+    filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     varname = identifier(tokens)  # TODO: support other kinds of Gets
     matchWordElseError(tokens, '\n')
     return lang.ReadFile(filename, varname)
 
 def writefileStmt(tokens: Tokens) -> lang.WriteFile:
-    filename: lang.Expr = parser(tokens)(tokens)
+    filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
     data = expression(tokens)
     matchWordElseError(tokens, '\n')
     return lang.WriteFile(filename, data)
 
 def closefileStmt(tokens: Tokens) -> lang.CloseFile:
-    filename: lang.Expr = parser(tokens)(tokens)
+    filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, '\n')
     return lang.CloseFile(filename)
 
