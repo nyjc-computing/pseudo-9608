@@ -270,6 +270,24 @@ def parser(tokens: Tokens) -> function[[Tokens], Any]:
     else:
         raise builtin.ParseError("Unexpected token", check(tokens))
 
+def value(tokens: Tokens):
+    """Dispatcher for highest-precedence parsing functions.
+    """
+    # Unary expressions
+    if expectWord(tokens, '-', 'NOT'):
+        return unary(tokens)
+    #  A grouping
+    if expectWord(tokens, '('):
+        return grouping(tokens)
+    # A single value
+    if expectType(tokens, *builtin.TYPES):
+        return literal(tokens)
+    # A name or call or attribute
+    if expectType(tokens, 'name'):
+        return name(tokens)
+    else:
+        raise builtin.ParseError("Unexpected token", check(tokens))
+
 def muldiv(tokens: Tokens) -> lang.Expr:
     # *, /
     parse = parser(tokens)
