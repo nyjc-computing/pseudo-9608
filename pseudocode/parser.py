@@ -243,15 +243,14 @@ def name(tokens: Tokens) -> lang.NameExpr:
     # Function call
     if matchWord(tokens, '('):
        unresolvedNameOrCall = callExpr(tokens, unresolvedName)
-    nameExpr: lang.NameExpr = unresolvedNameOrCall
-    while expectWord(tokens, '[', '.'):
-        # Array get
-        if matchWord(tokens, '['):
-            nameExpr = indexExpr(tokens, nameExpr)
-        # Attribute get
-        if matchWord(tokens, '.'):
-            nameExpr = attrExpr(tokens, nameExpr)
-    return nameExpr
+    return buildExprWhileWord(
+        tokens,
+        {
+            '[': indexExpr,
+            '.': attrExpr,
+        },
+        unresolvedNameOrCall,
+    )
 
 def parser(tokens: Tokens) -> function[[Tokens], Any]:
     """Dispatcher for highest-precedence parsing functions.
@@ -322,13 +321,14 @@ def expression(tokens: Tokens) -> lang.Expr:
 
 def assignment(tokens: Tokens) -> lang.Assign:
     assignee: lang.GetExpr = identifier(tokens)
-    while expectWord(tokens, '[', '.'):
-        # Array get
-        if matchWord(tokens, '['):
-            assignee = indexExpr(tokens, assignee)
-        # Attribute get
-        elif matchWord(tokens, '.'):
-            assignee = attrExpr(tokens, assignee)
+    assignee = buildExprWhileWord(
+        tokens,
+        {
+            '[': indexExpr,
+            '.': attrExpr,
+        },
+        assignee,
+    )
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
     return lang.Assign(assignee, expr)
