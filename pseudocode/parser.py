@@ -338,9 +338,7 @@ def assignment(tokens: Tokens) -> lang.Assign:
 # Statements beginning with a name are assumed to be AssignStmts.
 
 def outputStmt(tokens: Tokens) -> lang.Output:
-    exprs = [expression(tokens)]
-    while matchWord(tokens, ','):
-        exprs += [expression(tokens)]
+    exprs = collectExprsWhileWord(tokens, [','], expression)
     matchWordElseError(tokens, '\n', msg="after statement")
     return lang.Output(exprs)
 
@@ -369,9 +367,9 @@ def declare(tokens: Tokens) -> lang.Declare:
     metadata: lang.TypeMetadata = {}
     if typetoken.word == 'ARRAY':
         matchWordElseError(tokens, '[')
-        metadata['size'] = (colonRange(tokens),)
-        while matchWord(tokens, ','):
-            metadata['size'] += (colonRange(tokens),)
+        metadata['size'] = collectExprsWhileWord(
+            tokens, [','], colonRange
+        )
         matchWordElseError(tokens, ']')
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
@@ -485,11 +483,7 @@ def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
         passbyToken = matchWord(tokens, 'BYVALUE', 'BYREF')
         if passbyToken:
             passby = passbyToken.word  # type: ignore
-        expr = declare(tokens)
-        params += [expr]
-        while matchWord(tokens, ','):
-            expr = declare(tokens)
-            params += [expr]
+        params = collectExprsWhileWord(tokens, [','], declare)
         matchWordElseError(tokens, ')')
     matchWordElseError(tokens, '\n', msg="after parameters")
     stmts = parseUntilWord(tokens, ['ENDPROCEDURE'], statement3)
@@ -506,11 +500,7 @@ def functionStmt(tokens: Tokens) -> lang.FunctionStmt:
     params: List[lang.Declare] = []
     if matchWord(tokens, '('):
         passby: lang.Passby = 'BYVALUE'
-        var = declare(tokens)
-        params += [var]
-        while matchWord(tokens, ','):
-            var = declare(tokens)
-            params += [var]
+        params = collectExprsWhileWord(tokens, [','], declare)
         matchWordElseError(tokens, ')', msg="at end of parameters")
     matchWordElseError(tokens, 'RETURNS', msg="after parameters")
     typetoken = matchWordElseError(tokens, *builtin.TYPES, msg="Invalid type")
@@ -637,7 +627,7 @@ def parse(tokens: Tokens) -> Iterable[lang.Stmt]:
     tokens += [lang.Token(lastline, 0, 'EOF', "", None)]
     statements = []
     while not atEnd(tokens):
-        while matchWord(tokens, '\n'):
-            pass
+        # ignore line breaks
+        collectExprsWhileWord(tokens, ['\n'], lambda tokens: None)
         statements += [statement2(tokens)]
     return statements
