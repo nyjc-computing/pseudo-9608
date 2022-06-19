@@ -4,7 +4,7 @@ parse(tokens: str) -> statements: list
     Parses tokens and returns a list of statements.
 """
 
-from typing import Any, Optional, Union, Iterable, Tuple, List
+from typing import Optional, Union, Iterable, Mapping, Tuple, List
 from typing import Callable as function
 
 from . import builtin, lang
@@ -173,6 +173,11 @@ def colonPair(
     right = parseRight(tokens)
     return left, right
 
+def makeBinary(
+    expr: lang.Expr, operToken: lang.Token, right: lang.Expr
+) -> lang.Binary:
+    return lang.Binary(expr, operToken.value, right, token=operToken)
+
 
 
 # Precedence parsers
@@ -270,45 +275,41 @@ def value(tokens: Tokens):
 def muldiv(tokens: Tokens) -> lang.Expr:
     # *, /
     expr: lang.Expr = value(tokens)
-    while expectWord(tokens, '*', '/'):
-        oper = consume(tokens)
-        right: lang.Expr = value(tokens)
-        expr = lang.Binary(expr, oper.value, right, token=oper)
+    parser = lambda tokens, expr: makeBinary(expr, consume(tokens), value(tokens))
+    expr = buildExprWhileWord(tokens, {'*': parser, '/': parser}, expr)
     return expr
 
 def addsub(tokens: Tokens) -> lang.Expr:
     expr = muldiv(tokens)
-    while expectWord(tokens, '+', '-'):
-        oper = consume(tokens)
-        right = muldiv(tokens)
-        expr = lang.Binary(expr, oper.value, right, token=oper)
+    parser = lambda tokens, expr: makeBinary(expr, consume(tokens), muldiv(tokens))
+    expr = buildExprWhileWord(tokens, {'+': parser, '-': parser}, expr)
     return expr
 
 def comparison(tokens: Tokens) -> lang.Expr:
     # <, <=, >, >=
     expr = addsub(tokens)
-    while expectWord(tokens, '<', '<=', '>', '>='):
-        oper = consume(tokens)
-        right = addsub(tokens)
-        expr = lang.Binary(expr, oper.value, right, token=oper)
+    parser = lambda tokens, expr: makeBinary(expr, consume(tokens), addsub(tokens))
+    expr = buildExprWhileWord(
+        tokens, {'<': parser, '<=': parser, '>': parser, '>=': parser}, expr
+    )
     return expr
 
 def equality(tokens: Tokens) -> lang.Expr:
     # <>, =
     expr = comparison(tokens)
-    while expectWord(tokens, '<>', '='):
-        oper = consume(tokens)
-        right = comparison(tokens)
-        expr = lang.Binary(expr, oper.value, right, token=oper)
+    parser = lambda tokens, expr: makeBinary(
+        expr, consume(tokens), comparison(tokens)
+    )
+    expr = buildExprWhileWord(tokens, {'<>': parser, '=': parser}, expr)
     return expr
 
 def logical(tokens: Tokens) -> lang.Expr:
     # AND, OR
     expr = equality(tokens)
-    while expectWord(tokens, 'AND', 'OR'):
-        oper = consume(tokens)
-        right = equality(tokens)
-        expr = lang.Binary(expr, oper.value, right, token=oper)
+    parser = lambda tokens, expr: makeBinary(
+        expr, consume(tokens), equality(tokens)
+    )
+    expr = buildExprWhileWord(tokens, {'AND': parser, 'OR': parser}, expr)
     return expr
 
 def expression(tokens: Tokens) -> lang.Expr:
