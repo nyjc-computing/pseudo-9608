@@ -200,7 +200,7 @@ def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang
 @evaluate.register
 def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
     callable = evaluate(expr.callable, frame)
-    return evalCallable(callable, expr.args, frame)
+    return evalCallable(callable, expr.args, callable.frame)
 
 # Executors
 
@@ -364,7 +364,7 @@ def _(stmt: lang.CloseFile, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
     callable = evaluate(stmt.expr.callable, frame)
-    evalCallable(callable, stmt.expr.args, frame, **kwargs)
+    evalCallable(callable, stmt.expr.args, callable.frame, **kwargs)
     
 @execute.register
 def _(stmt: lang.AssignStmt, frame: lang.Frame, **kwargs) -> None:
