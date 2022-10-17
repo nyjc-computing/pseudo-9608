@@ -158,7 +158,7 @@ def resolveProcCall(
     """Resolve a procedure call.
     Statement verification should be done in verifyProcedure, not here.
     """
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     assert isinstance(expr.callable, lang.GetName), \
         f"Callable {expr.callable} unresolved"
     callableType = resolve(expr.callable, frame)
@@ -205,7 +205,7 @@ def _(
 
 @resolve.register
 def _(expr: lang.Unary, frame: lang.Frame, **kw) -> lang.Type:
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     rType = resolve(expr.right, frame)
     if expr.oper is builtin.sub:
         expectTypeElseError(
@@ -221,7 +221,7 @@ def _(expr: lang.Unary, frame: lang.Frame, **kw) -> lang.Type:
 
 @resolve.register
 def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.Type:
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     lType = resolve(expr.left, frame)
     rType = resolve(expr.right, frame)
     if expr.oper in (builtin.AND, builtin.OR):
@@ -271,7 +271,7 @@ def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.Type:
 
 @resolve.register
 def _(expr: lang.Assign, frame: lang.Frame, **kw) -> lang.Type:
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     assnType = resolve(expr.assignee, frame)
     exprType = resolve(expr.expr, frame)
     expectTypeElseError(exprType, assnType, token=expr.token)
@@ -282,7 +282,7 @@ def _(expr: lang.Call, frame: lang.Frame, **kw) -> lang.Type:
     """Resolve a function call.
     Statement verification should be done in verifyFunction, not here.
     """
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     assert isinstance(expr.callable, lang.GetName), \
         "Unresolved Callable"
     callableType = resolve(expr.callable, frame)
@@ -315,7 +315,7 @@ def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> lang.Type:
     # Array indexes must be integer
     intsElseError(frame, *expr.index)
     # Arrays in Objects not yet supported; assume frame
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     assert isinstance(expr.array, lang.GetName), "Array unresolved"
     expectTypeElseError(
         ## Expect array
@@ -329,7 +329,7 @@ def _(expr: lang.GetIndex, frame: lang.Frame, **kw) -> lang.Type:
 @resolve.register
 def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> lang.Type:
     """Resolves a GetAttr Expr to return an attribute's type"""
-    resolveNamesInExpr(expr, frame)
+    resolveNamesInTarget(expr, frame)
     assert not isinstance(expr.object, lang.UnresolvedName), \
         "Object unresolved"
     objType = resolve(expr.object, frame)
@@ -395,12 +395,12 @@ def _(stmt: lang.Output, frame: lang.Frame) -> None:
 
 @verify.register
 def _(stmt: lang.Input, frame: lang.Frame) -> None:
-    resolveNamesInExpr(stmt, frame)
+    resolveNamesInTarget(stmt, frame)
     resolve(stmt.key, frame)
 
 @verify.register
 def _(stmt: lang.Case, frame: lang.Frame) -> None:
-    resolveNamesInExpr(stmt, frame)
+    resolveNamesInTarget(stmt, frame)
     resolve(stmt.cond, frame)
     for statements in stmt.stmtMap.values():
         verifyStmts(statements, frame)
@@ -409,7 +409,7 @@ def _(stmt: lang.Case, frame: lang.Frame) -> None:
 
 @verify.register
 def _(stmt: lang.If, frame: lang.Frame) -> None:
-    resolveNamesInExpr(stmt, frame)
+    resolveNamesInTarget(stmt, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
     for statements in stmt.stmtMap.values():
@@ -419,7 +419,7 @@ def _(stmt: lang.If, frame: lang.Frame) -> None:
 
 @verify.register
 def _(stmt: lang.Loop, frame: lang.Frame) -> None:
-    resolveNamesInExpr(stmt, frame)
+    resolveNamesInTarget(stmt, frame)
     if stmt.init:
         verify(stmt.init, frame)
     condType = resolve(stmt.cond, frame)
@@ -432,11 +432,11 @@ def _(stmt: lang.Loop, frame: lang.Frame) -> None:
 @verify.register
 def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
     """Declare a Procedure in the given frame."""
-    resolveNamesInExpr(stmt, frame)
-    local = lang.Frame(typesys=frame.types, outer=frame)
-    params = transformDeclares(stmt.params, stmt.passby, local)
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(str(stmt.name), 'NULL')
+    resolveNamesInTarget(stmt, frame)
+    local = lang.Frame(typesys=frame.types, outer=frame)
+    params = transformDeclares(stmt.params, stmt.passby, local)
     frame.setValue(str(stmt.name), lang.Procedure(
         local, params, stmt.stmts
     ))
@@ -451,11 +451,11 @@ def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
 @verify.register
 def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
     """Declare a Function in the given frame."""
-    resolveNamesInExpr(stmt, frame)
-    local = lang.Frame(typesys=frame.types, outer=frame)
-    params = transformDeclares(stmt.params, stmt.passby, local)
     # Assign function in frame first, to make recursive calls work
     frame.declare(str(stmt.name), stmt.returnType)
+    resolveNamesInTarget(stmt, frame)
+    local = lang.Frame(typesys=frame.types, outer=frame)
+    params = transformDeclares(stmt.params, stmt.passby, local)
     frame.setValue(str(stmt.name), lang.Function(
         local, params, stmt.stmts
     ))
@@ -471,7 +471,7 @@ def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
 
 @verify.register
 def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
-    resolveNamesInExpr(stmt, frame)
+    resolveNamesInTarget(stmt, frame)
     expectTypeElseError(
         resolve(stmt.filename, frame), 'STRING',
         token=stmt.filename.token
