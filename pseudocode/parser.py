@@ -142,11 +142,7 @@ def buildExprWhileWord(
     provided for each matching word.
     """
     while expectWord(tokens, *parserMap.keys()):
-        try:
-            parser = parserMap[check(tokens).word]
-        except Exception as e:
-            print(e)
-            breakpoint()
+        parser = parserMap[check(tokens).word]
         rootExpr = parser(tokens, rootExpr)
     return rootExpr
 
@@ -241,7 +237,6 @@ def indexExpr(
 ) -> lang.GetIndex:
     indexes = collectExprsWhileWord(tokens, [','], value)
     matchWordElseError(tokens, ']')
-    breakpoint()
     return lang.GetIndex(arrayExpr, indexes)
 
 def name(tokens: Tokens) -> lang.NameExpr:
