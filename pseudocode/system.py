@@ -37,25 +37,27 @@ def EOF(file: TextIO) -> bool:
 
 
 
-system = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
+def initFrame() -> lang.Frame:
+    sysFrame = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
 
-system.declare('RND', 'REAL')
-system.setValue('RND', lang.Builtin(
-    params=[],
-    func=RND,
-))
-system.declare('RANDOMBETWEEN', 'INTEGER')
-system.setValue('RANDOMBETWEEN', lang.Builtin(
-    params=[
-        lang.TypedValue(type='INTEGER', value=None),
-        lang.TypedValue(type='INTEGER', value=None),
-    ],
-    func=RANDOMBETWEEN,
-))
-system.declare('EOF', 'BOOLEAN')
-system.setValue('EOF', lang.Builtin(
-    params=[
-        lang.TypedValue(type='STRING', value=None),
-    ],
-    func=EOF,
-))
+    sysFrame.declare('RND', 'REAL')
+    sysFrame.setValue('RND', lang.Builtin(
+        params=[],
+        func=RND,
+    ))
+    sysFrame.declare('RANDOMBETWEEN', 'INTEGER')
+    sysFrame.setValue('RANDOMBETWEEN', lang.Builtin(
+        params=[
+            lang.TypedValue(type='INTEGER', value=None),
+            lang.TypedValue(type='INTEGER', value=None),
+        ],
+        func=RANDOMBETWEEN,
+    ))
+    sysFrame.declare('EOF', 'BOOLEAN')
+    sysFrame.setValue('EOF', lang.Builtin(
+        params=[
+            lang.TypedValue(type='STRING', value=None),
+        ],
+        func=EOF,
+    ))
+    return sysFrame
