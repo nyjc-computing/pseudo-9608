@@ -45,44 +45,23 @@ def rangeProduct(indexes: lang.IndexRanges) -> Iterator:
     ]
     return product(*ranges)
 
-def resolveName(
-    exprOrStmt: Union[lang.Expr, lang.Stmt],
-    frame: lang.Frame,
-    attr: Optional[str]=None,
-) -> lang.GetName:
-    """Takes in an UnresolvedName, and returns a GetName with an
-    appropriate frame.
-    """
-    if isinstance(exprOrStmt, lang.Stmt) and not attr:
-        raise TypeError("attr required for Stmt argument")
-    expr: lang.Expr = getattr(exprOrStmt, attr) if attr else exprOrStmt
-    if not isinstance(expr, lang.UnresolvedName):
-        raise TypeError('Attempted to resolve invalid UnresolvedName')
-    unresolved: lang.UnresolvedName = expr
+def resolveName(unresolved: lang.UnresolvedName, frame: lang.Frame) -> lang.GetName:
+    """Resolves GetName for the UnresolvedName."""
     exprFrame = frame.lookup(str(unresolved.name))
     if exprFrame is None:
         raise builtin.LogicError("Undeclared", unresolved.token)
-    getNameExpr = lang.GetName(exprFrame, unresolved.name)
-    if attr:
-        setattr(exprOrStmt, attr, getNameExpr)
-    # Return value needed by resolveExprs()
-    return getNameExpr
+    return lang.GetName(exprFrame, unresolved.name)
 
-def resolveNamesInExpr(
-    exprOrStmt: Union[lang.Expr, lang.Stmt],
-    frame: lang.Frame,
-) -> None:
+def resolveNamesInTarget(target: Union[lang.Expr, lang.Stmt], frame: lang.Frame) -> None:
     """Checks the exprOrstmt's slots for UnresolvedName, and replaces
     them with GetNames.
     """
-    for attr in exprOrStmt.__slots__:
-        if isinstance(getattr(exprOrStmt, attr), lang.UnresolvedName):
-            resolveName(exprOrStmt, frame, attr)
+    for attr in target.__slots__:
+        expr: lang.Expr = getattr(target, attr)
+        if isinstance(expr, lang.UnresolvedName):
+            setattr(target, attr, resolveName(expr, frame))
 
-def resolveExprs(
-    exprs: lang.Exprs,
-    frame: lang.Frame,
-) -> Tuple[lang.Expr, ...]:
+def resolveExprs(exprs: lang.Exprs, frame: lang.Frame) -> Tuple[lang.Expr, ...]:
     """Resolve an iterable of Exprs.
     UnresolvedNames are resolved into GetNames.
 
