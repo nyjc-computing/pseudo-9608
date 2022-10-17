@@ -434,8 +434,8 @@ def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
     """Declare a Procedure in the given frame."""
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(str(stmt.name), 'NULL')
-    resolveNamesInTarget(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
+    resolveNamesInTarget(stmt, local)
     params = transformDeclares(stmt.params, stmt.passby, local)
     frame.setValue(str(stmt.name), lang.Procedure(
         local, params, stmt.stmts
@@ -453,8 +453,8 @@ def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
     """Declare a Function in the given frame."""
     # Assign function in frame first, to make recursive calls work
     frame.declare(str(stmt.name), stmt.returnType)
-    resolveNamesInTarget(stmt, frame)
     local = lang.Frame(typesys=frame.types, outer=frame)
+    resolveNamesInTarget(stmt, local)
     params = transformDeclares(stmt.params, stmt.passby, local)
     frame.setValue(str(stmt.name), lang.Function(
         local, params, stmt.stmts
