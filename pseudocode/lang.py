@@ -25,7 +25,7 @@ File
     An open file
 """
 from typing import Any, Optional, Union, TypedDict
-from typing import Iterable, Iterator, Mapping, MutableMapping, Collection
+from typing import Iterable, Sequence, Iterator, Mapping, MutableMapping
 from typing import Literal as LiteralType, Tuple, List
 from typing import Callable as function, IO
 from dataclasses import dataclass
@@ -39,12 +39,17 @@ NameKey = str  # Key for Object/Frame
 IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple["Expr", ...]  # Array indexes
 IndexRange = Tuple[int, int]  # Array ranges (declared)
+IndexRanges = Sequence[IndexRange]
 Passby = LiteralType['BYREF', 'BYVALUE']
-Args = Collection["Expr"]  # Callable args
+Exprs = Iterable["Exprs"]
+Stmts = Iterable["Stmt"]
+Args = Sequence["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
-Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable", "File"]  # in TypedValue
+Params = Sequence[Param]
+Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
+              "File"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
 # NameExprs are GetExprs that use a NameKey
 NameKeyExpr = Union["UnresolvedName", "GetName"]
@@ -52,11 +57,13 @@ NameKeyExpr = Union["UnresolvedName", "GetName"]
 GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
 # NameExprs start with a name
 NameExpr = Union[GetExpr, "Call"]
+
+
 class TypeMetadata(TypedDict, total=False):
     """The metadata dict passed to an Array declaration"""
     size: Tuple[IndexRange, ...]
     type: Type
-    
+
 
 # ----------------------------------------------------------------------
 @dataclass(eq=False, frozen=True)
@@ -77,12 +84,12 @@ class Token:
         return f"{lineinfo} <{self.value}> {repr(self.word)}"
 
 
-
 class Name:
     """Name represents a meaningful name, either a custom type or a
     variable name.
     """
     __slots__ = ('name', '_token')
+
     def __init__(
         self,
         name: NameKey,
@@ -102,7 +109,6 @@ class Name:
         return self._token
 
 
-
 @dataclass
 class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
@@ -114,7 +120,6 @@ class TypedValue:
 
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
-
 
 
 @dataclass
@@ -141,7 +146,6 @@ class TypeTemplate:
         return TypedValue(self.type, self.value)
 
 
-
 class ObjectTemplate:
     """Represents an object template in 9608 pseudocode.
     A space that maps Names to Types.
@@ -153,7 +157,6 @@ class ObjectTemplate:
     clone()
         Returns an empty Object of the same type
     """
-
     def __init__(
         self,
         typesys: "TypeSystem",
@@ -178,7 +181,6 @@ class ObjectTemplate:
         return obj
 
 
-
 class TypeSystem:
     """A space that maps Types to TypeTemplates.
     Handles registration of types in 9608 pseudocode.
@@ -198,7 +200,6 @@ class TypeSystem:
     cloneType(type)
         return a copy of the template for the type
     """
-
     def __init__(
         self,
         *types: Type,
@@ -208,7 +209,7 @@ class TypeSystem:
             self.declare(typeName)
 
     def __repr__(self) -> str:
-       return f"{{{', '.join(self.data.keys())}}}"
+        return f"{{{', '.join(self.data.keys())}}}"
 
     def has(self, type: Type) -> bool:
         return type in self.data
@@ -227,14 +228,12 @@ class TypeSystem:
         return self.data[type].clone()
 
 
-
 class PseudoValue:
     """Base class for pseudo values which are not PyLiterals.
     This includes Arrays, Objects, and Callables.
     PseudoValues may be stored in Arrays, Objects, or Callables, wrapped
     in a TypedValue.
     """
-
 
 
 class Object(PseudoValue):
@@ -259,7 +258,6 @@ class Object(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
-
     def __init__(
         self,
         typesys: "TypeSystem",
@@ -268,10 +266,7 @@ class Object(PseudoValue):
         self.types = typesys
 
     def __repr__(self) -> str:
-        nameTypePairs = [
-            f"{name}: {self.getType(name)}"
-            for name in self.data
-        ]
+        nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
         return f"{{{', '.join(nameTypePairs)}}}"
 
     def has(self, name: NameKey) -> bool:
@@ -300,7 +295,6 @@ class Object(PseudoValue):
         self.data[name].value = value
 
 
-
 class Frame:
     """Frames differ from Objects in that they can be chained (with a
     reference to an outer Frame, names can be reassigned to a different
@@ -317,21 +311,17 @@ class Frame:
     lookup(name)
         returns the first frame containing the name
     """
-
     def __init__(
         self,
         typesys: "TypeSystem",
-        outer: "Frame"=None,
+        outer: "Frame" = None,
     ) -> None:
         self.data: MutableMapping[NameKey, "TypedValue"] = {}
         self.types = typesys
         self.outer = outer
 
     def __repr__(self) -> str:
-        nameTypePairs = [
-            f"{name}: {self.getType(name)}"
-            for name in self.data
-        ]
+        nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
         return f"{{{', '.join(nameTypePairs)}}}"
 
     def has(self, name: NameKey) -> bool:
@@ -369,7 +359,6 @@ class Frame:
         return None
 
 
-
 class Array(PseudoValue):
     """A space that maps IndexKeys to TypedValues.
     Arrays differ from Objects in the use of IndexKey instead of
@@ -379,8 +368,8 @@ class Array(PseudoValue):
     ----------
     dim: int
         integer representing the number of dimensions of the array
-    ranges: Iterable[Tuple[int, int]]
-        an interable containing (start, end) tuple pairs of the
+    ranges: IndexRanges
+        an iterable containing (start, end) tuple pairs of the
         array indexes
     elementType: Type
         The type of each array element
@@ -400,15 +389,13 @@ class Array(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
-
     def __init__(
         self,
         typesys: "TypeSystem",
-        ranges: Collection[IndexRange],
+        ranges: IndexRanges,
         type: Type,
     ) -> None:
         self.types = typesys
-        # ranges is an iterable of (start, end) indexes
         self.ranges = ranges
         self.data: MutableMapping[IndexKey, "TypedValue"] = {
             index: self.types.cloneType(type)
@@ -417,23 +404,19 @@ class Array(PseudoValue):
 
     def __repr__(self) -> str:
         nameValuePairs = [
-            f"{index}: {self.getValue(index)}"
-            for index in self.data
+            f"{index}: {self.getValue(index)}" for index in self.data
         ]
         return f"{{{', '.join(nameValuePairs)}}}: {self.elementType}"
 
     @staticmethod
-    def rangeProduct(indexes: Iterable[Tuple[int, int]]) -> Iterator:
+    def rangeProduct(indexes: IndexRanges) -> Iterator:
         """Returns an iterator from an interable of (start, end) tuples.
         E.g. ((0, 2), (0, 3)) will return the following iterations:
             (0, 0), ..., (0, 3),
             (1, 0), ..., (1, 3),
             (2, 0), ..., (2, 3),
         """
-        ranges = (
-            range(start, end + 1)
-            for (start, end) in indexes
-        )
+        ranges = (range(start, end + 1) for (start, end) in indexes)
         return product(*ranges)
 
     @property
@@ -471,7 +454,6 @@ class Array(PseudoValue):
         self.data[index].value = value
 
 
-
 @dataclass
 class Builtin(PseudoValue):
     """Represents a system function in pseudo.
@@ -484,9 +466,8 @@ class Builtin(PseudoValue):
         the Python function to call when invoked
     """
     __slots__ = ('params', 'func')
-    params: Collection[Param]
+    params: Params
     func: function
-
 
 
 @dataclass
@@ -506,19 +487,16 @@ class Callable(PseudoValue):
 
     __slots__ = ('frame', 'params', 'stmts')
     frame: "Frame"
-    params: Collection[Param]
-    stmts: Iterable["Stmt"]
-
+    params: Params
+    stmts: "Stmts"
 
 
 class Function(Callable):
     """Functions are evaluated to return a value."""
 
 
-
 class Procedure(Callable):
     """Procedures are called to execute its statements."""
-
 
 
 @dataclass
@@ -541,7 +519,6 @@ class File(PseudoValue):
     iohandler: IO
 
 
-
 class Expr:
     """Represents an expression in 9608 pseudocode.
     An expression can be resolved to a Type, and evaluated to a Value.
@@ -561,7 +538,6 @@ class Expr:
         raise NotImplementedError
 
 
-
 @dataclass
 class Literal(Expr):
     """A Literal represents any value coming directly from the source
@@ -571,7 +547,6 @@ class Literal(Expr):
     type: Type
     value: PyLiteral
     token: Token
-
 
 
 @dataclass
@@ -585,7 +560,6 @@ class Declare(Expr):
     @property
     def token(self):
         return self.name.token
-
 
 
 @dataclass
@@ -603,7 +577,6 @@ class Assign(Expr):
         return self.assignee.token
 
 
-
 @dataclass
 class Unary(Expr):
     """A Unary Expr represents the invocation of a unary callable with a
@@ -613,7 +586,6 @@ class Unary(Expr):
     oper: function
     right: "Expr"
     token: Token
-
 
 
 @dataclass
@@ -628,7 +600,6 @@ class Binary(Expr):
     token: Token
 
 
-
 @dataclass
 class UnresolvedName(Expr):
     """An UnresolvedName is a Name which has been parsed, and whose
@@ -639,13 +610,12 @@ class UnresolvedName(Expr):
     appropriate Get Expr should be used to contain the name and context
     instead.
     """
-    __slots__ = ('name',)
+    __slots__ = ('name', )
     name: Name
 
     @property
     def token(self):
         return self.name.token
-
 
 
 @dataclass
@@ -661,7 +631,6 @@ class GetName(Expr):
         return self.name.token
 
 
-
 @dataclass
 class GetIndex(Expr):
     """A GetName Expr represents a Index with an Array context.
@@ -673,7 +642,6 @@ class GetIndex(Expr):
     @property
     def token(self):
         return self.index[0].token
-
 
 
 @dataclass
@@ -689,7 +657,6 @@ class GetAttr(Expr):
         return self.name.token
 
 
-
 @dataclass
 class Call(Expr):
     """A Call Expr represents the invocation of a Callable (Function or
@@ -699,10 +666,9 @@ class Call(Expr):
     callable: NameKeyExpr
     args: Args
 
-    @property 
+    @property
     def token(self):
         return self.callable.token
-
 
 
 class Stmt:
@@ -714,11 +680,11 @@ class Stmt:
     __slots__: Iterable[str] = tuple()
 
 
-
 class ExprStmt(Stmt):
     """Base class for statements that contain only a single Expr.
     """
-    __slots__ = ('expr',)
+    __slots__ = ('expr', )
+
 
 @dataclass
 class Return(ExprStmt):
@@ -726,17 +692,20 @@ class Return(ExprStmt):
     """
     expr: "Expr"
 
+
 @dataclass
 class AssignStmt(ExprStmt):
     """AssignStmt encapsulates an Assign Expr.
     """
     expr: "Assign"
 
+
 @dataclass
 class DeclareStmt(ExprStmt):
     """DeclareStmt encapsulates a Declare Expr.
     """
     expr: "Declare"
+
 
 @dataclass
 class CallStmt(ExprStmt):
@@ -745,14 +714,12 @@ class CallStmt(ExprStmt):
     expr: "Call"
 
 
-
 @dataclass
 class Output(Stmt):
     """Output encapsulates values to be displayed in a terminal/console.
     """
-    __slots__ = ('exprs',)
-    exprs: Iterable["Expr"]
-
+    __slots__ = ('exprs', )
+    exprs: "Exprs"
 
 
 @dataclass
@@ -760,9 +727,8 @@ class Input(Stmt):
     """Output encapsulates a GetExpr to which user input should be
     assigned.
     """
-    __slots__ = ('keyExpr',)
+    __slots__ = ('keyExpr', )
     key: GetExpr
-
 
 
 @dataclass
@@ -773,13 +739,14 @@ class Conditional(Stmt):
     """
     __slots__ = ('cond', 'stmtMap', 'fallback')
     cond: "Expr"
-    stmtMap: Mapping[PyLiteral, Iterable["Stmt"]]
-    fallback: Optional[Iterable["Stmt"]]
+    stmtMap: Mapping[PyLiteral, "Stmts"]
+    fallback: Optional["Stmts"]
+
 
 class Case(Conditional): ...
 
-class If(Conditional): ...
 
+class If(Conditional): ...
 
 
 class Loop(Stmt):
@@ -789,7 +756,8 @@ class Loop(Stmt):
     __slots__ = ('init', 'cond', 'stmts')
     init: Optional["Stmt"]
     cond: "Expr"
-    stmts: Iterable["Stmt"]
+    stmts: "Stmts"
+
 
 @dataclass
 class While(Loop):
@@ -798,7 +766,8 @@ class While(Loop):
     """
     init: Optional["Stmt"]
     cond: "Expr"
-    stmts: Iterable["Stmt"]
+    stmts: "Stmts"
+
 
 @dataclass
 class Repeat(Loop):
@@ -807,38 +776,40 @@ class Repeat(Loop):
     """
     init: None
     cond: "Expr"
-    stmts: Iterable["Stmt"]
-
+    stmts: "Stmts"
 
 
 @dataclass
 class ProcFunc(Stmt):
-    """ProcFunc encapsulates a declared Procedure or Function."""    
+    """ProcFunc encapsulates a declared Procedure or Function."""
     __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
     name: Name
     passby: LiteralType['BYVALUE', 'BYREF']
     params: Iterable[Declare]
-    stmts: Iterable["Stmt"]
+    stmts: "Stmts"
     returnType: Type
 
-class ProcedureStmt(ProcFunc): ...
 
-class FunctionStmt(ProcFunc): ...
+class ProcedureStmt(ProcFunc):
+    ...
 
+
+class FunctionStmt(ProcFunc):
+    ...
 
 
 @dataclass
 class TypeStmt(Stmt):
-    """TypeStmt encapsulates a declared custom Type."""    
+    """TypeStmt encapsulates a declared custom Type."""
     __slots__ = ('name', 'exprs')
     name: Name
     exprs: Iterable["Declare"]
 
 
-
 class FileStmt(Stmt):
     """Base class for Stmts involving Files."""
     filename: "Expr"
+
 
 @dataclass
 class OpenFile(FileStmt):
@@ -846,11 +817,13 @@ class OpenFile(FileStmt):
     filename: "Expr"
     mode: str
 
+
 @dataclass
 class ReadFile(FileStmt):
     __slots__ = ('filename', 'target')
     filename: "Expr"
     target: GetExpr
+
 
 @dataclass
 class WriteFile(FileStmt):
@@ -858,7 +831,8 @@ class WriteFile(FileStmt):
     filename: "Expr"
     data: "Expr"
 
+
 @dataclass
 class CloseFile(FileStmt):
-    __slots__ = ('filename',)
+    __slots__ = ('filename', )
     filename: "Expr"
