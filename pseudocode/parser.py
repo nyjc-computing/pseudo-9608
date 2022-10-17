@@ -134,17 +134,17 @@ def parseUntilWord(
 
 def buildExprWhileWord(
     tokens: Tokens,
-    build: Mapping[str, function[[Tokens, lang.Expr], lang.Expr]],
-    expr: lang.Expr,
+    parserMap: Mapping[str, function[[Tokens, lang.Expr], lang.Expr]],
+    rootExpr: lang.Expr,
 ) -> lang.Expr:
     """
     Builds an expression tree from a starting expr, using the parser
     provided for each matching word.
     """
-    while expectWord(tokens, *build.keys()):
-        builder = build[check(tokens)]
-        expr = builder(tokens, expr)
-    return expr
+    while expectWord(tokens, *parserMap.keys()):
+        parser = parserMap[check(tokens)]
+        rootExpr = parser(tokens, rootExpr)
+    return rootExpr
 
 def collectExprsWhileWord(
     tokens: Tokens,
@@ -247,11 +247,8 @@ def name(tokens: Tokens) -> lang.NameExpr:
        unresolvedNameOrCall = callExpr(tokens, unresolvedName)
     return buildExprWhileWord(
         tokens,
-        {
-            '[': indexExpr,
-            '.': attrExpr,
-        },
-        unresolvedNameOrCall,
+        parserMap={'[': indexExpr, '.': attrExpr},
+        rootExpr=unresolvedNameOrCall,
     )
 
 def value(tokens: Tokens):
@@ -276,13 +273,21 @@ def muldiv(tokens: Tokens) -> lang.Expr:
     # *, /
     expr: lang.Expr = value(tokens)
     parser = lambda tokens, expr: makeBinary(expr, consume(tokens), value(tokens))
-    expr = buildExprWhileWord(tokens, {'*': parser, '/': parser}, expr)
+    expr = buildExprWhileWord(
+        tokens,
+        parserMap={'*': parser, '/': parser},
+        rootExpr=expr,
+    )
     return expr
 
 def addsub(tokens: Tokens) -> lang.Expr:
     expr = muldiv(tokens)
     parser = lambda tokens, expr: makeBinary(expr, consume(tokens), muldiv(tokens))
-    expr = buildExprWhileWord(tokens, {'+': parser, '-': parser}, expr)
+    expr = buildExprWhileWord(
+        tokens,
+        parserMap={'+': parser, '-': parser},
+        rootExpr=expr,
+    )
     return expr
 
 def comparison(tokens: Tokens) -> lang.Expr:
@@ -290,7 +295,14 @@ def comparison(tokens: Tokens) -> lang.Expr:
     expr = addsub(tokens)
     parser = lambda tokens, expr: makeBinary(expr, consume(tokens), addsub(tokens))
     expr = buildExprWhileWord(
-        tokens, {'<': parser, '<=': parser, '>': parser, '>=': parser}, expr
+        tokens,
+        parserMap={
+            '<': parser,
+            '<=': parser,
+            '>': parser,
+            '>=': parser
+        },
+        rootExpr=expr,
     )
     return expr
 
@@ -300,7 +312,11 @@ def equality(tokens: Tokens) -> lang.Expr:
     parser = lambda tokens, expr: makeBinary(
         expr, consume(tokens), comparison(tokens)
     )
-    expr = buildExprWhileWord(tokens, {'<>': parser, '=': parser}, expr)
+    expr = buildExprWhileWord(
+        tokens,
+        parserMap={'<>': parser, '=': parser},
+        rootExpr=expr,
+    )
     return expr
 
 def logical(tokens: Tokens) -> lang.Expr:
@@ -309,7 +325,11 @@ def logical(tokens: Tokens) -> lang.Expr:
     parser = lambda tokens, expr: makeBinary(
         expr, consume(tokens), equality(tokens)
     )
-    expr = buildExprWhileWord(tokens, {'AND': parser, 'OR': parser}, expr)
+    expr = buildExprWhileWord(
+        tokens,
+        parserMap={'AND': parser, 'OR': parser},
+        rootExpr=expr,
+    )
     return expr
 
 def expression(tokens: Tokens) -> lang.Expr:
@@ -320,11 +340,8 @@ def assignment(tokens: Tokens) -> lang.Assign:
     assignee: lang.GetExpr = identifier(tokens)
     assignee = buildExprWhileWord(
         tokens,
-        {
-            '[': indexExpr,
-            '.': attrExpr,
-        },
-        assignee,
+        parserMap={'[': indexExpr, '.': attrExpr},
+        rootExpr=assignee,
     )
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
@@ -371,11 +388,7 @@ def declare(tokens: Tokens) -> lang.Declare:
         matchWordElseError(tokens, 'OF')
         expectTypeToken(tokens)
         metadata['type'] = consume(tokens).word
-    return lang.Declare(
-        name.name,
-        typetoken.word,
-        metadata,
-    )
+    return lang.Declare(name.name, typetoken.word, metadata)
     
 def declareStmt(tokens: Tokens) -> lang.DeclareStmt:
     expr = declare(tokens)
