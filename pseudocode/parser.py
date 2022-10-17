@@ -142,7 +142,11 @@ def buildExprWhileWord(
     provided for each matching word.
     """
     while expectWord(tokens, *parserMap.keys()):
-        parser = parserMap[check(tokens)]
+        try:
+            parser = parserMap[check(tokens).word]
+        except Exception as e:
+            print(e)
+            breakpoint()
         rootExpr = parser(tokens, rootExpr)
     return rootExpr
 
@@ -158,6 +162,7 @@ def collectExprsWhileWord(
     parsedExprs = [parse(tokens)]
     while matchWord(tokens, *goWords):
         parsedExprs += [parse(tokens)]
+    return parsedExprs
 
 def colonPair(
     tokens: Tokens,
@@ -236,6 +241,7 @@ def indexExpr(
 ) -> lang.GetIndex:
     indexes = collectExprsWhileWord(tokens, [','], value)
     matchWordElseError(tokens, ']')
+    breakpoint()
     return lang.GetIndex(arrayExpr, indexes)
 
 def name(tokens: Tokens) -> lang.NameExpr:
