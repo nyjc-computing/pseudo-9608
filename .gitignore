@@ -89,9 +89,10 @@ ENV/
 .ropeproject
 
 # Replit files
-poetry.lock
-replit.nix
-.replit
+.breakpoints
 .config/
+.replit
 main.py
+poetry.lock
 pseudo
+replit.nix
