@@ -6,15 +6,14 @@ system
     containing builtin-types.
 """
 
-from typing import TextIO
 import random
+from typing import TextIO
 
-from .builtin import TYPES, RuntimeError
-from .lang import Frame, TypeSystem, Builtin, TypedValue
+from . import(builtin, lang)
 
 
 
-system = Frame(typesys=TypeSystem(*TYPES))
+system = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
 
 
 
@@ -22,7 +21,7 @@ def RND() -> float:
     """Returns a random REAL between 0 and 1."""
     return random.random()
 system.declare('RND', 'REAL')
-system.setValue('RND', Builtin(
+system.setValue('RND', lang.Builtin(
     params=[],
     func=RND,
 ))
@@ -30,13 +29,13 @@ system.setValue('RND', Builtin(
 def RANDOMBETWEEN(start: int, end: int) -> int:
     """Returns a random INTEGER between start and end."""
     if not (start < end):
-        raise RuntimeError(f"{start} not less than {end}", None)
+        raise builtin.RuntimeError(f"{start} not less than {end}", None)
     return random.randint(start, end)
 system.declare('RANDOMBETWEEN', 'INTEGER')
-system.setValue('RANDOMBETWEEN', Builtin(
+system.setValue('RANDOMBETWEEN', lang.Builtin(
     params=[
-        TypedValue(type='INTEGER', value=None),
-        TypedValue(type='INTEGER', value=None),
+        lang.TypedValue(type='INTEGER', value=None),
+        lang.TypedValue(type='INTEGER', value=None),
     ],
     func=RANDOMBETWEEN,
 ))
@@ -53,9 +52,9 @@ def EOF(file: TextIO) -> bool:
     file.seek(pos)
     return iseof
 system.declare('EOF', 'BOOLEAN')
-system.setValue('EOF', Builtin(
+system.setValue('EOF', lang.Builtin(
     params=[
-        TypedValue(type='STRING', value=None),
+        lang.TypedValue(type='STRING', value=None),
     ],
     func=EOF,
 ))
