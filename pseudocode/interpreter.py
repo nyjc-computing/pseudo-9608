@@ -8,7 +8,7 @@ from typing import Union, Callable as function
 from functools import singledispatch
 from dataclasses import dataclass, field
 
-from . import builtin, lang, system
+from . import (builtin, lang, system)
 
 
 
@@ -101,15 +101,15 @@ def evalBinary(expr: lang.Binary, frame: lang.Frame) -> lang.PyLiteral:
     return expr.oper(leftval, rightval)
 
 @singledispatch
-def evalCallable(callable, args, frame, **kwargs):
+def evalCallable(callable, callargs, frame, **kwargs):
     """Returns the evaluated value of a Builtin/Callable."""
-    raise TypeError("Non-Callable passed in evalCallable")
+    raise TypeError(f"{type(callable)} passed in evalCallable")
 
+# BUG: callargs can't be typed with lang.Exprs
+# Raises NameError: name 'Expr' is not defined
+# Could be some complex interaction with singledispatch
 @evalCallable.register
-def _(callable: lang.Builtin,
-      callargs: lang.Exprs,
-      frame: lang.Frame,
-      **kwargs) -> lang.PyLiteral:
+def _(callable: lang.Builtin, callargs, frame: lang.Frame, **kwargs) -> lang.PyLiteral:
     if callable.func is system.EOF:
         name = evaluate(callargs[0], frame)  # type: ignore
         file = frame.getValue(name)
@@ -119,10 +119,7 @@ def _(callable: lang.Builtin,
     return callable.func(*argvals)
 
 @evalCallable.register
-def _(callable: lang.Procedure,
-      callargs: lang.Exprs,
-      frame: lang.Frame,
-      **kwargs) -> None:
+def _(callable: lang.Procedure, callargs, frame: lang.Frame, **kwargs) -> None:
     # Assign args to param slots
     for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, frame)
@@ -130,10 +127,7 @@ def _(callable: lang.Procedure,
     executeStmts(callable.stmts, callable.frame, **kwargs)
 
 @evalCallable.register
-def _(callable: lang.Function,
-      callargs: lang.Exprs,
-      frame: lang.Frame,
-      **kwargs) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+def _(callable: lang.Function, callargs, frame: lang.Frame, **kwargs) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     # Assign args to param slots
     for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, frame)
@@ -142,8 +136,7 @@ def _(callable: lang.Function,
     assert returnval, f"None returned from {callable}"
     return returnval
 
-def evalAssign(expr: lang.Assign,
-               frame: lang.Frame) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+def evalAssign(expr: lang.Assign, frame: lang.Frame) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     value = evaluate(expr.expr, frame)
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
