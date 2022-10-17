@@ -19,7 +19,7 @@ logging.basicConfig(
 
 from pseudocode import builtin
 from pseudocode.lang import Frame
-from pseudocode.system import system as sysFrame
+import pseudocode.system as system
 
 from pseudocode import scanner, parser
 from pseudocode.resolver import Resolver
@@ -92,10 +92,8 @@ class Pseudo:
     """
 
     def __init__(self) -> None:
-        self.frame: Frame = Frame(
-            typesys=sysFrame.types,
-            outer=sysFrame
-        )
+        sysFrame = system.initFrame()
+        self.frame: Frame = Frame(typesys=sysFrame.types, outer=sysFrame)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
