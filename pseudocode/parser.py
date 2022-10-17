@@ -408,7 +408,7 @@ def typeStmt(tokens: Tokens) -> lang.TypeStmt:
     exprs = []
     while not expectWord(tokens, 'ENDTYPE'):
         matchWordElseError(tokens, 'DECLARE')
-        exprs += [declareStmt(tokens)]
+        exprs += [declareStmt(tokens).expr]
     matchWordElseError(tokens, 'ENDTYPE')
     matchWordElseError(tokens, '\n')
     return lang.TypeStmt(name, exprs)
