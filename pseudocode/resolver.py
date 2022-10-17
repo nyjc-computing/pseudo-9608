@@ -76,7 +76,7 @@ def resolveExprs(exprs: lang.Exprs, frame: lang.Frame) -> Tuple[lang.Expr, ...]:
     return newexprs
 
 def resolveArgsParams(
-    args: lang.Args,
+    callargs: lang.Args,
     params: lang.Params,
     frame: lang.Frame,
     *,
@@ -87,12 +87,12 @@ def resolveArgsParams(
     It does not resolve the callable. This should be carried out first
     (e.g. in a wrapper function) before resolveArgsParams() is invoked.
     """
-    if len(args) != len(params):
+    if len(callargs) != len(params):
         raise builtin.LogicError(
-            f"Expected {len(params)} args, got {len(args)}",
+            f"Expected {len(params)} args, got {len(callargs)}",
             token=token,
         )
-    for arg, param in zip(args, params):
+    for arg, param in zip(callargs, params):
         # param is a TypedValue slot from either local or frame
         expectTypeElseError(
             resolve(arg, frame), param.type, token=arg.token
@@ -296,10 +296,7 @@ def _(expr: lang.Call, frame: lang.Frame, **kw) -> lang.Type:
             "Not FUNCTION", token=expr.callable.token
         )
     expr.args = resolveExprs(expr.args, frame)
-    resolveArgsParams(
-        expr.args, callable.params, frame,
-        token=expr.token
-    )
+    resolveArgsParams(expr.args, callable.params, frame, token=expr.token)
     return callableType
 
 @resolve.register
