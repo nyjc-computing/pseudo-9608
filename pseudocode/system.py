@@ -38,14 +38,24 @@ def EOF(file: TextIO) -> bool:
 
 
 def initFrame() -> lang.Frame:
+    """
+    Return a system frame with function declarations.
+    Functions are not yet defined.
+    """
     sysFrame = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
 
     sysFrame.declare('RND', 'REAL')
+    sysFrame.declare('RANDOMBETWEEN', 'INTEGER')
+    sysFrame.declare('EOF', 'BOOLEAN')
+
+def resolveGlobal(sysFrame: lang.Frame, globalFrame: lang.Frame) -> None:
+    """
+    Resolve all system functions in sysFrame to point to global frame.
+    """
     sysFrame.setValue('RND', lang.Builtin(
         params=[],
         func=RND,
     ))
-    sysFrame.declare('RANDOMBETWEEN', 'INTEGER')
     sysFrame.setValue('RANDOMBETWEEN', lang.Builtin(
         params=[
             lang.TypedValue(type='INTEGER', value=None),
@@ -53,7 +63,6 @@ def initFrame() -> lang.Frame:
         ],
         func=RANDOMBETWEEN,
     ))
-    sysFrame.declare('EOF', 'BOOLEAN')
     sysFrame.setValue('EOF', lang.Builtin(
         params=[
             lang.TypedValue(type='STRING', value=None),

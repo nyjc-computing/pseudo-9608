@@ -94,6 +94,7 @@ class Pseudo:
     def __init__(self) -> None:
         sysFrame = system.initFrame()
         self.frame: Frame = Frame(typesys=sysFrame.types, outer=sysFrame)
+        system.resolveGlobal(sysFrame, self.frame)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
