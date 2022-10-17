@@ -6,7 +6,7 @@ verify(statements: list, frame: Frame) -> None
 """
 
 from typing import Optional, Union
-from typing import Iterable, Iterator, Collection
+from typing import Iterable, Iterator
 from typing import Tuple
 from functools import singledispatch
 from dataclasses import dataclass
@@ -35,7 +35,7 @@ def expectTypeElseError(
             f"Expected {typesStr}, is {exprtype}", token
         )
 
-def rangeProduct(indexes: Iterable[tuple]) -> Iterator:
+def rangeProduct(indexes: lang.IndexRanges) -> Iterator:
     """Takes an iterable of (start, end) tuple pairs.
     Returns an iterator for cartesian product of indexes.
     """
@@ -80,16 +80,13 @@ def resolveNamesInExpr(
             resolveName(exprOrStmt, frame, attr)
 
 def resolveExprs(
-    exprs: Iterable[lang.Expr],
+    exprs: lang.Exprs,
     frame: lang.Frame,
 ) -> Tuple[lang.Expr, ...]:
     """Resolve an iterable of Exprs.
     UnresolvedNames are resolved into GetNames.
 
-    Return
-    ------
-    Tuple[Expr, ...]
-        A tuple of Exprs
+    Return: Tuple[Expr, ...]
     """
     newexprs: Tuple[lang.Expr, ...] = tuple()
     for expr in exprs:
@@ -101,7 +98,7 @@ def resolveExprs(
 
 def resolveArgsParams(
     args: lang.Args,
-    params: Collection[lang.Param],
+    params: lang.Params,
     frame: lang.Frame,
     *,
     token: lang.Token,
@@ -129,7 +126,7 @@ class Resolver:
     """Resolves a list of statements with the given frame."""
     __slots__ = ('frame', 'statements')
     frame: lang.Frame
-    statements: Iterable[lang.Stmt]
+    statements: lang.Stmts
 
     def inspect(self) -> None:
         verifyStmts(self.statements, self.frame)
@@ -395,7 +392,7 @@ def transformDeclares(
 # Verifiers
 
 def verifyStmts(
-    stmts: Iterable[lang.Stmt],
+    stmts: lang.Stmts,
     frame: lang.Frame,
     returnType: Optional[lang.Type]=None,
 ) -> None:
