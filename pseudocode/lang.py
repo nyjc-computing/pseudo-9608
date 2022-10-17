@@ -41,13 +41,14 @@ IndexExpr = Tuple["Expr", ...]  # Array indexes
 IndexRange = Tuple[int, int]  # Array ranges (declared)
 IndexRanges = Sequence[IndexRange]
 Passby = LiteralType['BYREF', 'BYVALUE']
-Exprs = Iterable["Exprs"]
+Exprs = Iterable["Expr"]
 Stmts = Iterable["Stmt"]
 Args = Sequence["Expr"]  # Callable args
 ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
 Param = Union["TypedValue"]  # Callable params (in the frame)
 Params = Sequence[Param]
+Assignable = Union[PyLiteral, "Object", "Array"]
 Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
               "File"]  # in TypedValue
 Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
@@ -465,7 +466,8 @@ class Builtin(PseudoValue):
     - func
         the Python function to call when invoked
     """
-    __slots__ = ('params', 'func')
+    __slots__ = ('frame', 'params', 'func')
+    frame: "Frame"  # Not used; for compatibility
     params: Params
     func: function
 
