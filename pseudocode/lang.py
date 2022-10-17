@@ -467,7 +467,7 @@ class Builtin(PseudoValue):
         the Python function to call when invoked
     """
     __slots__ = ('frame', 'params', 'func')
-    frame: "Frame"  # Not used; for compatibility
+    frame: "Frame"  # Builtins resolve with global frame
     params: Params
     func: function
 
