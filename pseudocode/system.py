@@ -13,32 +13,15 @@ from . import(builtin, lang)
 
 
 
-system = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
-
-
-
 def RND() -> float:
     """Returns a random REAL between 0 and 1."""
     return random.random()
-system.declare('RND', 'REAL')
-system.setValue('RND', lang.Builtin(
-    params=[],
-    func=RND,
-))
 
 def RANDOMBETWEEN(start: int, end: int) -> int:
     """Returns a random INTEGER between start and end."""
     if not (start < end):
         raise builtin.RuntimeError(f"{start} not less than {end}", None)
     return random.randint(start, end)
-system.declare('RANDOMBETWEEN', 'INTEGER')
-system.setValue('RANDOMBETWEEN', lang.Builtin(
-    params=[
-        lang.TypedValue(type='INTEGER', value=None),
-        lang.TypedValue(type='INTEGER', value=None),
-    ],
-    func=RANDOMBETWEEN,
-))
 
 def EOF(file: TextIO) -> bool:
     """Returns True if the file's cursor is at the end of the file."""
@@ -51,6 +34,24 @@ def EOF(file: TextIO) -> bool:
     iseof = (file.read(1) == '')
     file.seek(pos)
     return iseof
+
+
+
+system = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
+
+system.declare('RND', 'REAL')
+system.setValue('RND', lang.Builtin(
+    params=[],
+    func=RND,
+))
+system.declare('RANDOMBETWEEN', 'INTEGER')
+system.setValue('RANDOMBETWEEN', lang.Builtin(
+    params=[
+        lang.TypedValue(type='INTEGER', value=None),
+        lang.TypedValue(type='INTEGER', value=None),
+    ],
+    func=RANDOMBETWEEN,
+))
 system.declare('EOF', 'BOOLEAN')
 system.setValue('EOF', lang.Builtin(
     params=[
