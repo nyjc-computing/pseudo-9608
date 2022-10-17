@@ -136,13 +136,17 @@ def buildExprWhileWord(
     tokens: Tokens,
     parserMap: Mapping[str, function[[Tokens, lang.Expr], lang.Expr]],
     rootExpr: lang.Expr,
+    advance: bool = False,
 ) -> lang.Expr:
     """
     Builds an expression tree from a starting expr, using the parser
     provided for each matching word.
+
+    Used mainly for binary expressions
     """
     while expectWord(tokens, *parserMap.keys()):
         parser = parserMap[check(tokens).word]
+        if advance: consume(tokens)
         rootExpr = parser(tokens, rootExpr)
     return rootExpr
 
@@ -250,6 +254,7 @@ def name(tokens: Tokens) -> lang.NameExpr:
         tokens,
         parserMap={'[': indexExpr, '.': attrExpr},
         rootExpr=unresolvedNameOrCall,
+        advance=True,
     )
 
 def value(tokens: Tokens):
@@ -343,6 +348,7 @@ def assignment(tokens: Tokens) -> lang.Assign:
         tokens,
         parserMap={'[': indexExpr, '.': attrExpr},
         rootExpr=assignee,
+        advance=True,
     )
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
