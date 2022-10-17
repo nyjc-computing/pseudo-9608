@@ -37,36 +37,33 @@ def EOF(file: TextIO) -> bool:
 
 
 
+funcReturnParams = [
+    (RND, 'REAL', []),
+    (RANDOMBETWEEN, 'INTEGER', [
+        lang.TypedValue(type='INTEGER', value=None),
+        lang.TypedValue(type='INTEGER', value=None),
+    ]),
+    (EOF, 'BOOLEAN', [lang.TypedValue(type='STRING', value=None)]),
+]
+
 def initFrame() -> lang.Frame:
     """
     Return a system frame with function declarations.
     Functions are not yet defined.
     """
     sysFrame = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
-
-    sysFrame.declare('RND', 'REAL')
-    sysFrame.declare('RANDOMBETWEEN', 'INTEGER')
-    sysFrame.declare('EOF', 'BOOLEAN')
+    for func, retType, _ in funcReturnParams:
+        sysFrame.declare(func.__name__, retType)
+    return sysFrame
 
 def resolveGlobal(sysFrame: lang.Frame, globalFrame: lang.Frame) -> None:
     """
     Resolve all system functions in sysFrame to point to global frame.
     """
-    sysFrame.setValue('RND', lang.Builtin(
-        params=[],
-        func=RND,
-    ))
-    sysFrame.setValue('RANDOMBETWEEN', lang.Builtin(
-        params=[
-            lang.TypedValue(type='INTEGER', value=None),
-            lang.TypedValue(type='INTEGER', value=None),
-        ],
-        func=RANDOMBETWEEN,
-    ))
-    sysFrame.setValue('EOF', lang.Builtin(
-        params=[
-            lang.TypedValue(type='STRING', value=None),
-        ],
-        func=EOF,
-    ))
+    # Be careful to avoid recursion
+    for func, retType, params in funcReturnParams:
+        sysFrame.setValue(
+            func.__name__,
+            lang.Builtin(frame=globalFrame, params=params, func=func)
+        )
     return sysFrame
