@@ -132,3 +132,5 @@ SYM_SINGLE = '()[]:,.'
 SYM_MULTI = '+-/*=<>'
 
 SYMBOLS = SYM_SINGLE + SYM_MULTI
+
+COMMENT = '//'
