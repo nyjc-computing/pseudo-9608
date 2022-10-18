@@ -770,7 +770,7 @@ class While(Loop):
     """While represents a pre-condition Loop, executed only if the cond
     evaluates to True.
     """
-    init: Optional["Stmt"]
+    init: Optional["Expr"]
     cond: "Expr"
     stmts: Stmts
 
