@@ -4,21 +4,27 @@ DECLARE i : INTEGER
 
 Length <- 10
 
-PROCEDURE BubbleSort(BYREF Data: ARRAY[1:10] OF INTEGER, Length: INTEGER)
+PROCEDURE InsertSort(BYREF Data: ARRAY[1:10] OF INTEGER, Length: INTEGER)
     DECLARE i : INTEGER
-    DECLARE j : INTEGER
+    DECLARE p : INTEGER
+    DECLARE t : INTEGER
     DECLARE Temp : INTEGER
 
-    FOR i <- 1 TO Length - 1
-        FOR j <- 1 TO Length - i
-            IF Data[j] > Data[j + 1]
-              THEN
-                Temp <- Data[j]
-                Data[j] <- Data[j + 1]
-                Data[j + 1] <- Temp
-            ENDIF
+    IF Length > 1
+      THEN
+        FOR i <- 2 TO Length
+            p <- 1
+            WHILE p < i AND Data[i] > Data[p] DO
+                p <- p + 1
+            ENDWHILE
+            Temp <- Data[i]
+            WHILE i > p DO
+                Data[i] <- Data[i - 1]
+                i <- i - 1
+            ENDWHILE
+            Data[i] <- Temp
         ENDFOR
-    ENDFOR
+    ENDIF
 ENDPROCEDURE
 
 Data[1] <- 7
@@ -32,8 +38,8 @@ Data[8] <- 10
 Data[9] <- 6
 Data[10] <- 8
 
-CALL BubbleSort(Data, Length)
+CALL InsertSort(Data, Length)
 
 FOR i <- 1 TO 10
-    OUTPUT i, ": ", Data[i]
+    OUTPUT "Index: ", i, ": ", Data[i]
 ENDFOR
