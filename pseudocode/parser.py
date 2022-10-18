@@ -269,7 +269,7 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.GetIndex:
         or isinstance(arrayExpr, lang.GetAttr)
         or isinstance(arrayExpr, lang.GetIndex)
     ), f"{arrayExpr!r}: Invalid NameExpr"
-    index = tuple(collectExprsWhileWord(tokens, [','], value))
+    index = tuple(collectExprsWhileWord(tokens, [','], expression))
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, index)
 
@@ -486,7 +486,7 @@ def ifStmt(tokens: Tokens) -> lang.If:
     }
     if matchWord(tokens, 'ELSE'):
         matchWordElseError(tokens, '\n', msg="after ELSE")
-        fallback = parseUntilMatchWord(tokens, ['ENDIF'], statement5)
+        fallback = parseUntilMatchWord(tokens, ['ENDIF'], statement4)
     else:
         fallback = None
         matchWordElseError(tokens, 'ENDIF', msg="at end of IF")
@@ -497,13 +497,13 @@ def whileStmt(tokens: Tokens) -> lang.While:
     cond = expression(tokens)
     matchWordElseError(tokens, 'DO', msg="after WHILE condition")
     matchWordElseError(tokens, '\n', msg="after DO")
-    stmts = parseUntilMatchWord(tokens, ['ENDWHILE'], statement5)
+    stmts = parseUntilMatchWord(tokens, ['ENDWHILE'], statement4)
     matchWordElseError(tokens, '\n', msg="after ENDWHILE")
     return lang.While(None, cond, stmts)
 
 def repeatStmt(tokens: Tokens) -> lang.Repeat:
     matchWordElseError(tokens, '\n', msg="after REPEAT")
-    stmts = parseUntilMatchWord(tokens, ['UNTIL'], statement5)
+    stmts = parseUntilMatchWord(tokens, ['UNTIL'], statement4)
     cond = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of UNTIL")
     return lang.Repeat(None, cond, stmts)
@@ -511,12 +511,12 @@ def repeatStmt(tokens: Tokens) -> lang.Repeat:
 def forStmt(tokens: Tokens) -> lang.While:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
-    end: lang.Expr = value(tokens)
+    end: lang.Expr = expression(tokens)
     step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token)
     if matchWord(tokens, 'STEP'):
-        step = value(tokens)
+        step = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
-    stmts = parseUntilMatchWord(tokens, ['ENDFOR'], statement5)
+    stmts = parseUntilMatchWord(tokens, ['ENDFOR'], statement4)
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
     # Generate loop cond
     cond = lang.Binary(init.assignee, builtin.lte, end, token=init.token)
@@ -530,9 +530,9 @@ def forStmt(tokens: Tokens) -> lang.While:
             token=step.token,
         ),
     )
-    initStmt = lang.AssignStmt(init)
-    incrStmt = lang.AssignStmt(incr)
-    return lang.While(initStmt, cond, stmts + [incrStmt])
+    # initStmt = lang.AssignStmt(init)
+    # incrStmt = lang.AssignStmt(incr)
+    return lang.While(init, cond, stmts + [lang.AssignStmt(incr)])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     name = identifier(tokens).name  # Extract Name from UnresolvedName
@@ -683,7 +683,7 @@ def parse(tokens: Tokens) -> Iterable[lang.Stmt]:
     """Select a parsing function to use, from the next token, and use it.
     """
     lastline = tokens[-1].line
-    tokens += [lang.Token(lastline, 0, 'EOF', "", None)]
+    tokens += [lang.Token(lastline, 0, 'EOF', '\0', 'EOF')]
     statements = []
     while not atEnd(tokens):
         # ignore empty lines

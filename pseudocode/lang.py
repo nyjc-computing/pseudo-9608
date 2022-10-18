@@ -82,7 +82,8 @@ class Token:
 
     def __repr__(self) -> str:
         lineinfo = f"[Line {self.line} column {self.column}]"
-        return f"{lineinfo} <{self.value}> {repr(self.word)}"
+        valuestr = self.value or ''
+        return f"{lineinfo} {repr(self.word)} {valuestr}"
 
 
 class Name:
@@ -106,6 +107,7 @@ class Name:
     def __str__(self) -> NameKey:
         return self.name
 
+    @property
     def token(self) -> "Token":
         return self._token
 
@@ -758,7 +760,7 @@ class Loop(Stmt):
     cond evaluates to a False value.
     """
     __slots__ = ('init', 'cond', 'stmts')
-    init: Optional["Stmt"]
+    init: Optional["Expr"]
     cond: "Expr"
     stmts: Stmts
 
@@ -768,7 +770,7 @@ class While(Loop):
     """While represents a pre-condition Loop, executed only if the cond
     evaluates to True.
     """
-    init: Optional["Stmt"]
+    init: Optional["Expr"]
     cond: "Expr"
     stmts: Stmts
 

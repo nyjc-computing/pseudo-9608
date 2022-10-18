@@ -33,7 +33,7 @@ class ProcedureTestCase(unittest.TestCase):
         frame = self.result['frame']
 
         # Check procedure type
-        self.assertIs(
+        self.assertEqual(
             frame.getType('TestBool'),
             'NULL',
         )
