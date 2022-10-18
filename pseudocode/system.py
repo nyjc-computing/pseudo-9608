@@ -41,22 +41,22 @@ def EOF(file: TextIO) -> bool:
 
 def LENGTH(thisStr: str) -> int:
     """Returns integer value representing the length of thisStr."""
-    return len(str)
+    return len(thisStr)
 
 def LEFT(thisStr: str, x: int) -> str:
     """Returns leftmost x characters from thisStr."""
     if x < 0:
-        raise builtin.RuntimeError("Expected integer >= 0")
-    if x > len(str):
-        raise builtin.RuntimeError("String length exceeded")
+        raise builtin.RuntimeError("Expected integer >= 0", None)
+    if x > len(thisStr):
+        raise builtin.RuntimeError("String length exceeded", None)
     return thisStr[:x]
 
 def RIGHT(thisStr: str, x: int) -> str:
     """Returns rightmost x characters from thisStr."""
     if x < 0:
-        raise builtin.RuntimeError("Expected integer >= 0")
-    if x > len(str):
-        raise builtin.RuntimeError("String length exceeded")
+        raise builtin.RuntimeError("Expected integer >= 0", None)
+    if x > len(thisStr):
+        raise builtin.RuntimeError("String length exceeded", None)
     return thisStr[-x:]
 
 def INT(x: float) -> int:
@@ -75,9 +75,9 @@ def MID(thisStr: str, x: int, y: int) -> str:
     Returns string of length y starting at position x from thisStr.
     """
     if x < 0 or y < 0:
-        raise builtin.RuntimeError("Expected integer >= 0")
-    if x + y > len(str):
-        raise builtin.RuntimeError("String length exceeded")
+        raise builtin.RuntimeError("Expected integer >= 0", None)
+    if x + y > len(thisStr):
+        raise builtin.RuntimeError("String length exceeded", None)
     return thisStr[x:x + y]
 
 def LCASE(thisChar: str) -> str:
