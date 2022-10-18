@@ -20,11 +20,9 @@ from . import builtin, lang
 
 # Resolver helper functions
 
-def expectTypeElseError(
-    exprtype: lang.Type,
-    *expected: lang.Type,
-    token: lang.Token,
-) -> None:
+def expectTypeElseError(exprtype: lang.Type,
+                        *expected: lang.Type,
+                        token: lang.Token) -> None:
     """Takes in a type, followed by one or more expected types.
     Raises an error if the given type is not in the expected types.
     """
@@ -75,13 +73,10 @@ def resolveExprs(exprs: lang.Exprs, frame: lang.Frame) -> Tuple[lang.Expr, ...]:
         newexprs += (expr,)
     return newexprs
 
-def resolveArgsParams(
-    callargs: lang.Args,
-    params: lang.Params,
-    frame: lang.Frame,
-    *,
-    token: lang.Token,
-) -> None:
+def resolveArgsParams(callargs: lang.Args,
+                      params: lang.Params,
+                      frame: lang.Frame, *,
+                      token: lang.Token) -> None:
     """resolveArgsParams() only type-checks the args and stmts of the
     call.
     It does not resolve the callable. This should be carried out first
@@ -114,10 +109,7 @@ class Resolver:
     
 # Resolver helpers
 
-def declareByref(
-    declare: lang.Declare,
-    frame: lang.Frame,
-) -> None:
+def declareByref(declare: lang.Declare, frame: lang.Frame) -> None:
     """Declares BYREF variable in the given frame."""
     assert frame.outer, "Declared name in a frame with no outer"
     name: lang.NameKey = str(declare.name)
@@ -128,10 +120,8 @@ def declareByref(
     # Reference frame vars in local
     frame.set(name, frame.outer.get(name))
 
-def declareByval(
-    declare: lang.Declare,
-    frame: Union[lang.Frame, lang.ObjectTemplate],
-) -> None:
+def declareByval(declare: lang.Declare,
+                 frame: Union[lang.Frame, lang.ObjectTemplate]) -> None:
     """Declares BYVALUE variable in the given frame."""
     if (
         isinstance(frame, lang.ObjectTemplate)
@@ -151,10 +141,7 @@ def declareByval(
         assert isinstance(frame, lang.Frame), "Frame expected"
         frame.setValue(name, array)
 
-def resolveProcCall(
-    expr: lang.Call,
-    frame: lang.Frame,
-) -> lang.Type:
+def resolveProcCall(expr: lang.Call, frame: lang.Frame) -> lang.Type:
     """Resolve a procedure call.
     Statement verification should be done in verifyProcedure, not here.
     """
@@ -349,11 +336,9 @@ def _(expr: lang.GetName, frame: lang.Frame, **kw) -> lang.Type:
 
 # Verifier helpers
 
-def transformDeclares(
-    declares: Iterable[lang.Declare],
-    passby: lang.Passby,
-    frame: lang.Frame,
-) -> Tuple[lang.TypedValue, ...]:
+def transformDeclares(declares: Iterable[lang.Declare],
+                      passby: lang.Passby,
+                      frame: lang.Frame) -> Tuple[lang.TypedValue, ...]:
     """Takes in a list of Declares. Returns a list of TypedValues.
     Used to declare names in a frame/object.
     """
@@ -367,11 +352,9 @@ def transformDeclares(
 
 # Verifiers
 
-def verifyStmts(
-    stmts: lang.Stmts,
-    frame: lang.Frame,
-    returnType: Optional[lang.Type]=None,
-) -> None:
+def verifyStmts(stmts: lang.Stmts,
+                frame: lang.Frame,
+                returnType: Optional[lang.Type]=None) -> None:
     """Verify a list of statements."""
     for stmt in stmts:
         verify(stmt, frame)

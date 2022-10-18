@@ -4,7 +4,7 @@ execute(frame: Frame, statements: list) -> None
     Interprets and executes a list of statements
 """
 
-from typing import Union, Callable as function
+from typing import Optional, Union, Callable as function
 from functools import singledispatch
 from dataclasses import dataclass, field
 
@@ -16,36 +16,30 @@ from . import (builtin, lang, system)
 
 # Helper functions
 
-def expectTypeElseError(
-    exprmode: str,
-    *expected: str,
-    errmsg: str="Expected",
-    token: lang.Token,
-) -> None:
+def expectTypeElseError(exprmode: str,
+                        *expected: str,
+                        errmsg: str="Expected",
+                        token: lang.Token) -> None:
     """Takes in a type, followed by one or more expected types.
     Raises an error if the given type is not in the expected types.
     """
     if not exprmode in expected:
         raise builtin.RuntimeError(f"{errmsg} {expected}", token=token)
 
-def declaredElseError(
-    frame: lang.Frame,
-    name: lang.NameKey,
-    errmsg: str="Undeclared",
-    token: lang.Token=None,
-) -> None:
+def declaredElseError(frame: lang.Frame,
+                      name: lang.NameKey,
+                      errmsg: str="Undeclared",
+                      token: Optional[lang.Token]=None) -> None:
     """Takes in a frame and a name.
     Raises an error if the name is not declared in the frame.
     """
     if not frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
-def undeclaredElseError(
-    frame: lang.Frame,
-    name: lang.NameKey,
-    errmsg="Already declared",
-    token: lang.Token=None,
-) -> None:
+def undeclaredElseError(frame: lang.Frame,
+                        name: lang.NameKey,
+                        errmsg="Already declared",
+                        token: Optional[lang.Token]=None) -> None:
     """Takes in a frame and a name.
     Raises an error if the name is already declared in the frame.
     """
