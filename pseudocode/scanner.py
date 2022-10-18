@@ -82,8 +82,8 @@ def symbol(code: "Code") -> str:
         return token
     while not atEnd(code) and (check(code) in builtin.SYM_MULTI):
         token += consume(code)
-        if token == '//': break
-    if token == '//':
+        if token == builtin.COMMENT: break
+    if token == builtin.COMMENT:
         while not atEnd(code) and check(code) != '\n':
             token += consume(code)
     return token
@@ -171,7 +171,7 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
             text = symbol(code)
             # Ignore comment (//)
             # Terminal linebreak remains
-            if text.startswith("//"):
+            if text.startswith(builtin.COMMENT):
                 continue
             oper = builtin.OPERATORS.get(text, None)
             token = makeToken(code, 'symbol', text, oper)
