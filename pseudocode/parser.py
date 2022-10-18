@@ -269,7 +269,7 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.GetIndex:
         or isinstance(arrayExpr, lang.GetAttr)
         or isinstance(arrayExpr, lang.GetIndex)
     ), f"{arrayExpr!r}: Invalid NameExpr"
-    index = tuple(collectExprsWhileWord(tokens, [','], value))
+    index = tuple(collectExprsWhileWord(tokens, [','], expression))
     matchWordElseError(tokens, ']')
     return lang.GetIndex(arrayExpr, index)
 
