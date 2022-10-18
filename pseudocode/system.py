@@ -30,11 +30,9 @@ def RANDOMBETWEEN(start: int, end: int) -> int:
 
 def EOF(file: TextIO) -> bool:
     """Returns True if the file's cursor is at the end of the file."""
-    # Python has no in-built EOF support;
-    # if read() or readline() return an empty string,
-    # that's considered EOF
-    # So we'll have to seek back to the previous position
-    # after read()
+    # Python has no in-built EOF support; if read() or readline()
+    # return an empty string, that's considered EOF.
+    # So we'll have to seek back to the previous position after read()
     pos = file.tell()
     iseof = (file.read(1) == '')
     file.seek(pos)
