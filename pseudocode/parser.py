@@ -511,10 +511,10 @@ def repeatStmt(tokens: Tokens) -> lang.Repeat:
 def forStmt(tokens: Tokens) -> lang.While:
     init = assignment(tokens)
     matchWordElseError(tokens, 'TO')
-    end: lang.Expr = value(tokens)
+    end: lang.Expr = expression(tokens)
     step: lang.Expr = lang.Literal('INTEGER', 1, token=init.token)
     if matchWord(tokens, 'STEP'):
-        step = value(tokens)
+        step = expression(tokens)
     matchWordElseError(tokens, '\n', msg="at end of FOR")
     stmts = parseUntilMatchWord(tokens, ['ENDFOR'], statement4)
     matchWordElseError(tokens, '\n', msg="after ENDFOR")
