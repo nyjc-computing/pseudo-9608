@@ -33,6 +33,9 @@ def makeToken(code: "Code", type: lang.Type, word: str, value: Any) -> lang.Toke
     column = code.cursor - code.lineStart - len(word) + 1
     return lang.Token(code.line, column, type, word, value)
 
+def islinebreak(token: lang.Token) -> bool:
+    return token.word == '\n'
+
 
 
 # Scanning functions
@@ -171,4 +174,12 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
                 line=code.line,
             )
         tokens += [token]
+
+    # Remove multiple line breaks
+    i = 1
+    while i < len(tokens):
+        if islinebreak(tokens[i - 1]) and islinebreak(tokens[i]):
+            del tokens[i]
+        else:
+            i += 1
     return tokens, code.lines
