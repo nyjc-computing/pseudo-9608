@@ -74,7 +74,11 @@ def MID(thisStr: str, x: int, y: int) -> str:
     """
     Returns string of length y starting at position x from thisStr.
     """
-    pass
+    if x < 0 or y < 0:
+        raise builtin.RuntimeError("Expected integer >= 0")
+    if x + y > len(str):
+        raise builtin.RuntimeError("String length exceeded")
+    return thisStr[x:x + y]
 
 def LCASE(thisChar: str) -> str:
     """
@@ -84,14 +88,14 @@ def LCASE(thisChar: str) -> str:
     returned unchanged.
     """
     # TODO: Change type signature to take CHAR type only
-    pass
+    return thisChar.lower()
 
 def DIV(thisNum: int, thisDiv: int) -> int:
     """
     Returns the integer value representing the whole number part of
     the result when thisNum is divided by thisDiv.
     """
-    pass
+    return thisNum // thisDiv
 
 def INT_TO_STRING(x: int) -> str:
     """Returns a string representation of an INTEGER value."""
