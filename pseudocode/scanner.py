@@ -27,14 +27,10 @@ def consume(code: "Code") -> str:
     code.cursor += 1
     return char
 
-def makeToken(
-    code: "Code",
-    type: lang.Type,
-    word: str,
-    value: Any,
-) -> lang.Token:
+def makeToken(code: "Code", type: lang.Type, word: str, value: Any) -> lang.Token:
     """Factory function for a Token."""
-    column = code.cursor - code.lineStart - len(word)
+    # First char is column 1
+    column = code.cursor - code.lineStart - len(word) + 1
     return lang.Token(code.line, column, type, word, value)
 
 
