@@ -82,7 +82,7 @@ class Token:
 
     def __repr__(self) -> str:
         lineinfo = f"[Line {self.line} column {self.column}]"
-        return f"{lineinfo} <{self.value}> {repr(self.word)}"
+        return f"<{lineinfo} {{{self.value}}} {repr(self.word)}>"
 
 
 class Name:
