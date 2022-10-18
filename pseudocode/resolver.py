@@ -431,18 +431,21 @@ def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
     """Declare a Procedure in the given frame."""
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(str(stmt.name), 'NULL')
+    # No UnresolvedNames to resolve
+
+    # Declare parameters
     local = lang.Frame(typesys=frame.types, outer=frame)
-    resolveNamesInTarget(stmt, local)
     params = transformDeclares(stmt.params, stmt.passby, local)
-    frame.setValue(str(stmt.name), lang.Procedure(
-        local, params, stmt.stmts
-    ))
+
+    # Add procedure definition
+    proc = lang.Procedure(local, params, stmt.stmts)
+    frame.setValue(str(stmt.name), proc)
+
+    # Check for return statements
     for procstmt in stmt.stmts:
         if isinstance(procstmt, lang.Return):
-            raise builtin.LogicError(
-                "Unexpected RETURN in PROCEDURE",
-                procstmt.expr.token
-            )
+            raise builtin.LogicError("Unexpected RETURN in PROCEDURE",
+                                     procstmt.expr.token)
     verifyStmts(stmt.stmts, local)
 
 @verify.register
@@ -450,20 +453,23 @@ def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
     """Declare a Function in the given frame."""
     # Assign function in frame first, to make recursive calls work
     frame.declare(str(stmt.name), stmt.returnType)
+    # No UnresolvedNames to resolve
+
+    # Declare parameters
     local = lang.Frame(typesys=frame.types, outer=frame)
-    resolveNamesInTarget(stmt, local)
     params = transformDeclares(stmt.params, stmt.passby, local)
-    frame.setValue(str(stmt.name), lang.Function(
-        local, params, stmt.stmts
-    ))
+
+    # Add procedure definition
+    func = lang.Function(local, params, stmt.stmts)
+    frame.setValue(str(stmt.name), func)
+
     # Check for return statements
     if not any([
         isinstance(stmt, lang.Return)
         for stmt in stmt.stmts
     ]):
-        raise builtin.LogicError(
-            "No RETURN in function", stmt.name.token
-        )
+        raise builtin.LogicError("No RETURN in function",
+                                 stmt.name.token)
     verifyStmts(stmt.stmts, local, stmt.returnType)
 
 @verify.register
