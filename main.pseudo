@@ -42,6 +42,6 @@ Data[10] <- 8
 CALL InsertSort(Data, Length)
 
 FOR i <- 1 TO 10
-    OUTPUT "Index: " & INT_TO_STRING(i) & ": " & INT_TO_STRING(Data[i])
+    OUTPUT "Index: " & INTTOSTRING(i) & ": " & INTTOSTRING(Data[i])
 ENDFOR
 // End of code

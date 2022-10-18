@@ -97,11 +97,11 @@ def DIV(thisNum: int, thisDiv: int) -> int:
     """
     return thisNum // thisDiv
 
-def INT_TO_STRING(x: int) -> str:
+def INTTOSTRING(x: int) -> str:
     """Returns a string representation of an INTEGER value."""
     return str(x)
 
-def REAL_TO_STRING(x: float) -> str:
+def REALTOSTRING(x: float) -> str:
     """Returns a string representation of a REAL value."""
     return str(x)
 
@@ -137,8 +137,8 @@ funcReturnParams: List[Tuple[function, lang.Type, List[lang.TypedValue]]] = [
         lang.TypedValue(type='INTEGER', value=None),
         lang.TypedValue(type='INTEGER', value=None),
     ]),
-    (INT_TO_STRING, 'STRING', [lang.TypedValue(type='INTEGER', value=None)]),
-    (REAL_TO_STRING, 'STRING', [lang.TypedValue(type='REAL', value=None)]),
+    (INTTOSTRING, 'STRING', [lang.TypedValue(type='INTEGER', value=None)]),
+    (REALTOSTRING, 'STRING', [lang.TypedValue(type='REAL', value=None)]),
 ]
 
 def initFrame() -> lang.Frame:
