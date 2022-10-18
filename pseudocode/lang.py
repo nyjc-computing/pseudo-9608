@@ -26,7 +26,7 @@ File
 """
 from typing import Any, Optional, Union, TypedDict
 from typing import Iterable, Sequence, Iterator, Mapping, MutableMapping
-from typing import Literal as LiteralType, Tuple, List
+from typing import Literal as LiteralType, Tuple
 from typing import Callable as function, IO
 from dataclasses import dataclass
 from itertools import product
@@ -36,22 +36,22 @@ from itertools import product
 PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
 NameKey = str  # Key for Object/Frame
+IndexDigit = Union["Expr"]
 IndexKey = Tuple[int, ...]  # Key for Array
-IndexExpr = Tuple["Expr", ...]  # Array indexes
-IndexRange = Tuple[int, int]  # Array ranges (declared)
+IndexExpr = Tuple[IndexDigit, ...]  # Array indexes
+IndexRange = Tuple[int, int]  # Array ranges (start, end)
 IndexRanges = Sequence[IndexRange]
 Passby = LiteralType['BYREF', 'BYVALUE']
 Exprs = Iterable["Expr"]
 Stmts = Iterable["Stmt"]
 Args = Sequence["Expr"]  # Callable args
-ParamDecl = "Declare"  # ProcFunc params (in statement)
 # HACK: Should use TypeAlias but not yet supported in Python 3.8
-Param = Union["TypedValue"]  # Callable params (in the frame)
-Params = Sequence[Param]
+Declares = Sequence["Declare"]
+Params = Sequence["TypedValue"]
 Assignable = Union[PyLiteral, "Object", "Array"]
 Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
               "File"]  # in TypedValue
-Cases = MutableMapping[PyLiteral, List["Stmt"]]  # For Conditionals
+CaseMap = MutableMapping[PyLiteral, Stmts]  # For Conditionals
 # NameExprs are GetExprs that use a NameKey
 NameKeyExpr = Union["UnresolvedName", "GetName"]
 # GetExprs hold Exprs that evaluate to a KeyMap and a Key
@@ -62,7 +62,7 @@ NameExpr = Union[GetExpr, "Call"]
 
 class TypeMetadata(TypedDict, total=False):
     """The metadata dict passed to an Array declaration"""
-    size: Tuple[IndexRange, ...]
+    size: IndexRanges
     type: Type
 
 
@@ -490,7 +490,7 @@ class Callable(PseudoValue):
     __slots__ = ('frame', 'params', 'stmts')
     frame: "Frame"
     params: Params
-    stmts: "Stmts"
+    stmts: Stmts
 
 
 class Function(Callable):
@@ -741,13 +741,15 @@ class Conditional(Stmt):
     """
     __slots__ = ('cond', 'stmtMap', 'fallback')
     cond: "Expr"
-    stmtMap: Mapping[PyLiteral, "Stmts"]
-    fallback: Optional["Stmts"]
+    stmtMap: Mapping[PyLiteral, Stmts]
+    fallback: Optional[Stmts]
 
 
+@dataclass
 class Case(Conditional): ...
 
 
+@dataclass
 class If(Conditional): ...
 
 
@@ -758,7 +760,7 @@ class Loop(Stmt):
     __slots__ = ('init', 'cond', 'stmts')
     init: Optional["Stmt"]
     cond: "Expr"
-    stmts: "Stmts"
+    stmts: Stmts
 
 
 @dataclass
@@ -768,7 +770,7 @@ class While(Loop):
     """
     init: Optional["Stmt"]
     cond: "Expr"
-    stmts: "Stmts"
+    stmts: Stmts
 
 
 @dataclass
@@ -778,7 +780,7 @@ class Repeat(Loop):
     """
     init: None
     cond: "Expr"
-    stmts: "Stmts"
+    stmts: Stmts
 
 
 @dataclass
@@ -788,7 +790,7 @@ class ProcFunc(Stmt):
     name: Name
     passby: LiteralType['BYVALUE', 'BYREF']
     params: Iterable[Declare]
-    stmts: "Stmts"
+    stmts: Stmts
     returnType: Type
 
 

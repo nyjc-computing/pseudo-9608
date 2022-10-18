@@ -7,7 +7,12 @@ system
 """
 
 import random
-from typing import TextIO
+from typing import (
+    Callable as function,
+    List,
+    TextIO,
+    Tuple,
+)
 
 from . import(builtin, lang)
 
@@ -37,7 +42,7 @@ def EOF(file: TextIO) -> bool:
 
 
 
-funcReturnParams = [
+funcReturnParams: List[Tuple[function, lang.Type, List[lang.TypedValue]]] = [
     (RND, 'REAL', []),
     (RANDOMBETWEEN, 'INTEGER', [
         lang.TypedValue(type='INTEGER', value=None),
@@ -64,6 +69,5 @@ def resolveGlobal(sysFrame: lang.Frame, globalFrame: lang.Frame) -> None:
     for func, retType, params in funcReturnParams:
         sysFrame.setValue(
             func.__name__,
-            lang.Builtin(frame=globalFrame, params=params, func=func)
+            lang.Builtin(globalFrame, params, func)
         )
-    return sysFrame
