@@ -275,7 +275,7 @@ def _(stmt: lang.If, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> None:
     if stmt.init:
-        execute(stmt.init, frame, **kwargs)
+        evaluate(stmt.init, frame, **kwargs)
     while evaluate(stmt.cond, frame) is True:
         executeStmts(stmt.stmts, frame, **kwargs)
     

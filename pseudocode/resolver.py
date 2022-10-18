@@ -418,7 +418,7 @@ def _(stmt: lang.If, frame: lang.Frame) -> None:
 def _(stmt: lang.Loop, frame: lang.Frame) -> None:
     resolveNamesInTarget(stmt, frame)
     if stmt.init:
-        verify(stmt.init, frame)
+        resolve(stmt.init, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(
         condType, 'BOOLEAN',

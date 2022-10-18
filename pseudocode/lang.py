@@ -760,7 +760,7 @@ class Loop(Stmt):
     cond evaluates to a False value.
     """
     __slots__ = ('init', 'cond', 'stmts')
-    init: Optional["Stmt"]
+    init: Optional["Expr"]
     cond: "Expr"
     stmts: Stmts
 

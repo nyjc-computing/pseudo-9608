@@ -530,9 +530,9 @@ def forStmt(tokens: Tokens) -> lang.While:
             token=step.token,
         ),
     )
-    initStmt = lang.AssignStmt(init)
-    incrStmt = lang.AssignStmt(incr)
-    return lang.While(initStmt, cond, stmts + [incrStmt])
+    # initStmt = lang.AssignStmt(init)
+    # incrStmt = lang.AssignStmt(incr)
+    return lang.While(init, cond, stmts + [lang.AssignStmt(incr)])
 
 def procedureStmt(tokens: Tokens) -> lang.ProcedureStmt:
     name = identifier(tokens).name  # Extract Name from UnresolvedName
