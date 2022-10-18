@@ -5,11 +5,10 @@ execute(frame: Frame, statements: list) -> None
 """
 
 from typing import Union, Callable as function
-from typing import Iterable, Collection
 from functools import singledispatch
 from dataclasses import dataclass, field
 
-from . import builtin, lang, system
+from . import (builtin, lang, system)
 
 
 
@@ -59,7 +58,7 @@ def undeclaredElseError(
 class Interpreter:
     """Interprets a list of statements with a given frame."""
     frame: lang.Frame
-    statements: Iterable[lang.Stmt]
+    statements: lang.Stmts
     outputHandler: function = field(default=print, init=False)
 
     def registerOutputHandler(self, handler: function) -> None:
@@ -81,10 +80,7 @@ class Interpreter:
 # Evaluators
 # Evaluation functions return the evaluated value of Exprs.
 
-def evalIndex(
-    indexExpr: lang.IndexExpr,
-    frame: lang.Frame,
-) -> lang.IndexKey:
+def evalIndex(indexExpr: lang.IndexExpr, frame: lang.Frame) -> lang.IndexKey:
     """Returns the evaluated value of an Array's index."""
     indexes: lang.IndexKey = tuple()
     for expr in indexExpr:
@@ -92,79 +88,55 @@ def evalIndex(
         indexes += (index,)
     return indexes
 
-def evalLiteral(
-    literal: lang.Literal,
-    frame: lang.Frame,
-) -> lang.PyLiteral:
+def evalLiteral(literal: lang.Literal, frame: lang.Frame) -> lang.PyLiteral:
     return literal.value
 
-def evalUnary(
-    expr: lang.Unary,
-    frame: lang.Frame,
-) -> lang.PyLiteral:
+def evalUnary(expr: lang.Unary, frame: lang.Frame) -> lang.PyLiteral:
     rightval = evaluate(expr.right, frame)
     return expr.oper(rightval)
 
-def evalBinary(
-    expr: lang.Binary,
-    frame: lang.Frame,
-) -> lang.PyLiteral:
+def evalBinary(expr: lang.Binary, frame: lang.Frame) -> lang.PyLiteral:
     leftval = evaluate(expr.left, frame)
     rightval = evaluate(expr.right, frame)
     return expr.oper(leftval, rightval)
 
 @singledispatch
-def evalCallable(callable, args, frame, **kwargs):
+def evalCallable(callable, callargs, frame, **kwargs):
     """Returns the evaluated value of a Builtin/Callable."""
-    raise TypeError("Non-Callable passed in evalCallable")
+    raise TypeError(f"{type(callable)} passed in evalCallable")
 
+# BUG: callargs can't be typed with lang.Exprs
+# Raises NameError: name 'Expr' is not defined
+# Could be some complex interaction with singledispatch
 @evalCallable.register
-def _(
-    callable: lang.Builtin,
-    args: Collection[lang.Expr],
-    frame: lang.Frame,
-    **kwargs,
-) -> lang.PyLiteral:
+def _(callable: lang.Builtin, callargs, frame: lang.Frame, **kwargs) -> lang.PyLiteral:
     if callable.func is system.EOF:
-        name = evaluate(args[0], frame)  # type: ignore
+        name = evaluate(callargs[0], frame)  # type: ignore
         file = frame.getValue(name)
         assert isinstance(file, lang.File), "Invalid File"
         return callable.func(file.iohandler)
-    argvals = [evaluate(arg, frame) for arg in args]
+    argvals = [evaluate(arg, frame) for arg in callargs]
     return callable.func(*argvals)
 
 @evalCallable.register
-def _(
-    callable: lang.Procedure,
-    args: Collection[lang.Expr],
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+def _(callable: lang.Procedure, callargs, frame: lang.Frame, **kwargs) -> None:
     # Assign args to param slots
-    for arg, slot in zip(args, callable.params):
+    for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, frame)
         slot.value = argval
-    executeStmts(callable.stmts, frame, **kwargs)
+    executeStmts(callable.stmts, callable.frame, **kwargs)
 
 @evalCallable.register
-def _(
-    callable: lang.Function,
-    args: Collection[lang.Expr],
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+def _(callable: lang.Function, callargs, frame: lang.Frame, **kwargs) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     # Assign args to param slots
-    for arg, slot in zip(args, callable.params):
+    for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, frame)
         slot.value = argval
-    returnval = executeStmts(callable.stmts, frame, **kwargs)
+    returnval = executeStmts(callable.stmts, callable.frame, **kwargs)
     assert returnval, f"None returned from {callable}"
     return returnval
 
-def evalAssign(
-    expr: lang.Assign,
-    frame: lang.Frame,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+def evalAssign(expr: lang.Assign, frame: lang.Frame) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     value = evaluate(expr.expr, frame)
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
@@ -228,15 +200,11 @@ def _(expr: lang.GetAttr, frame: lang.Frame, **kw) -> Union[lang.PyLiteral, lang
 @evaluate.register
 def _(expr: lang.Call, frame: lang.Frame, **kw) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
     callable = evaluate(expr.callable, frame)
-    return evalCallable(callable, expr.args, frame)
+    return evalCallable(callable, expr.args, callable.frame)
 
 # Executors
 
-def executeStmts(
-    stmts: Iterable[lang.Stmt],
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
+def executeStmts(stmts: lang.Stmts, frame: lang.Frame, **kwargs) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
     """Execute a list of statements."""
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
@@ -245,11 +213,7 @@ def executeStmts(
             execute(stmt, frame, **kwargs)
     return None
 
-def execReturn(
-    stmt: lang.Return,
-    frame: lang.Frame,
-    **kwargs,
-) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+def execReturn(stmt: lang.Return, frame: lang.Frame, **kwargs) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
     """Return statements should be explicitly checked for and the
     return value passed back. They should not be dispatched through
     execute().
@@ -259,11 +223,7 @@ def execReturn(
 
 
 @singledispatch
-def execute(
-    stmt: lang.Stmt,
-    frame: lang.Frame,
-    **kwargs,
-) -> None:
+def execute(stmt: lang.Stmt, frame: lang.Frame, **kwargs) -> None:
     """Dispatcher for statement executors."""
     raise TypeError(f"Invalid Stmt {stmt}")
 
@@ -272,13 +232,7 @@ def _(stmt: lang.Return, frame: lang.Frame, **kwargs) -> None:
     raise TypeError("Return Stmts should not be dispatched from execute()")
     
 @execute.register
-def _(
-    stmt: lang.Output,
-    frame: lang.Frame,
-    *,
-    output: function,
-    **kwargs,
-) -> None:
+def _(stmt: lang.Output, frame: lang.Frame, *, output: function, **kwargs) -> None:
     for expr in stmt.exprs:
         value = evaluate(expr, frame)
         if type(value) is bool:
@@ -410,7 +364,7 @@ def _(stmt: lang.CloseFile, frame: lang.Frame, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
     callable = evaluate(stmt.expr.callable, frame)
-    evalCallable(callable, stmt.expr.args, frame, **kwargs)
+    evalCallable(callable, stmt.expr.args, callable.frame, **kwargs)
     
 @execute.register
 def _(stmt: lang.AssignStmt, frame: lang.Frame, **kwargs) -> None:

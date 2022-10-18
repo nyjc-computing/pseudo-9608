@@ -72,3 +72,5 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [28a Shrinkwrap: dataclasses](https://github.com/nyjc-computing/pseudo-9608/pull/83)
 - [28b Shrinkwrap: Single dispatch](https://github.com/nyjc-computing/pseudo-9608/pull/84)
 - [28c Shrinkwrap: Compressing loops](https://github.com/nyjc-computing/pseudo-9608/pull/85)
+- [29 Cleanup](https://github.com/nyjc-computing/pseudo-9608/pull/86)
+- 

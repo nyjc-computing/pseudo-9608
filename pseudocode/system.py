@@ -6,40 +6,27 @@ system
     containing builtin-types.
 """
 
-from typing import TextIO
 import random
+from typing import (
+    Callable as function,
+    List,
+    TextIO,
+    Tuple,
+)
 
-from .builtin import TYPES, RuntimeError
-from .lang import Frame, TypeSystem, Builtin, TypedValue
-
-
-
-system = Frame(typesys=TypeSystem(*TYPES))
+from . import(builtin, lang)
 
 
 
 def RND() -> float:
     """Returns a random REAL between 0 and 1."""
     return random.random()
-system.declare('RND', 'REAL')
-system.setValue('RND', Builtin(
-    params=[],
-    func=RND,
-))
 
 def RANDOMBETWEEN(start: int, end: int) -> int:
     """Returns a random INTEGER between start and end."""
     if not (start < end):
-        raise RuntimeError(f"{start} not less than {end}", None)
+        raise builtin.RuntimeError(f"{start} not less than {end}", None)
     return random.randint(start, end)
-system.declare('RANDOMBETWEEN', 'INTEGER')
-system.setValue('RANDOMBETWEEN', Builtin(
-    params=[
-        TypedValue(type='INTEGER', value=None),
-        TypedValue(type='INTEGER', value=None),
-    ],
-    func=RANDOMBETWEEN,
-))
 
 def EOF(file: TextIO) -> bool:
     """Returns True if the file's cursor is at the end of the file."""
@@ -52,10 +39,35 @@ def EOF(file: TextIO) -> bool:
     iseof = (file.read(1) == '')
     file.seek(pos)
     return iseof
-system.declare('EOF', 'BOOLEAN')
-system.setValue('EOF', Builtin(
-    params=[
-        TypedValue(type='STRING', value=None),
-    ],
-    func=EOF,
-))
+
+
+
+funcReturnParams: List[Tuple[function, lang.Type, List[lang.TypedValue]]] = [
+    (RND, 'REAL', []),
+    (RANDOMBETWEEN, 'INTEGER', [
+        lang.TypedValue(type='INTEGER', value=None),
+        lang.TypedValue(type='INTEGER', value=None),
+    ]),
+    (EOF, 'BOOLEAN', [lang.TypedValue(type='STRING', value=None)]),
+]
+
+def initFrame() -> lang.Frame:
+    """
+    Return a system frame with function declarations.
+    Functions are not yet defined.
+    """
+    sysFrame = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
+    for func, retType, _ in funcReturnParams:
+        sysFrame.declare(func.__name__, retType)
+    return sysFrame
+
+def resolveGlobal(sysFrame: lang.Frame, globalFrame: lang.Frame) -> None:
+    """
+    Resolve all system functions in sysFrame to point to global frame.
+    """
+    # Be careful to avoid recursion
+    for func, retType, params in funcReturnParams:
+        sysFrame.setValue(
+            func.__name__,
+            lang.Builtin(globalFrame, params, func)
+        )
