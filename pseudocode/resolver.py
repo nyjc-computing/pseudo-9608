@@ -389,8 +389,10 @@ def _(stmt: lang.Input, frame: lang.Frame) -> None:
 @verify.register
 def _(stmt: lang.Case, frame: lang.Frame) -> None:
     resolveNamesInTarget(stmt, frame)
-    resolve(stmt.cond, frame)
-    for statements in stmt.stmtMap.values():
+    condType = resolve(stmt.cond, frame)
+    for caseValue, statements in stmt.stmtMap.items():
+        caseType = resolve(caseValue, frame)
+        expectTypeElseError(caseType, condType, token=caseValue.token)
         verifyStmts(statements, frame)
     if stmt.fallback:
         verifyStmts(stmt.fallback, frame)
