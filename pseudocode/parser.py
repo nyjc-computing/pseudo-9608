@@ -465,7 +465,7 @@ def caseStmt(tokens: Tokens) -> lang.Case:
         tokens,
         ['OTHERWISE', 'ENDCASE'],
         lambda tokens: colonPair(tokens,
-                                 lambda tokens: literal(tokens).value,
+                                 lambda tokens: literal(tokens),
                                  lambda tokens: [statement1(tokens)])
     ))
     if matchWord(tokens, 'OTHERWISE'):
