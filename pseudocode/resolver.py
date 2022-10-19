@@ -256,10 +256,10 @@ def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.Type:
         return 'REAL'
     if expr.oper in (builtin.concat, ):
         expectTypeElseError(
-            lType, builtin.STRING, token=expr.left.token
+            lType, 'STRING', token=expr.left.token
         )
         expectTypeElseError(
-            rType, builtin.STRING, token=expr.right.token
+            rType, 'STRING', token=expr.right.token
         )
         return 'STRING'
     raise ValueError("No return for Binary")
