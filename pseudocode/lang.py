@@ -559,6 +559,12 @@ class Literal(Expr):
     value: PyLiteral
     token: Token
 
+    def __hash__(self):
+        return hash(self.value)
+
+    def __eq__(self, other: "Literal") -> bool:
+        return self.value == other.value
+
 
 @dataclass
 class Declare(Expr):

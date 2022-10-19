@@ -461,20 +461,25 @@ def caseStmt(tokens: Tokens) -> lang.Case:
     matchWordElseError(tokens, 'OF', msg="after CASE")
     cond: lang.Expr = value(tokens)
     matchWordElseError(tokens, '\n', msg="after CASE OF")
-    stmts: lang.CaseMap = dict(parseUntilExpectWord(
+    caseStmts: lang.CaseMap = dict()
+    caseMap = parseUntilExpectWord(
         tokens,
         ['OTHERWISE', 'ENDCASE'],
         lambda tokens: colonPair(tokens,
                                  lambda tokens: literal(tokens),
                                  lambda tokens: [statement1(tokens)])
-    ))
+    )
+    for caseValue, stmts in caseMap:
+        if caseValue in caseStmts:
+            raise builtin.ParseError(f"Repeated CASE value", caseValue.token)
+        caseStmts[caseValue] = stmts
     if matchWord(tokens, 'OTHERWISE'):
         fallback = [statement6(tokens)]
     else:
         fallback = None
     matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
     matchWordElseError(tokens, '\n', msg="after ENDCASE")
-    return lang.Case(cond, stmts, fallback)
+    return lang.Case(cond, caseStmts, fallback)
 
 def ifStmt(tokens: Tokens) -> lang.If:
     cond = expression(tokens)
