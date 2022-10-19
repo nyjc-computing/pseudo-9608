@@ -3,7 +3,17 @@ import unittest
 import pseudocode
 
 TESTCODE = """
-IF TRUE
+DECLARE Test : STRING
+
+Test <- "Hi"
+
+CASE OF Test
+  "Hello": OUTPUT "Oh, hello there!"
+  "Hi": OUTPUT "Hi again!"
+  "Yo": OUTPUT "Wassup?"
+  0: OUTPUT "Huh?"
+  1: OUTPUT "No way..."
+ENDCASE
 """
 
 class ProcedureTestCase(unittest.TestCase):
@@ -22,5 +32,11 @@ class ProcedureTestCase(unittest.TestCase):
         )
         self.assertIs(
             type(error),
-            pseudocode.builtin.ParseError,
+            pseudocode.builtin.LogicError,
+        )
+        infoword = 'expect'
+        self.assertIn(
+            infoword,
+            error.msg().lower(),
+            f"Error message does not contain {infoword!r}"
         )
