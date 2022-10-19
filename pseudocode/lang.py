@@ -25,33 +25,40 @@ File
     An open file
 """
 from typing import Any, Optional, Union, TypedDict
-from typing import Iterable, Sequence, Iterator, Mapping, MutableMapping
+from typing import Iterable, Sequence, Iterator, MutableMapping
 from typing import Literal as LiteralType, Tuple
 from typing import Callable as function, IO
 from dataclasses import dataclass
 from itertools import product
 
 # Pseudocode types
-# These are used for type-checking
 PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
-NameKey = str  # Key for Object/Frame
 IndexDigit = Union["Expr"]
-IndexKey = Tuple[int, ...]  # Key for Array
 IndexExpr = Tuple[IndexDigit, ...]  # Array indexes
 IndexRange = Tuple[int, int]  # Array ranges (start, end)
-IndexRanges = Sequence[IndexRange]
 Passby = LiteralType['BYREF', 'BYVALUE']
+
+# Plurals
 Exprs = Iterable["Expr"]
 Stmts = Iterable["Stmt"]
 Args = Sequence["Expr"]  # Callable args
-# HACK: Should use TypeAlias but not yet supported in Python 3.8
 Declares = Sequence["Declare"]
 Params = Sequence["TypedValue"]
+IndexRanges = Sequence[IndexRange]
+
+# Mappings
+NameKey = str  # for Object/Frame
+IndexKey = Tuple[int, ...]  # for Array
+NameMap = MutableMapping[NameKey, "TypedValue"]
+IndexMap = MutableMapping[IndexKey, "TypedValue"]
+CaseMap = MutableMapping["Literal", Stmts]  # for Conditionals
+
+# HACK: Should use TypeAlias but not yet supported in Python 3.8
 Assignable = Union[PyLiteral, "Object", "Array"]
 Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
               "File"]  # in TypedValue
-CaseMap = MutableMapping[PyLiteral, Stmts]  # For Conditionals
+
 # NameExprs are GetExprs that use a NameKey
 NameKeyExpr = Union["UnresolvedName", "GetName"]
 # GetExprs hold Exprs that evaluate to a KeyMap and a Key
@@ -265,7 +272,7 @@ class Object(PseudoValue):
         self,
         typesys: "TypeSystem",
     ) -> None:
-        self.data: MutableMapping[NameKey, "TypedValue"] = {}
+        self.data: NameMap = {}
         self.types = typesys
 
     def __repr__(self) -> str:
@@ -319,7 +326,7 @@ class Frame:
         typesys: "TypeSystem",
         outer: "Frame" = None,
     ) -> None:
-        self.data: MutableMapping[NameKey, "TypedValue"] = {}
+        self.data: NameMap = {}
         self.types = typesys
         self.outer = outer
 
@@ -400,7 +407,7 @@ class Array(PseudoValue):
     ) -> None:
         self.types = typesys
         self.ranges = ranges
-        self.data: MutableMapping[IndexKey, "TypedValue"] = {
+        self.data: IndexMap = {
             index: self.types.cloneType(type)
             for index in self.rangeProduct(ranges)
         }
@@ -559,7 +566,7 @@ class Declare(Expr):
     __slots__ = ('name', 'type', 'metadata')
     name: Name
     type: Type
-    metadata: Mapping
+    metadata: MutableMapping
 
     @property
     def token(self):
@@ -743,7 +750,7 @@ class Conditional(Stmt):
     """
     __slots__ = ('cond', 'stmtMap', 'fallback')
     cond: "Expr"
-    stmtMap: Mapping[PyLiteral, Stmts]
+    stmtMap: CaseMap
     fallback: Optional[Stmts]
 
 
