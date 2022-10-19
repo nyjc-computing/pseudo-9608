@@ -177,7 +177,7 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
             token = makeToken(code, 'symbol', text, oper)
         else:
             raise builtin.ParseError(
-                f"Unrecognised character",
+                f"{char!r}: Unrecognised character",
                 token=char,
                 line=code.line,
             )

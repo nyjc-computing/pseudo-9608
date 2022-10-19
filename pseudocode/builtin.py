@@ -79,6 +79,9 @@ def OR(x, y):
 def NOT(x):
     return not x
 
+def concat(x, y):
+    return x + y
+
 
 
 # Token types
@@ -125,9 +128,10 @@ OPERATORS = {
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
+    '&': concat,
 }
 
-SYM_SINGLE = '()[]:,.'
+SYM_SINGLE = '()[]:,.&'
 
 SYM_MULTI = '+-/*=<>'
 

@@ -254,6 +254,14 @@ def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.Type:
         ):
             return 'INTEGER'
         return 'REAL'
+    if expr.oper in (builtin.concat, ):
+        expectTypeElseError(
+            lType, 'STRING', token=expr.left.token
+        )
+        expectTypeElseError(
+            rType, 'STRING', token=expr.right.token
+        )
+        return 'STRING'
     raise ValueError("No return for Binary")
 
 @resolve.register

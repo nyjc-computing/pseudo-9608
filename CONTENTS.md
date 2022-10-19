@@ -75,3 +75,4 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [29a Cleanup](https://github.com/nyjc-computing/pseudo-9608/pull/86)
 - [29b Trivialities][https://github.com/nyjc-computing/pseudo-9608/pull/89]
 - [30a New features: Comments][https://github.com/nyjc-computing/pseudo-9608/pull/91]
+- [30b New features: concatenation with & operator][https://github.com/nyjc-computing/pseudo-9608/pull/92]

@@ -4,18 +4,12 @@ import pseudocode
 from tests import capture
 
 TESTCODE = """
-PROCEDURE CountDown(Num : INTEGER)
-    OUTPUT Num
-    IF Num > 0
-      THEN
-        CALL CountDown(Num - 1)
-    ENDIF
-ENDPROCEDURE
-
-CALL CountDown(10)
+OUTPUT "A: " & INTTOSTRING(1) & ", B: " & INTTOSTRING(999)
 """
 
-class RecursionTestCase(unittest.TestCase):
+EXPECTED = "A: 1, B: 999\n"
+
+class ProcedureTestCase(unittest.TestCase):
     def setUp(self):
         pseudo = pseudocode.Pseudo()
         captureOutput, returnOutput = capture('output')
@@ -25,14 +19,11 @@ class RecursionTestCase(unittest.TestCase):
         self.result = pseudo.run(TESTCODE)
         self.result['output'] = returnOutput()
         
-    def test_recursion(self):
-        # Procedure should complete successfully
+    def test_string(self):
+        # Code should complete successfully
         self.assertIsNone(self.result['error'])        
 
     def test_output(self):
         # Check output
         output = self.result['output']
-        self.assertEqual(
-            output.strip(),
-            "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0",
-        )
+        self.assertEqual(output, EXPECTED)

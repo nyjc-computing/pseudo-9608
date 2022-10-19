@@ -324,7 +324,7 @@ def addsub(tokens: Tokens) -> lang.Expr:
     parser = lambda tokens, expr: makeBinary(expr, consume(tokens), muldiv(tokens))
     expr = buildExprWhileWord(
         tokens,
-        parserMap={'+': parser, '-': parser},
+        parserMap={'+': parser, '-': parser, '&': parser},
         rootExpr=expr,
     )
     return expr
