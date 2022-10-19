@@ -176,7 +176,6 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
             oper = builtin.OPERATORS.get(text, None)
             token = makeToken(code, 'symbol', text, oper)
         else:
-            breakpoint()
             raise builtin.ParseError(
                 f"{char!r}: Unrecognised character",
                 token=char,
