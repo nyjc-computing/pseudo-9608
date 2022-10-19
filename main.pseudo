@@ -1,47 +1,13 @@
-// A comment
-DECLARE Length : INTEGER
-DECLARE Data : ARRAY[1:10] OF INTEGER
-DECLARE i : INTEGER
+DECLARE Test : STRING
 
-Length <- 10
+Test <- "Hi"
 
-PROCEDURE InsertSort(BYREF Data: ARRAY[1:10] OF INTEGER, Length: INTEGER)
-    DECLARE i : INTEGER
-    DECLARE p : INTEGER
-    DECLARE t : INTEGER
-    DECLARE Temp : INTEGER
-
-    IF Length > 1
-      THEN
-        FOR i <- 2 TO Length
-            p <- 1
-            WHILE p < i AND Data[i] > Data[p] DO
-                p <- p + 1
-            ENDWHILE
-            Temp <- Data[i]
-            WHILE i > p DO
-                Data[i] <- Data[i - 1]
-                i <- i - 1
-            ENDWHILE
-            Data[i] <- Temp
-        ENDFOR
-    ENDIF
-ENDPROCEDURE
-
-Data[1] <- 7
-Data[2] <- 9
-Data[3] <- 4
-Data[4] <- 1
-Data[5] <- 2
-Data[6] <- 3
-Data[7] <- 5
-Data[8] <- 10
-Data[9] <- 6
-Data[10] <- 8
-
-CALL InsertSort(Data, Length)
-
-FOR i <- 1 TO 10
-    OUTPUT "Index: " & INTTOSTRING(i) & ": " & INTTOSTRING(Data[i])
-ENDFOR
-// End of code
+CASE OF Test
+  "Hello": OUTPUT "Oh, hello there!"
+  "Hi": OUTPUT "Hihi!"
+  "Hi": OUTPUT "Hi again!"
+  "Yo": OUTPUT "Wassup?"
+  0: OUTPUT "Huh?"
+  0: OUTPUT "Sense of deja vu ..."
+  1: OUTPUT "No way..."
+ENDCASE
