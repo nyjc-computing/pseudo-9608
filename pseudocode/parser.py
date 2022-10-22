@@ -507,8 +507,11 @@ def caseStmt(tokens: Tokens) -> lang.Case:
     caseStmts: lang.CaseMap = dict()
     caseMap = parseUntilExpectWord(
         tokens, ['OTHERWISE', 'ENDCASE'],
-        lambda tokens: colonPair(tokens, lambda tokens: literal(tokens), lambda
-                                 tokens: [statement1(tokens)]))
+        lambda tokens: colonPair(
+            tokens,
+            lambda tokens: literal(tokens),
+            lambda tokens: [statement1(tokens)]
+        ))
     for caseValue, stmts in caseMap:
         if caseValue in caseStmts:
             raise builtin.ParseError(f"Repeated CASE value", caseValue.token)
