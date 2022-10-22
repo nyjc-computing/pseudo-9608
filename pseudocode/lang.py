@@ -99,12 +99,7 @@ class Name:
     """
     __slots__ = ('name', '_token')
 
-    def __init__(
-        self,
-        name: NameKey,
-        *,
-        token: "Token",
-    ) -> None:
+    def __init__(self, name: NameKey, *, token: "Token") -> None:
         self.name = name
         self._token = token
 
@@ -148,9 +143,7 @@ class TypeTemplate:
     value: Optional["ObjectTemplate"]
 
     def clone(self) -> "TypedValue":
-        """
-        This returns an empty TypedValue of the same type
-        """
+        """This returns an empty TypedValue of the same type."""
         if isinstance(self.value, ObjectTemplate):
             return TypedValue(self.type, self.value.clone())
         return TypedValue(self.type, self.value)
@@ -167,10 +160,9 @@ class ObjectTemplate:
     clone()
         Returns an empty Object of the same type
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-    ) -> None:
+    __slots__ = ('types', 'data')
+
+    def __init__(self, typesys: "TypeSystem") -> None:
         self.types = typesys
         self.data: MutableMapping[NameKey, Type] = {}
 
@@ -210,10 +202,9 @@ class TypeSystem:
     cloneType(type)
         return a copy of the template for the type
     """
-    def __init__(
-        self,
-        *types: Type,
-    ) -> None:
+    __slots__ = ('data', )
+
+    def __init__(self, *types: Type) -> None:
         self.data: MutableMapping[Type, TypeTemplate] = {}
         for typeName in types:
             self.declare(typeName)
@@ -227,11 +218,7 @@ class TypeSystem:
     def declare(self, type: Type) -> None:
         self.data[type] = TypeTemplate(type, None)
 
-    def setTemplate(
-        self,
-        type: Type,
-        template: "ObjectTemplate",
-    ) -> None:
+    def setTemplate(self, type: Type, template: "ObjectTemplate") -> None:
         self.data[type].value = template
 
     def cloneType(self, type: Type) -> "TypedValue":
@@ -268,12 +255,11 @@ class Object(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-    ) -> None:
-        self.data: NameMap = {}
+    __slots__ = ('types', 'data')
+
+    def __init__(self, typesys: "TypeSystem") -> None:
         self.types = typesys
+        self.data: NameMap = {}
 
     def __repr__(self) -> str:
         nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
@@ -321,13 +307,11 @@ class Frame:
     lookup(name)
         returns the first frame containing the name
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-        outer: "Frame" = None,
-    ) -> None:
-        self.data: NameMap = {}
+    __slots__ = ('types', 'data', 'outer')
+
+    def __init__(self, typesys: "TypeSystem", outer: "Frame" = None) -> None:
         self.types = typesys
+        self.data: NameMap = {}
         self.outer = outer
 
     def __repr__(self) -> str:
@@ -399,12 +383,10 @@ class Array(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-        ranges: IndexRanges,
-        type: Type,
-    ) -> None:
+    __slots__ = ('types', 'ranges', 'data')
+
+    def __init__(self, typesys: "TypeSystem", ranges: IndexRanges,
+                 type: Type) -> None:
         self.types = typesys
         self.ranges = ranges
         self.data: IndexMap = {
@@ -495,7 +477,6 @@ class Callable(PseudoValue):
     - stmts
         A list of statements the callable executes when called
     """
-
     __slots__ = ('frame', 'params', 'stmts')
     frame: "Frame"
     params: Params
@@ -541,7 +522,6 @@ class Expr:
     token: Token
         Returns the token asociated with the expr
     """
-
     __slots__: Iterable[str] = tuple()
 
     @property
@@ -637,8 +617,7 @@ class UnresolvedName(Expr):
 
 @dataclass
 class GetName(Expr):
-    """A GetName Expr represents a Name with a Frame context.
-    """
+    """A GetName Expr represents a Name with a Frame context."""
     __slots__ = ('frame', 'name')
     frame: "Frame"
     name: Name
@@ -650,8 +629,7 @@ class GetName(Expr):
 
 @dataclass
 class GetIndex(Expr):
-    """A GetName Expr represents a Index with an Array context.
-    """
+    """A GetName Expr represents a Index with an Array context."""
     __slots__ = ('array', 'index')
     array: NameExpr
     index: IndexExpr
@@ -663,8 +641,7 @@ class GetIndex(Expr):
 
 @dataclass
 class GetAttr(Expr):
-    """A GetName Expr represents a Name with an Object context.
-    """
+    """A GetName Expr represents a Name with an Object context."""
     __slots__ = ('object', 'name')
     object: NameExpr
     name: Name
@@ -698,36 +675,31 @@ class Stmt:
 
 
 class ExprStmt(Stmt):
-    """Base class for statements that contain only a single Expr.
-    """
+    """Base class for statements that contain only a single Expr."""
     __slots__ = ('expr', )
 
 
 @dataclass
 class Return(ExprStmt):
-    """Return encapsulates the value to be returned from a Function.
-    """
+    """Return encapsulates the value to be returned from a Function."""
     expr: "Expr"
 
 
 @dataclass
 class AssignStmt(ExprStmt):
-    """AssignStmt encapsulates an Assign Expr.
-    """
+    """AssignStmt encapsulates an Assign Expr."""
     expr: "Assign"
 
 
 @dataclass
 class DeclareStmt(ExprStmt):
-    """DeclareStmt encapsulates a Declare Expr.
-    """
+    """DeclareStmt encapsulates a Declare Expr."""
     expr: "Declare"
 
 
 @dataclass
 class CallStmt(ExprStmt):
-    """CallStmt encapsulates a Call Expr.
-    """
+    """CallStmt encapsulates a Call Expr."""
     expr: "Call"
 
 
@@ -761,11 +733,13 @@ class Conditional(Stmt):
 
 
 @dataclass
-class Case(Conditional): ...
+class Case(Conditional):
+    ...
 
 
 @dataclass
-class If(Conditional): ...
+class If(Conditional):
+    ...
 
 
 class Loop(Stmt):
