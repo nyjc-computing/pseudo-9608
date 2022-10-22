@@ -61,10 +61,8 @@ Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
 
 # NameExprs are GetExprs that use a NameKey
 NameKeyExpr = Union["UnresolvedName", "GetName"]
-# GetExprs hold Exprs that evaluate to a KeyMap and a Key
-GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
 # NameExprs start with a name
-NameExpr = Union[GetExpr, "Call"]
+NameExpr = Union["GetExpr", "Call"]
 
 
 class TypeMetadata(TypedDict, total=False):
@@ -570,7 +568,7 @@ class Assign(Expr):
     represented by the assignee.
     """
     __slots__ = ("assignee", "expr")
-    assignee: GetExpr
+    assignee: "GetExpr"
     expr: "Expr"
 
     @property
@@ -620,7 +618,18 @@ class UnresolvedName(Expr):
 
 
 @dataclass
-class GetName(Expr):
+class GetExpr(Expr):
+    """Base class for Exprs involving Names.
+
+    Such expressions involve a context, and a key for extracting data
+    from the context.
+    
+    E.g. Variable evaluation, array indexing, object attribute access
+    """
+
+
+@dataclass
+class GetName(GetExpr):
     """A GetName Expr represents a Name with a Frame context."""
     __slots__ = ("frame", "name")
     frame: "Frame"
@@ -632,7 +641,7 @@ class GetName(Expr):
 
 
 @dataclass
-class GetIndex(Expr):
+class GetIndex(GetExpr):
     """A GetName Expr represents a Index with an Array context."""
     __slots__ = ("array", "index")
     array: NameExpr
@@ -644,7 +653,7 @@ class GetIndex(Expr):
 
 
 @dataclass
-class GetAttr(Expr):
+class GetAttr(GetExpr):
     """A GetName Expr represents a Name with an Object context."""
     __slots__ = ("object", "name")
     object: NameExpr
@@ -721,7 +730,7 @@ class Input(Stmt):
     assigned.
     """
     __slots__ = ("keyExpr", )
-    key: GetExpr
+    key: "GetExpr"
 
 
 @dataclass
@@ -819,7 +828,7 @@ class OpenFile(FileStmt):
 class ReadFile(FileStmt):
     __slots__ = ("filename", "target")
     filename: "Expr"
-    target: GetExpr
+    target: "GetExpr"
 
 
 @dataclass
