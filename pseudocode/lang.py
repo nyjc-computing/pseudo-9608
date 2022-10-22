@@ -542,7 +542,11 @@ class Literal(Expr):
     def __hash__(self):
         return hash(self.value)
 
-    def __eq__(self, other: "Literal") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Literal):
+            # Allow Python to try other.__eq__(self)
+            # See: https://stackoverflow.com/a/54816069
+            return NotImplemented
         return self.value == other.value
 
 
