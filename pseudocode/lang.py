@@ -552,7 +552,7 @@ class Declare(Expr):
     __slots__ = ("name", "type", "metadata")
     name: Name
     type: Type
-    metadata: MutableMapping
+    metadata: TypeMetadata
 
     @property
     def token(self):

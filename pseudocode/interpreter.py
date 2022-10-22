@@ -265,7 +265,7 @@ def _(stmt: lang.Case, frame: lang.Frame, **kwargs) -> None:
 def _(stmt: lang.If, frame: lang.Frame, **kwargs) -> None:
     cond = evaluate(stmt.cond, frame)
     if cond in stmt.stmtMap:
-        executeStmts(stmt.stmtMap[True], frame, **kwargs)
+        executeStmts(stmt.stmtMap[cond], frame, **kwargs)
     elif stmt.fallback:
         executeStmts(stmt.fallback, frame, **kwargs)
     

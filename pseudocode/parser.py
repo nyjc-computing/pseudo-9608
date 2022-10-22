@@ -528,7 +528,8 @@ def ifStmt(tokens: Tokens) -> lang.If:
     matchWordElseError(tokens, 'THEN')
     matchWordElseError(tokens, '\n', msg="after THEN")
     stmts: lang.CaseMap = {
-        True: parseUntilExpectWord(tokens, ['ELSE', 'ENDIF'], statement1)
+        lang.Literal('BOOLEAN', True, cond.token):
+        parseUntilExpectWord(tokens, ['ELSE', 'ENDIF'], statement1)
     }
     if matchWord(tokens, 'ELSE'):
         matchWordElseError(tokens, '\n', msg="after ELSE")
