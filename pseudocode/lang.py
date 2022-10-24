@@ -37,7 +37,7 @@ Type = str  # pseudocode type, whether built-in or declared
 IndexDigit = Union["Expr"]
 IndexExpr = Tuple[IndexDigit, ...]  # Array indexes
 IndexRange = Tuple[int, int]  # Array ranges (start, end)
-Passby = LiteralType['BYREF', 'BYVALUE']
+Passby = LiteralType["BYREF", "BYVALUE"]
 
 # Plurals
 Exprs = Iterable["Expr"]
@@ -59,12 +59,16 @@ Assignable = Union[PyLiteral, "Object", "Array"]
 Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
               "File"]  # in TypedValue
 
-# NameExprs are GetExprs that use a NameKey
-NameKeyExpr = Union["UnresolvedName", "GetName"]
-# GetExprs hold Exprs that evaluate to a KeyMap and a Key
-GetExpr = Union["UnresolvedName", "GetName", "GetAttr", "GetIndex"]
-# NameExprs start with a name
-NameExpr = Union[GetExpr, "Call"]
+# CallTargets resolve to function names
+CallTarget = Union["UnresolvedName", "GetName"]
+
+# While SetExprs represent targets that values can be assigned to,
+# GetExprs represent sources that evaluate to targets.
+GetExpr = Union["SetExpr", "Call"]
+# TargetExprs and SourceExprs are SetExprs and GetExprs that include
+# UnresolvedNames
+TargetExpr = Union["UnresolvedName", "SetExpr"]
+SourceExpr = Union["UnresolvedName", "GetExpr"]
 
 
 class TypeMetadata(TypedDict, total=False):
@@ -80,7 +84,7 @@ class Token:
     and Stmts.
     It also encapsulates code information for error reporting.
     """
-    __slots__ = ('line', 'column', 'type', 'word', 'value')
+    __slots__ = ("line", "column", "type", "word", "value")
     line: int
     column: int
     type: Type
@@ -97,19 +101,14 @@ class Name:
     """Name represents a meaningful name, either a custom type or a
     variable name.
     """
-    __slots__ = ('name', '_token')
+    __slots__ = ("name", "_token")
 
-    def __init__(
-        self,
-        name: NameKey,
-        *,
-        token: "Token",
-    ) -> None:
+    def __init__(self, name: NameKey, *, token: "Token") -> None:
         self.name = name
         self._token = token
 
     def __repr__(self) -> str:
-        return f'Name({self.name})'
+        return f"Name({self.name})"
 
     def __str__(self) -> NameKey:
         return self.name
@@ -124,7 +123,7 @@ class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
     Each TypedValue has a type and a value.
     """
-    __slots__ = ('type', 'value')
+    __slots__ = ("type", "value")
     type: Type
     value: Optional[Value]
 
@@ -143,14 +142,12 @@ class TypeTemplate:
     clone()
         Returns a TypedValue of the same type
     """
-    __slots__ = ('type', 'value')
+    __slots__ = ("type", "value")
     type: Type
     value: Optional["ObjectTemplate"]
 
     def clone(self) -> "TypedValue":
-        """
-        This returns an empty TypedValue of the same type
-        """
+        """This returns an empty TypedValue of the same type."""
         if isinstance(self.value, ObjectTemplate):
             return TypedValue(self.type, self.value.clone())
         return TypedValue(self.type, self.value)
@@ -167,10 +164,9 @@ class ObjectTemplate:
     clone()
         Returns an empty Object of the same type
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-    ) -> None:
+    __slots__ = ("types", "data")
+
+    def __init__(self, typesys: "TypeSystem") -> None:
         self.types = typesys
         self.data: MutableMapping[NameKey, Type] = {}
 
@@ -210,10 +206,9 @@ class TypeSystem:
     cloneType(type)
         return a copy of the template for the type
     """
-    def __init__(
-        self,
-        *types: Type,
-    ) -> None:
+    __slots__ = ("data", )
+
+    def __init__(self, *types: Type) -> None:
         self.data: MutableMapping[Type, TypeTemplate] = {}
         for typeName in types:
             self.declare(typeName)
@@ -227,11 +222,7 @@ class TypeSystem:
     def declare(self, type: Type) -> None:
         self.data[type] = TypeTemplate(type, None)
 
-    def setTemplate(
-        self,
-        type: Type,
-        template: "ObjectTemplate",
-    ) -> None:
+    def setTemplate(self, type: Type, template: "ObjectTemplate") -> None:
         self.data[type].value = template
 
     def cloneType(self, type: Type) -> "TypedValue":
@@ -268,12 +259,11 @@ class Object(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-    ) -> None:
-        self.data: NameMap = {}
+    __slots__ = ("types", "data")
+
+    def __init__(self, typesys: "TypeSystem") -> None:
         self.types = typesys
+        self.data: NameMap = {}
 
     def __repr__(self) -> str:
         nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
@@ -321,13 +311,11 @@ class Frame:
     lookup(name)
         returns the first frame containing the name
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-        outer: "Frame" = None,
-    ) -> None:
-        self.data: NameMap = {}
+    __slots__ = ("types", "data", "outer")
+
+    def __init__(self, typesys: "TypeSystem", outer: "Frame" = None) -> None:
         self.types = typesys
+        self.data: NameMap = {}
         self.outer = outer
 
     def __repr__(self) -> str:
@@ -399,12 +387,10 @@ class Array(PseudoValue):
     setValue(name, value)
         updates the value associated with the name
     """
-    def __init__(
-        self,
-        typesys: "TypeSystem",
-        ranges: IndexRanges,
-        type: Type,
-    ) -> None:
+    __slots__ = ("types", "ranges", "data")
+
+    def __init__(self, typesys: "TypeSystem", ranges: IndexRanges,
+                 type: Type) -> None:
         self.types = typesys
         self.ranges = ranges
         self.data: IndexMap = {
@@ -475,7 +461,7 @@ class Builtin(PseudoValue):
     - func
         the Python function to call when invoked
     """
-    __slots__ = ('frame', 'params', 'func')
+    __slots__ = ("frame", "params", "func")
     frame: "Frame"  # Builtins resolve with global frame
     params: Params
     func: function
@@ -495,8 +481,7 @@ class Callable(PseudoValue):
     - stmts
         A list of statements the callable executes when called
     """
-
-    __slots__ = ('frame', 'params', 'stmts')
+    __slots__ = ("frame", "params", "stmts")
     frame: "Frame"
     params: Params
     stmts: Stmts
@@ -524,7 +509,7 @@ class File(PseudoValue):
     - iohandler
         An object for accessing the file
     """
-    __slots__ = ('name', 'mode', 'iohandler')
+    __slots__ = ("name", "mode", "iohandler")
     name: NameKey
     mode: str
     iohandler: IO
@@ -541,7 +526,6 @@ class Expr:
     token: Token
         Returns the token asociated with the expr
     """
-
     __slots__: Iterable[str] = tuple()
 
     @property
@@ -554,7 +538,7 @@ class Literal(Expr):
     """A Literal represents any value coming directly from the source
     code.
     """
-    __slots__ = ('type', 'value', 'token')
+    __slots__ = ("type", "value", "token")
     type: Type
     value: PyLiteral
     token: Token
@@ -562,17 +546,21 @@ class Literal(Expr):
     def __hash__(self):
         return hash(self.value)
 
-    def __eq__(self, other: "Literal") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Literal):
+            # Allow Python to try other.__eq__(self)
+            # See: https://stackoverflow.com/a/54816069
+            return NotImplemented
         return self.value == other.value
 
 
 @dataclass
 class Declare(Expr):
     """A Declare Expr associates a Name with its declared Type."""
-    __slots__ = ('name', 'type', 'metadata')
+    __slots__ = ("name", "type", "metadata")
     name: Name
     type: Type
-    metadata: MutableMapping
+    metadata: TypeMetadata
 
     @property
     def token(self):
@@ -582,11 +570,11 @@ class Declare(Expr):
 @dataclass
 class Assign(Expr):
     """An Assign Expr represents an assignment operation.
-    The Expr's evaluated value should be assigned to the Name/Index
+    The Expr"s evaluated value should be assigned to the Name/Index
     represented by the assignee.
     """
-    __slots__ = ('assignee', 'expr')
-    assignee: GetExpr
+    __slots__ = ("assignee", "expr")
+    assignee: "SetExpr"
     expr: "Expr"
 
     @property
@@ -599,7 +587,7 @@ class Unary(Expr):
     """A Unary Expr represents the invocation of a unary callable with a
     single operand.
     """
-    __slots__ = ('oper', 'right', 'token')
+    __slots__ = ("oper", "right", "token")
     oper: function
     right: "Expr"
     token: Token
@@ -610,7 +598,7 @@ class Binary(Expr):
     """A Binary Expr represents the invocation of a binary callable
     with two operands.
     """
-    __slots__ = ('left', 'oper', 'right', 'token')
+    __slots__ = ("left", "oper", "right", "token")
     left: "Expr"
     oper: function
     right: "Expr"
@@ -627,7 +615,7 @@ class UnresolvedName(Expr):
     appropriate Get Expr should be used to contain the name and context
     instead.
     """
-    __slots__ = ('name', )
+    __slots__ = ("name", )
     name: Name
 
     @property
@@ -636,10 +624,20 @@ class UnresolvedName(Expr):
 
 
 @dataclass
-class GetName(Expr):
-    """A GetName Expr represents a Name with a Frame context.
+class SetExpr(Expr):
+    """Base class for Exprs that form valid assignment targets.
+
+    Such expressions involve a context, and a key for extracting data
+    from the context.
+    
+    E.g. Variable evaluation, array indexing, object attribute access
     """
-    __slots__ = ('frame', 'name')
+
+
+@dataclass
+class GetName(SetExpr):
+    """A GetName Expr represents a Name with a Frame context."""
+    __slots__ = ("frame", "name")
     frame: "Frame"
     name: Name
 
@@ -649,11 +647,10 @@ class GetName(Expr):
 
 
 @dataclass
-class GetIndex(Expr):
-    """A GetName Expr represents a Index with an Array context.
-    """
-    __slots__ = ('array', 'index')
-    array: NameExpr
+class GetIndex(SetExpr):
+    """A GetName Expr represents a Index with an Array context."""
+    __slots__ = ("array", "index")
+    array: SetExpr
     index: IndexExpr
 
     @property
@@ -662,11 +659,10 @@ class GetIndex(Expr):
 
 
 @dataclass
-class GetAttr(Expr):
-    """A GetName Expr represents a Name with an Object context.
-    """
-    __slots__ = ('object', 'name')
-    object: NameExpr
+class GetAttr(SetExpr):
+    """A GetName Expr represents a Name with an Object context."""
+    __slots__ = ("object", "name")
+    object: SetExpr
     name: Name
 
     @property
@@ -679,8 +675,8 @@ class Call(Expr):
     """A Call Expr represents the invocation of a Callable (Function or
     Procedure) with arguments.
     """
-    __slots__ = ('callable', 'args')
-    callable: NameKeyExpr
+    __slots__ = ("callable", "args")
+    callable: CallTarget
     args: Args
 
     @property
@@ -698,36 +694,31 @@ class Stmt:
 
 
 class ExprStmt(Stmt):
-    """Base class for statements that contain only a single Expr.
-    """
-    __slots__ = ('expr', )
+    """Base class for statements that contain only a single Expr."""
+    __slots__ = ("expr", )
 
 
 @dataclass
 class Return(ExprStmt):
-    """Return encapsulates the value to be returned from a Function.
-    """
+    """Return encapsulates the value to be returned from a Function."""
     expr: "Expr"
 
 
 @dataclass
 class AssignStmt(ExprStmt):
-    """AssignStmt encapsulates an Assign Expr.
-    """
+    """AssignStmt encapsulates an Assign Expr."""
     expr: "Assign"
 
 
 @dataclass
 class DeclareStmt(ExprStmt):
-    """DeclareStmt encapsulates a Declare Expr.
-    """
+    """DeclareStmt encapsulates a Declare Expr."""
     expr: "Declare"
 
 
 @dataclass
 class CallStmt(ExprStmt):
-    """CallStmt encapsulates a Call Expr.
-    """
+    """CallStmt encapsulates a Call Expr."""
     expr: "Call"
 
 
@@ -735,17 +726,17 @@ class CallStmt(ExprStmt):
 class Output(Stmt):
     """Output encapsulates values to be displayed in a terminal/console.
     """
-    __slots__ = ('exprs', )
+    __slots__ = ("exprs", )
     exprs: "Exprs"
 
 
 @dataclass
 class Input(Stmt):
-    """Output encapsulates a GetExpr to which user input should be
+    """Input encapsulates a SetExpr to which user input should be
     assigned.
     """
-    __slots__ = ('keyExpr', )
-    key: GetExpr
+    __slots__ = ("keyExpr", )
+    key: "SetExpr"
 
 
 @dataclass
@@ -754,25 +745,27 @@ class Conditional(Stmt):
     A provided condition cond, when evaluated to a value, results in
     the associated statement(s) being executed.
     """
-    __slots__ = ('cond', 'stmtMap', 'fallback')
+    __slots__ = ("cond", "stmtMap", "fallback")
     cond: "Expr"
     stmtMap: CaseMap
     fallback: Optional[Stmts]
 
 
 @dataclass
-class Case(Conditional): ...
+class Case(Conditional):
+    ...
 
 
 @dataclass
-class If(Conditional): ...
+class If(Conditional):
+    ...
 
 
 class Loop(Stmt):
     """Loop encapsulates statements to be executed repeatedly until its
     cond evaluates to a False value.
     """
-    __slots__ = ('init', 'cond', 'stmts')
+    __slots__ = ("init", "cond", "stmts")
     init: Optional["Expr"]
     cond: "Expr"
     stmts: Stmts
@@ -801,9 +794,9 @@ class Repeat(Loop):
 @dataclass
 class ProcFunc(Stmt):
     """ProcFunc encapsulates a declared Procedure or Function."""
-    __slots__ = ('name', 'passby', 'params', 'stmts', 'returnType')
+    __slots__ = ("name", "passby", "params", "stmts", "returnType")
     name: Name
-    passby: LiteralType['BYVALUE', 'BYREF']
+    passby: LiteralType["BYVALUE", "BYREF"]
     params: Iterable[Declare]
     stmts: Stmts
     returnType: Type
@@ -820,7 +813,7 @@ class FunctionStmt(ProcFunc):
 @dataclass
 class TypeStmt(Stmt):
     """TypeStmt encapsulates a declared custom Type."""
-    __slots__ = ('name', 'exprs')
+    __slots__ = ("name", "exprs")
     name: Name
     exprs: Iterable["Declare"]
 
@@ -832,26 +825,26 @@ class FileStmt(Stmt):
 
 @dataclass
 class OpenFile(FileStmt):
-    __slots__ = ('filename', 'mode')
+    __slots__ = ("filename", "mode")
     filename: "Expr"
     mode: str
 
 
 @dataclass
 class ReadFile(FileStmt):
-    __slots__ = ('filename', 'target')
+    __slots__ = ("filename", "target")
     filename: "Expr"
-    target: GetExpr
+    target: "SetExpr"
 
 
 @dataclass
 class WriteFile(FileStmt):
-    __slots__ = ('filename', 'data')
+    __slots__ = ("filename", "data")
     filename: "Expr"
     data: "Expr"
 
 
 @dataclass
 class CloseFile(FileStmt):
-    __slots__ = ('filename', )
+    __slots__ = ("filename", )
     filename: "Expr"
