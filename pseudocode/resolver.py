@@ -311,72 +311,108 @@ def transformDeclares(declares: Iterable[lang.Declare], passby: lang.Passby,
     return params
 
 
+@singledispatch
+def hasAnyReturn(stmt):
+    """Checks if statement is a Return statement, or contains any Return
+    statements.
+
+    Returns True if yes, otherwise returns False.
+    """
+    raise builtin.LogicError(
+        f"{stmt}: Unexpected statement in PROCEDURE/FUNCTION")
+
+
+@hasAnyReturn.register
+def _(stmt: lang.DeclareStmt) -> bool:
+    pass
+
+
+@hasAnyReturn.register
+def _(stmt: lang.TypeStmt) -> bool:
+    pass
+
+
 # Verifiers
 
 
-def verifyStmts(stmts: lang.Stmts, frame: lang.Frame,
+def verifyStmts(stmts: lang.Stmts,
+                frame: lang.Frame,
                 returnType: Optional[lang.Type] = None) -> None:
     """Verify a list of statements."""
     for stmt in stmts:
-        verify(stmt, frame)
-        if returnType and isinstance(stmt, lang.Return):
+        verify(stmt, frame, returnType)
+        if isinstance(stmt, lang.Return):
+            if not returnType:
+                raise builtin.LogicError("Unexpected RETURN statement")
             expectTypeElseError(resolve(stmt.expr, frame),
                                 returnType,
                                 token=stmt.expr.token)
 
 
 @singledispatch
-def verify(stmt, frame):
+def verify(stmt, frame, returnType):
     """Dispatcher for Stmt verifiers."""
-    raise TypeError(f"No verifier found for {stmt}")
+    raise builtin.LogicError("Unexpected statement")
 
 
 @verify.register
-def _(stmt: lang.Output, frame: lang.Frame) -> None:
+def _(stmt: lang.Output,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     stmt.exprs = resolveExprs(stmt.exprs, frame)
 
 
 @verify.register
-def _(stmt: lang.Input, frame: lang.Frame) -> None:
+def _(stmt: lang.Input,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolveNamesInTarget(stmt, frame)
     resolve(stmt.key, frame)
 
 
 @verify.register
-def _(stmt: lang.Case, frame: lang.Frame) -> None:
+def _(stmt: lang.Case,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolveNamesInTarget(stmt, frame)
     condType = resolve(stmt.cond, frame)
     for caseValue, statements in stmt.stmtMap.items():
         caseType = resolve(caseValue, frame)
         expectTypeElseError(caseType, condType, token=caseValue.token)
-        verifyStmts(statements, frame)
+        verifyStmts(statements, frame, returnType)
     if stmt.fallback:
-        verifyStmts(stmt.fallback, frame)
+        verifyStmts(stmt.fallback, frame, returnType)
 
 
 @verify.register
-def _(stmt: lang.If, frame: lang.Frame) -> None:
+def _(stmt: lang.If,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolveNamesInTarget(stmt, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
     for statements in stmt.stmtMap.values():
-        verifyStmts(statements, frame)
+        verifyStmts(statements, frame, returnType)
     if stmt.fallback:
-        verifyStmts(stmt.fallback, frame)
+        verifyStmts(stmt.fallback, frame, returnType)
 
 
 @verify.register
-def _(stmt: lang.Loop, frame: lang.Frame) -> None:
+def _(stmt: lang.Loop,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolveNamesInTarget(stmt, frame)
     if stmt.init:
         resolve(stmt.init, frame)
     condType = resolve(stmt.cond, frame)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
-    verifyStmts(stmt.stmts, frame)
+    verifyStmts(stmt.stmts, frame, returnType)
 
 
 @verify.register
-def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.ProcedureStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     """Declare a Procedure in the given frame."""
     # Assign procedure in frame first, to make recursive calls work
     frame.declare(str(stmt.name), 'NULL')
@@ -390,16 +426,13 @@ def _(stmt: lang.ProcedureStmt, frame: lang.Frame) -> None:
     proc = lang.Procedure(local, params, stmt.stmts)
     frame.setValue(str(stmt.name), proc)
 
-    # Check for return statements
-    for procstmt in stmt.stmts:
-        if isinstance(procstmt, lang.Return):
-            raise builtin.LogicError("Unexpected RETURN in PROCEDURE",
-                                     procstmt.expr.token)
     verifyStmts(stmt.stmts, local)
 
 
 @verify.register
-def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.FunctionStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     """Declare a Function in the given frame."""
     # Assign function in frame first, to make recursive calls work
     frame.declare(str(stmt.name), stmt.returnType)
@@ -420,7 +453,9 @@ def _(stmt: lang.FunctionStmt, frame: lang.Frame) -> None:
 
 
 @verify.register
-def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.FileStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolveNamesInTarget(stmt, frame)
     expectTypeElseError(resolve(stmt.filename, frame),
                         'STRING',
@@ -428,7 +463,9 @@ def _(stmt: lang.FileStmt, frame: lang.Frame) -> None:
 
 
 @verify.register
-def _(stmt: lang.TypeStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.TypeStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     """Declare a custom Type in the given frame's TypeSystem."""
     frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=frame.types)
@@ -438,20 +475,21 @@ def _(stmt: lang.TypeStmt, frame: lang.Frame) -> None:
 
 
 @verify.register
-def _(stmt: lang.CallStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.CallStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolveProcCall(stmt.expr, frame)
 
 
 @verify.register
-def _(stmt: lang.AssignStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.AssignStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolve(stmt.expr, frame)
 
 
 @verify.register
-def _(stmt: lang.DeclareStmt, frame: lang.Frame) -> None:
+def _(stmt: lang.DeclareStmt,
+      frame: lang.Frame,
+      returnType: Optional[lang.Type] = None) -> None:
     resolve(stmt.expr, frame)
-
-
-@verify.register
-def _(stmt: lang.Return, frame: lang.Frame) -> None:
-    raise ValueError("Unhandled Return in verify()")
