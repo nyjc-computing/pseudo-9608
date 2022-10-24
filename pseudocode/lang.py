@@ -24,6 +24,7 @@ Builtin, Function, Procedure
 File
     An open file
 """
+from abc import ABC, abstractmethod
 from typing import Any, Optional, Union, TypedDict
 from typing import Iterable, Sequence, Iterator, MutableMapping
 from typing import Literal as LiteralType, Tuple
@@ -128,8 +129,23 @@ class TypedValue:
         return f"<{self.type}: {repr(self.value)}>"
 
 
+class Template(ABC):
+    """Base class for ObjectTemplate and TypeTemplate.
+    Templates are used to clone objects and types.
+    They do not store values.
+
+    Methods
+    -------
+    clone()
+        Returns a copy of what the template represemts
+    """
+    @abstractmethod
+    def clone(self):
+        raise NotImplementedError
+
+
 @dataclass
-class TypeTemplate:
+class TypeTemplate(Template):
     """Represents a type template in 9608 pseudocode.
     A type template can be cloned to create a TypedValue slot
     (in a Frame or Object).
@@ -150,7 +166,7 @@ class TypeTemplate:
         return TypedValue(self.type, self.value)
 
 
-class ObjectTemplate:
+class ObjectTemplate(Template):
     """Represents an object template in 9608 pseudocode.
     A space that maps Names to Types.
     An object template can be cloned to create an Object
@@ -226,7 +242,7 @@ class TypeSystem:
         return self.data[type].clone()
 
 
-class PseudoValue:
+class PseudoValue(ABC):
     """Base class for pseudo values which are not PyLiterals.
     This includes Arrays, Objects, and Callables.
     PseudoValues may be stored in Arrays, Objects, or Callables, wrapped
