@@ -508,14 +508,14 @@ def caseStmt(tokens: Tokens) -> lang.Case:
         tokens, ['OTHERWISE', 'ENDCASE'],
         lambda tokens: colonPair(tokens,
                                  lambda tokens: literal(tokens),
-                                 lambda tokens: [statement1(tokens)])
+                                 lambda tokens: [statement7(tokens)])
     )
     for caseValue, stmts in caseMap:
         if caseValue in caseStmts:
             raise builtin.ParseError(f"Repeated CASE value", caseValue.token)
         caseStmts[caseValue] = stmts
     if matchWord(tokens, 'OTHERWISE'):
-        fallback = [statement6(tokens)]
+        fallback = [statement7(tokens)]
     else:
         fallback = None
     matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
@@ -685,6 +685,8 @@ def closefileStmt(tokens: Tokens) -> lang.CloseFile:
 #    only accepts single-line statements
 # 6. OUTPUT | INPUT | CALL | Assign | OPEN/READ/WRITE/CLOSEFILE -> END
 #    may be used anywhere in a program
+# 7. RETURN -> (6)
+#    used within CASE option statements only
 
 
 def statement1(tokens: Tokens) -> lang.Stmt:
@@ -745,6 +747,12 @@ def statement6(tokens: Tokens) -> lang.Stmt:
     if expectType(tokens, 'name'):
         return assignStmt(tokens)
     raise builtin.ParseError("Unrecognised token", check(tokens))
+
+
+def statement7(tokens: Tokens) -> lang.Stmt:
+    if matchWord(tokens, 'RETURN'):
+        return returnStmt(tokens)
+    return statement6(tokens)
 
 
 # Main parsing loop
