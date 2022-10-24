@@ -340,13 +340,14 @@ def verifyStmts(stmts: lang.Stmts,
                 returnType: Optional[lang.Type] = None) -> None:
     """Verify a list of statements."""
     for stmt in stmts:
-        verify(stmt, frame, returnType)
         if isinstance(stmt, lang.Return):
             if not returnType:
                 raise builtin.LogicError("Unexpected RETURN statement")
             expectTypeElseError(resolve(stmt.expr, frame),
                                 returnType,
                                 token=stmt.expr.token)
+        else:
+            verify(stmt, frame, returnType)
 
 
 @singledispatch
