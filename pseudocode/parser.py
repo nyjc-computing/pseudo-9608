@@ -286,23 +286,26 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.GetExpr) -> lang.GetIndex:
     return lang.GetIndex(arrayExpr, index)
 
 
-def name(tokens: Tokens) -> lang.NameExpr:
-    expr: lang.UnresolvedName = identifier(tokens)
-    nameExpr = buildExprWhileWord(
+def nameExpr(tokens: Tokens) -> lang.NameExpr:
+    expr = identifier(tokens)
+    if matchWord(tokens, '('):
+        expr = callExpr(tokens, expr)
+    rootExpr = buildExprWhileWord(
         tokens,
         parserMap={
             '[': indexExpr,
             '.': attrExpr
         },
         # Check for function call
-        rootExpr=callExpr(tokens, expr) if matchWord(tokens, '(') else expr,
+        rootExpr=expr,
         advance=True,
     )
-    assert (isinstance(nameExpr, lang.UnresolvedName)
-            or isinstance(nameExpr, lang.Call)
-            or isinstance(nameExpr, lang.GetAttr) or isinstance(
-                nameExpr, lang.GetIndex)), f"{nameExpr!r}: Invalid NameExpr"
-    return nameExpr
+    assert (isinstance(rootExpr, lang.UnresolvedName)
+            or isinstance(rootExpr, lang.Call)
+            or isinstance(rootExpr, lang.GetAttr)
+            or isinstance(rootExpr, lang.GetIndex)
+           ), f"{rootExpr!r}: Invalid NameExpr"
+    return rootExpr
 
 
 def value(tokens: Tokens):
@@ -319,7 +322,7 @@ def value(tokens: Tokens):
         return literal(tokens)
     # A name or call or attribute
     if expectType(tokens, 'name'):
-        return name(tokens)
+        return nameExpr(tokens)
     else:
         raise builtin.ParseError("Unexpected token", check(tokens))
 
@@ -442,9 +445,9 @@ def outputStmt(tokens: Tokens) -> lang.Output:
 
 
 def inputStmt(tokens: Tokens) -> lang.Input:
-    name = identifier(tokens)
+    target = nameExpr(tokens)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Input(name)
+    return lang.Input(target)
 
 
 def colonRange(tokens: Tokens) -> lang.IndexRange:
@@ -652,9 +655,9 @@ def openfileStmt(tokens: Tokens) -> lang.OpenFile:
 def readfileStmt(tokens: Tokens) -> lang.ReadFile:
     filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
-    varname = identifier(tokens)  # TODO: support other kinds of Gets
+    target = nameExpr(tokens)
     matchWordElseError(tokens, '\n')
-    return lang.ReadFile(filename, varname)
+    return lang.ReadFile(filename, target)
 
 
 def writefileStmt(tokens: Tokens) -> lang.WriteFile:
