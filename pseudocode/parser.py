@@ -749,8 +749,6 @@ def statement6(tokens: Tokens) -> lang.Stmt:
 
 
 # Main parsing loop
-
-
 def parse(tokens: Tokens) -> Iterable[lang.Stmt]:
     """Select a parsing function to use, from the next token, and use
     it.
