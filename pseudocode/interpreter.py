@@ -289,18 +289,7 @@ def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
 
 
 @execute.register
-def _(stmt: lang.Case, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]:
-    condValue = evaluate(stmt.cond, frame)
-    for caseValue, stmts in stmt.stmtMap.items():
-        if evaluate(caseValue, frame) == condValue:
-            return executeStmts(stmts, frame, **kwargs)
-    else:  # for loop completed normally, i.e. no matching cases
-        if stmt.fallback:
-            return executeStmts(stmt.fallback, frame, **kwargs)
-
-
-@execute.register
-def _(stmt: lang.If, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]:
+def _(stmt: lang.Conditional, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]:
     condValue = evaluate(stmt.cond, frame)
     for caseValue, stmts in stmt.stmtMap.items():
         if evaluate(caseValue, frame) == condValue:
