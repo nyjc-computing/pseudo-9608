@@ -78,3 +78,4 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [30b New features: concatenation with & operator][https://github.com/nyjc-computing/pseudo-9608/pull/92]
 - [30c New features: Fixing CASE evaluations](https://github.com/nyjc-computing/pseudo-9608/pull/93)
 - [31a Defining behaviour: Cleaning up (again)](https://github.com/nyjc-computing/pseudo-9608/pull/96)
+- [31b Defining behaviour: EOF handling and Returns](https://github.com/nyjc-computing/pseudo-9608/pull/97)
