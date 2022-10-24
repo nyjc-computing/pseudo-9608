@@ -24,7 +24,7 @@ Builtin, Function, Procedure
 File
     An open file
 """
-from typing import Any, Optional, Union, TypedDict
+from typing import Any, Optional, Union, Hashable, TypedDict
 from typing import Iterable, Sequence, Iterator, MutableMapping
 from typing import Literal as LiteralType, Tuple
 from typing import Callable as function, IO
@@ -237,8 +237,110 @@ class PseudoValue:
     """
 
 
-class Object(PseudoValue):
-    """A space that maps NameKeys to TypedValues.
+class Container(PseudoValue):
+    """Base class for Array and Object.
+    Represents a Container in Pseudo, which maps keys to TypedValues.
+
+    Attributes
+    ----------
+    - types
+        The TypeSystem used by the Container to resolve types
+    - data
+        A MutableMapping used to map keys to TypedValues
+    """
+    types: "TypeSystem"
+    data: MutableMapping
+
+
+class Array(Container):
+    """A Container that maps Index: TypedValue.
+
+    Attributes
+    ----------
+    dim: int
+        integer representing the number of dimensions of the array
+    elementType: Type
+        The type of each array element
+
+    Methods
+    -------
+    has(index)
+        returns True if the index exists in frame,
+        otherwise returns False
+    get(index)
+        retrieves the slot associated with the index
+    getType(index)
+        retrieves the type information associated with the index
+    getValue(index)
+        retrieves the value associated with the index
+    setValue(index, value)
+        updates the value associated with the index
+    """
+    __slots__ = ("types", "ranges", "data")
+
+    def __init__(self, typesys: "TypeSystem", ranges: IndexRanges,
+                 type: Type) -> None:
+        self.types = typesys
+        self.ranges = ranges
+        self.data: IndexMap = {
+            index: self.types.cloneType(type)
+            for index in self.rangeProduct(ranges)
+        }
+
+    def __repr__(self) -> str:
+        nameValuePairs = [
+            f"{index}: {self.getValue(index)}" for index in self.data
+        ]
+        return f"{{{', '.join(nameValuePairs)}}}: {self.elementType}"
+
+    @staticmethod
+    def rangeProduct(indexes: IndexRanges) -> Iterator:
+        """Returns an iterator from an interable of (start, end) tuples.
+        E.g. ((0, 2), (0, 3)) will return the following iterations:
+            (0, 0), ..., (0, 3),
+            (1, 0), ..., (1, 3),
+            (2, 0), ..., (2, 3),
+        """
+        ranges = (range(start, end + 1) for (start, end) in indexes)
+        return product(*ranges)
+
+    @property
+    def dim(self) -> int:
+        """Returns the number of dimensions the array has, as an
+        integer.
+        E.g. a 1D array would return 1, 2D array would return 2, ...
+        """
+        return len(self.ranges)
+
+    @property
+    def elementType(self) -> Type:
+        return tuple(self.data.values())[0].type
+
+    def has(self, index: IndexKey) -> bool:
+        return index in self.data
+
+    def getType(self, index: IndexKey) -> Type:
+        return self.data[index].type
+
+    def getValue(self, index: IndexKey) -> Union[PyLiteral, "Object"]:
+        returnval = self.data[index].value
+        if returnval is None:
+            raise ValueError(f"Accessed unassigned index {index!r}")
+        assert not isinstance(returnval, Array), "Unexpected Array"
+        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
+        assert not isinstance(returnval, Callable), "Unexpected Callable"
+        assert not isinstance(returnval, File), "Unexpected File"
+        return returnval
+
+    def get(self, index: IndexKey) -> "TypedValue":
+        return self.data[index]
+
+    def setValue(self, index: IndexKey, value: Value) -> None:
+        self.data[index].value = value
+
+
+class Object(Container):
+    """A Container that maps Name: TypedValue.
     Existence checks should be carried out (using has()) before using
     the methods here.
 
@@ -252,8 +354,7 @@ class Object(PseudoValue):
     get(name)
         retrieves the slot associated with the name
     getType(name)
-        retrieves the type information associated
-        the name
+        retrieves the type information associated with the name
     getValue(name)
         retrieves the value associated with the name
     setValue(name, value)
@@ -355,99 +456,6 @@ class Frame:
         if self.outer:
             return self.outer.lookup(name)
         return None
-
-
-class Array(PseudoValue):
-    """A space that maps IndexKeys to TypedValues.
-    Arrays differ from Objects in the use of IndexKey instead of
-    NameKey, and in being statically allocated at init.
-
-    Attributes
-    ----------
-    dim: int
-        integer representing the number of dimensions of the array
-    ranges: IndexRanges
-        an iterable containing (start, end) tuple pairs of the
-        array indexes
-    elementType: Type
-        The type of each array element
-
-    Methods
-    -------
-    has(index)
-        returns True if the index exists in frame,
-        otherwise returns False
-    get(name)
-        retrieves the slot associated with the name
-    getType(name)
-        retrieves the type information associated
-        the name
-    getValue(name)
-        retrieves the value associated with the name
-    setValue(name, value)
-        updates the value associated with the name
-    """
-    __slots__ = ("types", "ranges", "data")
-
-    def __init__(self, typesys: "TypeSystem", ranges: IndexRanges,
-                 type: Type) -> None:
-        self.types = typesys
-        self.ranges = ranges
-        self.data: IndexMap = {
-            index: self.types.cloneType(type)
-            for index in self.rangeProduct(ranges)
-        }
-
-    def __repr__(self) -> str:
-        nameValuePairs = [
-            f"{index}: {self.getValue(index)}" for index in self.data
-        ]
-        return f"{{{', '.join(nameValuePairs)}}}: {self.elementType}"
-
-    @staticmethod
-    def rangeProduct(indexes: IndexRanges) -> Iterator:
-        """Returns an iterator from an interable of (start, end) tuples.
-        E.g. ((0, 2), (0, 3)) will return the following iterations:
-            (0, 0), ..., (0, 3),
-            (1, 0), ..., (1, 3),
-            (2, 0), ..., (2, 3),
-        """
-        ranges = (range(start, end + 1) for (start, end) in indexes)
-        return product(*ranges)
-
-    @property
-    def dim(self) -> int:
-        """Returns the number of dimensions the array has, as an
-        integer.
-        E.g. a 1D array would return 1, 2D array would return 2, ...
-        """
-        return len(self.ranges)
-
-    @property
-    def elementType(self) -> Type:
-        return tuple(self.data.values())[0].type
-
-    def has(self, index: IndexKey) -> bool:
-        return index in self.data
-
-    def getType(self, index: IndexKey) -> Type:
-        return self.data[index].type
-
-    def getValue(self, index: IndexKey) -> Union[PyLiteral, Object]:
-        returnval = self.data[index].value
-        if returnval is None:
-            raise ValueError(f"Accessed unassigned index {index!r}")
-        assert not isinstance(returnval, Array), "Unexpected Array"
-        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
-        assert not isinstance(returnval, Callable), "Unexpected Callable"
-        assert not isinstance(returnval, File), "Unexpected File"
-        return returnval
-
-    def get(self, index: IndexKey) -> "TypedValue":
-        return self.data[index]
-
-    def setValue(self, index: IndexKey, value: Value) -> None:
-        self.data[index].value = value
 
 
 class Callable(PseudoValue):

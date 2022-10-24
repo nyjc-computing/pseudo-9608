@@ -74,7 +74,7 @@ class Interpreter:
 # Evaluation functions return the evaluated value of Exprs.
 
 
-def evalIndex(indexExpr: lang.IndexExpr, frame: lang.Frame) -> lang.IndexKey:
+def evalIndex(indexExpr: lang.Indices, frame: lang.Frame) -> lang.IndexKey:
     """Returns the evaluated value of an Array's index."""
     indexes: lang.IndexKey = tuple()
     for expr in indexExpr:
