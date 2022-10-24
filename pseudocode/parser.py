@@ -286,20 +286,26 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.GetExpr) -> lang.GetIndex:
     return lang.GetIndex(arrayExpr, index)
 
 
+def target(tokens: Tokens, expr: lang.UnresolvedName) -> lang.GetExpr:
+    rootExpr = buildExprWhileWord(tokens,
+                                  parserMap={'[': indexExpr,
+                                             '.': attrExpr},
+                                  # Check for function call
+                                  rootExpr=expr,
+                                  advance=True)
+    return rootExpr
+
+
 def nameExpr(tokens: Tokens) -> lang.NameExpr:
     expr = identifier(tokens)
-    if matchWord(tokens, '('):
-        expr = callExpr(tokens, expr)
-    rootExpr = buildExprWhileWord(
-        tokens,
-        parserMap={
-            '[': indexExpr,
-            '.': attrExpr
-        },
-        # Check for function call
-        rootExpr=expr,
-        advance=True,
-    )
+    rootExpr = buildExprWhileWord(tokens,
+                                  parserMap={'[': indexExpr,
+                                             '.': attrExpr},
+                                  # Check for function call
+                                  rootExpr=(callExpr(tokens, expr)
+                                            if matchWord(tokens, '(')
+                                            else expr),
+                                  advance=True)
     assert (isinstance(rootExpr, lang.UnresolvedName)
             or isinstance(rootExpr, lang.Call)
             or isinstance(rootExpr, lang.GetAttr)
