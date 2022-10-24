@@ -312,24 +312,36 @@ def transformDeclares(declares: Iterable[lang.Declare], passby: lang.Passby,
 
 
 @singledispatch
-def hasAnyReturn(stmt):
-    """Checks if statement is a Return statement, or contains any Return
-    statements.
+def willReturn(stmt) -> bool:
+    """Checks if statement is a Return statement, or is guaranteed to return
+    a value.
 
     Returns True if yes, otherwise returns False.
     """
-    raise builtin.LogicError(
-        f"{stmt}: Unexpected statement in PROCEDURE/FUNCTION")
+    return False
 
 
-@hasAnyReturn.register
-def _(stmt: lang.DeclareStmt) -> bool:
-    pass
+@willReturn.register
+def _(stmt: lang.Conditional) -> bool:
+    # If & CASE: If any case statements do not have a return, the statement is
+    # not guaranteed to return.
+    for stmts in stmt.stmtMap.values():
+        if not any(map(willReturn, stmts)):
+            return False
+    if (not stmt.fallback) or not any(map(willReturn, stmt.fallback)):
+        return False
+    return True
 
 
-@hasAnyReturn.register
-def _(stmt: lang.TypeStmt) -> bool:
-    pass
+@willReturn.register
+def _(stmt: lang.Loop) -> bool:
+    stmtsWillReturn: bool = any(map(willReturn, stmt.stmts))
+    return stmtsWillReturn
+
+
+@willReturn.register
+def _(stmt: lang.Return) -> bool:
+    return True
 
 
 # Verifiers
@@ -448,8 +460,9 @@ def _(stmt: lang.FunctionStmt,
     frame.setValue(str(stmt.name), func)
 
     # Check for return statements
-    if not any([isinstance(stmt, lang.Return) for stmt in stmt.stmts]):
-        raise builtin.LogicError("No RETURN in function", stmt.name.token)
+    if not any(map(willReturn, stmt.stmts)):
+        raise builtin.LogicError("Function does not guarantee a return value",
+                                 stmt.name.token)
     verifyStmts(stmt.stmts, local, stmt.returnType)
 
 

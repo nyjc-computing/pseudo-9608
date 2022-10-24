@@ -7,8 +7,7 @@ FUNCTION Respond(Prompt: STRING) RETURNS STRING
       "Hello": RETURN "Oh, hello there!"
       "Hi": RETURN "Hihi!"
       "Yo": RETURN "Wassup?"
-      0: RETURN "Huh?"
-      1: RETURN "No way..."
+      OTHERWISE RETURN "Huh"
     ENDCASE
 ENDFUNCTION
 
