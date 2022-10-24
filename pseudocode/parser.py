@@ -4,7 +4,7 @@ parse(tokens: str) -> statements: list
     Parses tokens and returns a list of statements.
 """
 
-from typing import Any, Optional, Union, Iterable, Mapping, Tuple, List
+from typing import Optional, Iterable, Mapping, Tuple, List
 from typing import TypeVar, Callable as function
 
 from . import builtin, lang
