@@ -257,7 +257,7 @@ def grouping(tokens: Tokens) -> lang.Expr:
     return expr
 
 
-def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
+def callExpr(tokens: Tokens, callableExpr: lang.CallTarget) -> lang.Call:
     args: Tuple[lang.Expr, ...] = tuple()
     while not expectWord(tokens, ')'):
         if len(args) > 0:
@@ -267,7 +267,7 @@ def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
     return lang.Call(callableExpr, args)
 
 
-def attrExpr(tokens: Tokens, objExpr: lang.GetExpr) -> lang.GetAttr:
+def attrExpr(tokens: Tokens, objExpr: lang.SetExpr) -> lang.GetAttr:
     assert (isinstance(objExpr, lang.UnresolvedName)
             or isinstance(objExpr, lang.Call)
             or isinstance(objExpr, lang.GetAttr) or isinstance(
@@ -276,7 +276,7 @@ def attrExpr(tokens: Tokens, objExpr: lang.GetExpr) -> lang.GetAttr:
     return lang.GetAttr(objExpr, name)
 
 
-def indexExpr(tokens: Tokens, arrayExpr: lang.GetExpr) -> lang.GetIndex:
+def indexExpr(tokens: Tokens, arrayExpr: lang.SetExpr) -> lang.GetIndex:
     assert (isinstance(arrayExpr, lang.UnresolvedName)
             or isinstance(arrayExpr, lang.Call)
             or isinstance(arrayExpr, lang.GetAttr) or isinstance(
@@ -286,7 +286,7 @@ def indexExpr(tokens: Tokens, arrayExpr: lang.GetExpr) -> lang.GetIndex:
     return lang.GetIndex(arrayExpr, index)
 
 
-def target(tokens: Tokens, expr: lang.UnresolvedName) -> lang.GetExpr:
+def target(tokens: Tokens, expr: lang.UnresolvedName) -> lang.SetExpr:
     rootExpr = buildExprWhileWord(tokens,
                                   parserMap={'[': indexExpr,
                                              '.': attrExpr},
@@ -296,7 +296,7 @@ def target(tokens: Tokens, expr: lang.UnresolvedName) -> lang.GetExpr:
     return rootExpr
 
 
-def nameExpr(tokens: Tokens) -> lang.NameExpr:
+def getExpr(tokens: Tokens) -> lang.SourceExpr:
     expr = identifier(tokens)
     rootExpr = buildExprWhileWord(tokens,
                                   parserMap={'[': indexExpr,
@@ -328,7 +328,7 @@ def value(tokens: Tokens):
         return literal(tokens)
     # A name or call or attribute
     if expectType(tokens, 'name'):
-        return nameExpr(tokens)
+        return getExpr(tokens)
     else:
         raise builtin.ParseError("Unexpected token", check(tokens))
 
@@ -422,18 +422,7 @@ def expression(tokens: Tokens) -> lang.Expr:
 
 def assignment(tokens: Tokens) -> lang.Assign:
     unresolvedName: lang.UnresolvedName = identifier(tokens)
-    assignee = buildExprWhileWord(
-        tokens,
-        parserMap={
-            '[': indexExpr,
-            '.': attrExpr
-        },
-        rootExpr=unresolvedName,
-        advance=True,
-    )
-    assert (isinstance(assignee, lang.UnresolvedName)
-            or isinstance(assignee, lang.GetAttr) or isinstance(
-                assignee, lang.GetIndex)), f"{assignee!r}: Invalid assignee"
+    assignee = target(tokens, unresolvedName)
     matchWordElseError(tokens, '<-', msg="after name")
     expr = expression(tokens)
     return lang.Assign(assignee, expr)
@@ -451,9 +440,10 @@ def outputStmt(tokens: Tokens) -> lang.Output:
 
 
 def inputStmt(tokens: Tokens) -> lang.Input:
-    target = nameExpr(tokens)
+    unresolvedName = identifier(tokens)
+    inputTarget = target(tokens, unresolvedName)
     matchWordElseError(tokens, '\n', msg="after statement")
-    return lang.Input(target)
+    return lang.Input(inputTarget)
 
 
 def colonRange(tokens: Tokens) -> lang.IndexRange:
@@ -661,9 +651,10 @@ def openfileStmt(tokens: Tokens) -> lang.OpenFile:
 def readfileStmt(tokens: Tokens) -> lang.ReadFile:
     filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, ',', msg="after file identifier")
-    target = nameExpr(tokens)
+    unresolvedName = identifier(tokens)
+    readTarget = target(tokens, unresolvedName)
     matchWordElseError(tokens, '\n')
-    return lang.ReadFile(filename, target)
+    return lang.ReadFile(filename, readTarget)
 
 
 def writefileStmt(tokens: Tokens) -> lang.WriteFile:

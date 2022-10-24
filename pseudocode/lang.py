@@ -59,10 +59,16 @@ Assignable = Union[PyLiteral, "Object", "Array"]
 Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
               "File"]  # in TypedValue
 
-# NameExprs are GetExprs that use a NameKey
-NameKeyExpr = Union["UnresolvedName", "GetName"]
-# NameExprs start with a name
-NameExpr = Union["GetExpr", "Call"]
+# CallTargets resolve to function names
+CallTarget = Union["UnresolvedName", "GetName"]
+
+# While SetExprs represent targets that values can be assigned to,
+# GetExprs represent sources that evaluate to targets.
+GetExpr = Union["SetExpr", "Call"]
+# TargetExprs and SourceExprs are SetExprs and GetExprs that include
+# UnresolvedNames
+TargetExpr = Union["UnresolvedName", "SetExpr"]
+SourceExpr = Union["UnresolvedName", "GetExpr"]
 
 
 class TypeMetadata(TypedDict, total=False):
@@ -568,7 +574,7 @@ class Assign(Expr):
     represented by the assignee.
     """
     __slots__ = ("assignee", "expr")
-    assignee: "GetExpr"
+    assignee: "SetExpr"
     expr: "Expr"
 
     @property
@@ -618,8 +624,8 @@ class UnresolvedName(Expr):
 
 
 @dataclass
-class GetExpr(Expr):
-    """Base class for Exprs involving Names.
+class SetExpr(Expr):
+    """Base class for Exprs that form valid assignment targets.
 
     Such expressions involve a context, and a key for extracting data
     from the context.
@@ -629,7 +635,7 @@ class GetExpr(Expr):
 
 
 @dataclass
-class GetName(GetExpr):
+class GetName(SetExpr):
     """A GetName Expr represents a Name with a Frame context."""
     __slots__ = ("frame", "name")
     frame: "Frame"
@@ -641,10 +647,10 @@ class GetName(GetExpr):
 
 
 @dataclass
-class GetIndex(GetExpr):
+class GetIndex(SetExpr):
     """A GetName Expr represents a Index with an Array context."""
     __slots__ = ("array", "index")
-    array: NameExpr
+    array: SetExpr
     index: IndexExpr
 
     @property
@@ -653,10 +659,10 @@ class GetIndex(GetExpr):
 
 
 @dataclass
-class GetAttr(GetExpr):
+class GetAttr(SetExpr):
     """A GetName Expr represents a Name with an Object context."""
     __slots__ = ("object", "name")
-    object: NameExpr
+    object: SetExpr
     name: Name
 
     @property
@@ -670,7 +676,7 @@ class Call(Expr):
     Procedure) with arguments.
     """
     __slots__ = ("callable", "args")
-    callable: NameKeyExpr
+    callable: CallTarget
     args: Args
 
     @property
@@ -726,11 +732,11 @@ class Output(Stmt):
 
 @dataclass
 class Input(Stmt):
-    """Output encapsulates a GetExpr to which user input should be
+    """Input encapsulates a SetExpr to which user input should be
     assigned.
     """
     __slots__ = ("keyExpr", )
-    key: "GetExpr"
+    key: "SetExpr"
 
 
 @dataclass
@@ -828,7 +834,7 @@ class OpenFile(FileStmt):
 class ReadFile(FileStmt):
     __slots__ = ("filename", "target")
     filename: "Expr"
-    target: "GetExpr"
+    target: "SetExpr"
 
 
 @dataclass
