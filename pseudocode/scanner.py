@@ -9,17 +9,18 @@ from typing import List, Tuple
 
 from . import builtin, lang
 
-
-
 # Helper functions
+
 
 def atEnd(code: "Code") -> bool:
     """Returns True if at end of code."""
-    return code.cursor >= code.length
+    return check(code) == '\0'
+
 
 def check(code: "Code") -> str:
     """Returns char at cursor."""
     return code.src[code.cursor]
+
 
 def consume(code: "Code") -> str:
     """Returns char at cursor, advances cursor."""
@@ -27,18 +28,21 @@ def consume(code: "Code") -> str:
     code.cursor += 1
     return char
 
-def makeToken(code: "Code", type: lang.Type, word: str, value: Any) -> lang.Token:
+
+def makeToken(code: "Code", type: lang.Type, word: str,
+              value: Any) -> lang.Token:
     """Factory function for a Token."""
     # First char is column 1
     column = code.cursor - code.lineStart - len(word) + 1
     return lang.Token(code.line, column, type, word, value)
 
+
 def islinebreak(token: lang.Token) -> bool:
     return token.word == '\n'
 
 
-
 # Scanning functions
+
 
 def word(code: "Code") -> str:
     """A word is a sequence of chars starting with a letter, and
@@ -48,6 +52,7 @@ def word(code: "Code") -> str:
     while not atEnd(code) and (check(code).isalpha() or check(code).isdigit()):
         token += consume(code)
     return token
+
 
 def number(code: "Code") -> str:
     """A number is a sequence of chars consisting of digits, with 0 or 1
@@ -64,6 +69,7 @@ def number(code: "Code") -> str:
         token += consume(code)
     return token
 
+
 def string(code: "Code") -> str:
     """A string is a sequence of chars that are enclosed in
     double-quotes (").
@@ -75,6 +81,7 @@ def string(code: "Code") -> str:
         token += consume(code)
     return token
 
+
 def symbol(code: "Code") -> str:
     """A symbol is a sequence of symbolic chars."""
     token = consume(code)
@@ -84,10 +91,9 @@ def symbol(code: "Code") -> str:
         token += consume(code)
         if token == builtin.COMMENT: break
     if token == builtin.COMMENT:
-        while not atEnd(code) and check(code) != '\n':
+        while not atEnd(code) and not islinebreak(token):
             token += consume(code)
     return token
-
 
 
 class Code:
@@ -96,11 +102,10 @@ class Code:
 
     Used by the scanner.
     """
-    def __init__(
-        self,
-        src: str,
-    ):
-        self.src = src
+    def __init__(self, src: str) -> None:
+        if not src.endswith('\n'):
+            src = src + '\n'
+        self.src = src + '\0'
         self.cursor: int = 0
         self.line: int = 1
         self.lineStart: int = 0
@@ -115,30 +120,24 @@ class Code:
         self.lines += [self.src[start:end]]
         self.line += 1
         self.lineStart = self.cursor
-        
-    
 
-    
+
 # Main scanning loop
-
 def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
     """Select a scanning function to use, from the next char in the code
     string, and use it.
     """
     # Append a line break to help with end-of-statement detection in
     # parser.
-    if not src.endswith('\n'):
-        src = src + '\n'
     code = Code(src)
     tokens = []
-    while not atEnd(code):
+    while not atEnd(code):  # Checks for EOF ('\0')
         char = check(code)
         if char in [' ', '\r', '\t']:
             consume(code)
             continue
         elif char == '\n':
-            text = consume(code)
-            token = makeToken(code, 'keyword', text, None)
+            token = makeToken(code, 'keyword', consume(code), None)
             code.nextLine()
         elif char.isalpha():
             text = word(code)
@@ -183,6 +182,11 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
             )
         tokens += [token]
 
+    tokens += [makeToken(code, 'EOF', consume(code), 'EOF')]
+    code.nextLine()
+    # Remove leading line breaks
+    while islinebreak(tokens[0]):
+        del tokens[0]
     # Remove multiple line breaks
     i = 1
     while i < len(tokens):

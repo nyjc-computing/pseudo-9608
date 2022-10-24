@@ -506,17 +506,16 @@ def caseStmt(tokens: Tokens) -> lang.Case:
     caseStmts: lang.CaseMap = dict()
     caseMap = parseUntilExpectWord(
         tokens, ['OTHERWISE', 'ENDCASE'],
-        lambda tokens: colonPair(
-            tokens,
-            lambda tokens: literal(tokens),
-            lambda tokens: [statement1(tokens)]
-        ))
+        lambda tokens: colonPair(tokens,
+                                 lambda tokens: literal(tokens),
+                                 lambda tokens: [statement7(tokens)])
+    )
     for caseValue, stmts in caseMap:
         if caseValue in caseStmts:
             raise builtin.ParseError(f"Repeated CASE value", caseValue.token)
         caseStmts[caseValue] = stmts
     if matchWord(tokens, 'OTHERWISE'):
-        fallback = [statement6(tokens)]
+        fallback = [statement7(tokens)]
     else:
         fallback = None
     matchWordElseError(tokens, 'ENDCASE', msg="at end of CASE")
@@ -684,8 +683,10 @@ def closefileStmt(tokens: Tokens) -> lang.CloseFile:
 #    can be used anywhere except in CASE option statements
 # 5. CASE -> (6)
 #    only accepts single-line statements
-# 6. OUTPUT | INPUT | CALL | Assign | OPEN/READ/WRITE/CLOSEFILE
+# 6. OUTPUT | INPUT | CALL | Assign | OPEN/READ/WRITE/CLOSEFILE -> END
 #    may be used anywhere in a program
+# 7. RETURN -> (6)
+#    used within CASE option statements only
 
 
 def statement1(tokens: Tokens) -> lang.Stmt:
@@ -748,17 +749,18 @@ def statement6(tokens: Tokens) -> lang.Stmt:
     raise builtin.ParseError("Unrecognised token", check(tokens))
 
 
+def statement7(tokens: Tokens) -> lang.Stmt:
+    if matchWord(tokens, 'RETURN'):
+        return returnStmt(tokens)
+    return statement6(tokens)
+
+
 # Main parsing loop
-
-
 def parse(tokens: Tokens) -> Iterable[lang.Stmt]:
-    """Select a parsing function to use, from the next token, and use it.
+    """Select a parsing function to use, from the next token, and use
+    it.
     """
-    lastline = tokens[-1].line
-    tokens += [lang.Token(lastline, 0, 'EOF', '\0', 'EOF')]
     statements = []
     while not atEnd(tokens):
-        # ignore empty lines
-        collectExprsWhileWord(tokens, ['\n'], lambda tokens: None)
         statements += [statement2(tokens)]
     return statements
