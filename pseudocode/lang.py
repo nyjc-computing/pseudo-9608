@@ -25,10 +25,20 @@ File
     An open file
 """
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union, TypedDict
-from typing import Iterable, Sequence, Iterator, MutableMapping
-from typing import Literal as LiteralType, Tuple
-from typing import Callable as function, IO
+from typing import (
+    Any,
+    Callable as function,
+    IO,
+    Iterable,
+    Iterator,
+    Literal as LiteralType,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypedDict,
+    Union,
+)
 from dataclasses import dataclass
 from itertools import product
 
@@ -75,7 +85,6 @@ class TypeMetadata(TypedDict, total=False):
     type: Type
 
 
-# ----------------------------------------------------------------------
 @dataclass(eq=False, frozen=True)
 class Token:
     """Tokens encapsulate data needed by the parser to construct Exprs
