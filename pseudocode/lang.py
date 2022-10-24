@@ -34,8 +34,8 @@ from itertools import product
 # Pseudocode types
 PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
-IndexDigit = Union["Expr"]
-IndexExpr = Tuple[IndexDigit, ...]  # Array indexes
+Index = Union["Expr"]
+Indices = Tuple[Index, ...]  # Array indexes
 IndexRange = Tuple[int, int]  # Array ranges (start, end)
 Passby = LiteralType["BYREF", "BYVALUE"]
 
@@ -656,7 +656,7 @@ class GetIndex(SetExpr):
     """A GetName Expr represents a Index with an Array context."""
     __slots__ = ("array", "index")
     array: SetExpr
-    index: IndexExpr
+    index: Indices
 
     @property
     def token(self):
