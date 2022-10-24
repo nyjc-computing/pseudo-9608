@@ -267,7 +267,7 @@ def callExpr(tokens: Tokens, callableExpr: lang.NameKeyExpr) -> lang.Call:
     return lang.Call(callableExpr, args)
 
 
-def attrExpr(tokens: Tokens, objExpr: lang.Expr) -> lang.GetAttr:
+def attrExpr(tokens: Tokens, objExpr: lang.GetExpr) -> lang.GetAttr:
     assert (isinstance(objExpr, lang.UnresolvedName)
             or isinstance(objExpr, lang.Call)
             or isinstance(objExpr, lang.GetAttr) or isinstance(
@@ -276,7 +276,7 @@ def attrExpr(tokens: Tokens, objExpr: lang.Expr) -> lang.GetAttr:
     return lang.GetAttr(objExpr, name)
 
 
-def indexExpr(tokens: Tokens, arrayExpr: lang.Expr) -> lang.GetIndex:
+def indexExpr(tokens: Tokens, arrayExpr: lang.GetExpr) -> lang.GetIndex:
     assert (isinstance(arrayExpr, lang.UnresolvedName)
             or isinstance(arrayExpr, lang.Call)
             or isinstance(arrayExpr, lang.GetAttr) or isinstance(
