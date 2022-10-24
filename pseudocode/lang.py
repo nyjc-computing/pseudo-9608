@@ -450,8 +450,23 @@ class Array(PseudoValue):
         self.data[index].value = value
 
 
+class Callable(PseudoValue):
+    """Base class for Function and Procedure.
+    Represents a Callable in pseudo.
+
+    Attributes
+    ----------
+    - frame
+        The frame used by the callable
+    - params
+        A list of parameters used by the callable
+    - stmts
+        A list of statements the callable executes when called
+    """
+
+
 @dataclass
-class Builtin(PseudoValue):
+class Builtin(Callable):
     """Represents a system function in pseudo.
 
     Attributes
@@ -468,31 +483,21 @@ class Builtin(PseudoValue):
 
 
 @dataclass
-class Callable(PseudoValue):
-    """Base class for Function and Procedure.
-    Represents a Callable in pseudo.
-
-    Attributes
-    ----------
-    - frame
-        The frame used by the callable
-    - params
-        A list of parameters used by the callable
-    - stmts
-        A list of statements the callable executes when called
-    """
+class Function(Callable):
+    """Functions are evaluated to return a value."""
     __slots__ = ("frame", "params", "stmts")
     frame: "Frame"
     params: Params
     stmts: Stmts
 
 
-class Function(Callable):
-    """Functions are evaluated to return a value."""
-
-
+@dataclass
 class Procedure(Callable):
     """Procedures are called to execute its statements."""
+    __slots__ = ("frame", "params", "stmts")
+    frame: "Frame"
+    params: Params
+    stmts: Stmts
 
 
 @dataclass
