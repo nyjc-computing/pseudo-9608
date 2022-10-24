@@ -181,6 +181,9 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
 
     tokens += [makeToken(code, 'EOF', consume(code), 'EOF')]
     code.nextLine()
+    # Remove leading line breaks
+    while islinebreak(tokens[0]):
+        del tokens[0]
     # Remove multiple line breaks
     i = 1
     while i < len(tokens):
