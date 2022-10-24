@@ -752,13 +752,10 @@ def statement6(tokens: Tokens) -> lang.Stmt:
 
 
 def parse(tokens: Tokens) -> Iterable[lang.Stmt]:
-    """Select a parsing function to use, from the next token, and use it.
+    """Select a parsing function to use, from the next token, and use
+    it.
     """
-    lastline = tokens[-1].line
-    tokens += [lang.Token(lastline, 0, 'EOF', '\0', 'EOF')]
     statements = []
     while not atEnd(tokens):
-        # ignore empty lines
-        collectExprsWhileWord(tokens, ['\n'], lambda tokens: None)
         statements += [statement2(tokens)]
     return statements

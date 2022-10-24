@@ -15,7 +15,7 @@ from . import builtin, lang
 
 def atEnd(code: "Code") -> bool:
     """Returns True if at end of code."""
-    return code.cursor >= code.length
+    return check(code) == '\0'
 
 def check(code: "Code") -> str:
     """Returns char at cursor."""
@@ -84,7 +84,7 @@ def symbol(code: "Code") -> str:
         token += consume(code)
         if token == builtin.COMMENT: break
     if token == builtin.COMMENT:
-        while not atEnd(code) and check(code) != '\n':
+        while not atEnd(code) and not islinebreak(token):
             token += consume(code)
     return token
 
@@ -96,11 +96,10 @@ class Code:
 
     Used by the scanner.
     """
-    def __init__(
-        self,
-        src: str,
-    ):
-        self.src = src
+    def __init__(self, src: str) -> None:
+        if not src.endswith('\n'):
+            src = src + '\n'
+        self.src = src + '\0'
         self.cursor: int = 0
         self.line: int = 1
         self.lineStart: int = 0
@@ -127,18 +126,15 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
     """
     # Append a line break to help with end-of-statement detection in
     # parser.
-    if not src.endswith('\n'):
-        src = src + '\n'
     code = Code(src)
     tokens = []
-    while not atEnd(code):
+    while not atEnd(code):  # Checks for EOF ('\0')
         char = check(code)
         if char in [' ', '\r', '\t']:
             consume(code)
             continue
         elif char == '\n':
-            text = consume(code)
-            token = makeToken(code, 'keyword', text, None)
+            token = makeToken(code, 'keyword', consume(code), None)
             code.nextLine()
         elif char.isalpha():
             text = word(code)
@@ -183,6 +179,8 @@ def scan(src: str) -> Tuple[List[lang.Token], List[str]]:
             )
         tokens += [token]
 
+    tokens += [makeToken(code, 'EOF', consume(code), 'EOF')]
+    code.nextLine()
     # Remove multiple line breaks
     i = 1
     while i < len(tokens):
