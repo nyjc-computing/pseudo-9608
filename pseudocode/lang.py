@@ -24,7 +24,7 @@ Builtin, Function, Procedure
 File
     An open file
 """
-from typing import Any, Optional, Union, Hashable, TypedDict
+from typing import Any, Optional, Union, TypedDict
 from typing import Iterable, Sequence, Iterator, MutableMapping
 from typing import Literal as LiteralType, Tuple
 from typing import Callable as function, IO
@@ -54,10 +54,7 @@ NameMap = MutableMapping[NameKey, "TypedValue"]
 IndexMap = MutableMapping[IndexKey, "TypedValue"]
 CaseMap = MutableMapping["Literal", Stmts]  # for Conditionals
 
-# HACK: Should use TypeAlias but not yet supported in Python 3.8
-Assignable = Union[PyLiteral, "Object", "Array"]
-Value = Union[PyLiteral, "Object", "Array", "Builtin", "Callable",
-              "File"]  # in TypedValue
+Value = Union[PyLiteral, "Container", "Callable", "File"]  # in TypedValue
 
 # CallTargets resolve to function names
 CallTarget = Union["UnresolvedName", "GetName"]
@@ -395,6 +392,8 @@ class Object(Container):
     def setValue(self, name: NameKey, value: Value) -> None:
         self.data[name].value = value
 
+
+Assignable = Union[PyLiteral, Container]
 
 class Frame:
     """Frames differ from Objects in that they can be chained (with a

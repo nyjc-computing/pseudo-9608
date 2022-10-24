@@ -130,7 +130,7 @@ def _(callable: lang.Procedure, callargs, frame: lang.Frame, **kwargs) -> None:
 
 @evalCallable.register
 def _(callable: lang.Function, callargs, frame: lang.Frame,
-      **kwargs) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+      **kwargs) -> lang.Assignable:
     # Assign args to param slots
     for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, frame)
@@ -142,7 +142,7 @@ def _(callable: lang.Function, callargs, frame: lang.Frame,
 
 def evalAssign(
         expr: lang.Assign,
-        frame: lang.Frame) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+        frame: lang.Frame) -> lang.Assignable:
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
     """
@@ -188,7 +188,7 @@ def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.PyLiteral:
 
 @evaluate.register
 def _(expr: lang.Assign, frame: lang.Frame,
-      **kw) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+      **kw) -> lang.Assignable:
     return evalAssign(expr, frame)
 
 
@@ -243,7 +243,7 @@ def executeStmts(
 
 
 def execReturn(stmt: lang.Return, frame: lang.Frame,
-               **kwargs) -> Union[lang.PyLiteral, lang.Object, lang.Array]:
+               **kwargs) -> lang.Assignable:
     """Return statements should be explicitly checked for and the
     return value passed back. They should not be dispatched through
     execute().
