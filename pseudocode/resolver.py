@@ -354,7 +354,8 @@ def verifyStmts(stmts: lang.Stmts,
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
             if not returnType:
-                raise builtin.LogicError("Unexpected RETURN statement")
+                raise builtin.LogicError("Unexpected RETURN statement",
+                                         token=stmt.expr.token)
             expectTypeElseError(resolve(stmt.expr, frame),
                                 returnType,
                                 token=stmt.expr.token)

@@ -252,7 +252,7 @@ def execReturn(stmt: lang.Return, frame: lang.Frame,
 
 
 @singledispatch
-def execute(stmt: lang.Stmt, frame: lang.Frame, **kwargs) -> None:
+def execute(stmt: lang.Stmt, frame: lang.Frame, **kwargs):
     """Dispatcher for statement executors."""
     raise TypeError(f"Invalid Stmt {stmt}")
 
@@ -297,6 +297,7 @@ def _(stmt: lang.Conditional, frame: lang.Frame, **kwargs) -> Optional[lang.PyLi
     else:  # for loop completed normally, i.e. no matching cases
         if stmt.fallback:
             return executeStmts(stmt.fallback, frame, **kwargs)
+    return None
 
 
 @execute.register
@@ -307,6 +308,7 @@ def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]
         returnVal = executeStmts(stmt.stmts, frame, **kwargs)
         if returnVal:
             return returnVal
+    return None
 
 
 @execute.register
@@ -316,6 +318,7 @@ def _(stmt: lang.Repeat, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral
         returnVal = executeStmts(stmt.stmts, frame)
         if returnVal:
             return returnVal
+    return None
 
 
 @execute.register
