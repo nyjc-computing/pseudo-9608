@@ -54,7 +54,7 @@ NameMap = MutableMapping[NameKey, "TypedValue"]
 IndexMap = MutableMapping[IndexKey, "TypedValue"]
 CaseMap = MutableMapping["Literal", Stmts]  # for Conditionals
 
-Value = Union[PyLiteral, "Container", "Callable", "File"]  # in TypedValue
+Value = Union[PyLiteral, "PseudoValue"]  # in TypedValue
 
 # CallTargets resolve to function names
 CallTarget = Union["UnresolvedName", "GetName"]
@@ -323,16 +323,17 @@ class Array(Container):
         returnval = self.data[index].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned index {index!r}")
-        assert not isinstance(returnval, Array), "Unexpected Array"
-        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
-        assert not isinstance(returnval, Callable), "Unexpected Callable"
-        assert not isinstance(returnval, File), "Unexpected File"
+        assert (isinstance(returnval, bool)
+                or isinstance(returnval, int)
+                or isinstance(returnval, float)
+                or isinstance(returnval, str)
+                or isinstance(returnval, Object)), f"Unexpected {type(returnval)}"
         return returnval
 
     def get(self, index: IndexKey) -> "TypedValue":
         return self.data[index]
 
-    def setValue(self, index: IndexKey, value: Value) -> None:
+    def setValue(self, index: IndexKey, value: Union[PyLiteral, "Object"]) -> None:
         self.data[index].value = value
 
 
@@ -376,24 +377,26 @@ class Object(Container):
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> Union[PyLiteral, "Object"]:
+    def getValue(self, name: NameKey) -> "Assignable":
         returnval = self.data[name].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned variable {name!r}")
-        assert not isinstance(returnval, Array), "Unexpected Array"
-        assert not isinstance(returnval, Builtin), "Unexpected Builtin"
-        assert not isinstance(returnval, Callable), "Unexpected Callable"
-        assert not isinstance(returnval, File), "Unexpected File"
+        assert (isinstance(returnval, bool)
+                or isinstance(returnval, int)
+                or isinstance(returnval, float)
+                or isinstance(returnval, str)
+                or isinstance(returnval, Container)), f"Unexpected {type(returnval)}"
         return returnval
 
     def get(self, name: NameKey) -> "TypedValue":
         return self.data[name]
 
-    def setValue(self, name: NameKey, value: Value) -> None:
+    def setValue(self, name: NameKey, value: "Assignable") -> None:
         self.data[name].value = value
 
 
 Assignable = Union[PyLiteral, Container]
+
 
 class Frame:
     """Frames differ from Objects in that they can be chained (with a

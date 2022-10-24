@@ -140,9 +140,7 @@ def _(callable: lang.Function, callargs, frame: lang.Frame,
     return returnVal
 
 
-def evalAssign(
-        expr: lang.Assign,
-        frame: lang.Frame) -> lang.Assignable:
+def evalAssign(expr: lang.Assign, frame: lang.Frame) -> lang.Assignable:
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
     """
@@ -187,19 +185,24 @@ def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.PyLiteral:
 
 
 @evaluate.register
-def _(expr: lang.Assign, frame: lang.Frame,
-      **kw) -> lang.Assignable:
+def _(expr: lang.Assign, frame: lang.Frame, **kw) -> lang.Assignable:
     return evalAssign(expr, frame)
 
 
 @evaluate.register
 def _(
     expr: lang.GetName, frame: lang.Frame, **kw
-) -> Union[lang.PyLiteral, lang.Object, lang.Array, lang.Builtin,
-           lang.Callable]:
+) -> Union[lang.Assignable, lang.Callable]:
     value = expr.frame.getValue(str(expr.name))
-    assert not isinstance(value, lang.File), "Unexpected File"
-    return value
+    # mypy can't type-check Non-Files
+    if (isinstance(value, bool)
+            or isinstance(value, int)
+            or isinstance(value, float)
+            or isinstance(value, str)
+            or isinstance(value, lang.Container)
+            or isinstance(value, lang.Callable)):
+        return value
+    raise RuntimeError(f"{value}: Unexpected File")
 
 
 @evaluate.register
@@ -212,14 +215,14 @@ def _(expr: lang.GetIndex, frame: lang.Frame,
 
 @evaluate.register
 def _(expr: lang.GetAttr, frame: lang.Frame,
-      **kw) -> Union[lang.PyLiteral, lang.Object]:
+      **kw) -> lang.Assignable:
     obj = evaluate(expr.object, frame)
     return obj.getValue(str(expr.name))
 
 
 @evaluate.register
 def _(expr: lang.Call, frame: lang.Frame,
-      **kw) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
+      **kw) -> Optional[lang.Assignable]:
     callable = evaluate(expr.callable, frame)
     returnVal = evalCallable(callable, expr.args, callable.frame)
     return returnVal
@@ -230,7 +233,7 @@ def _(expr: lang.Call, frame: lang.Frame,
 
 def executeStmts(
         stmts: lang.Stmts, frame: lang.Frame,
-        **kwargs) -> Union[None, lang.PyLiteral, lang.Object, lang.Array]:
+        **kwargs) -> Optional[lang.Assignable]:
     """Execute a list of statements."""
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
@@ -289,7 +292,8 @@ def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
 
 
 @execute.register
-def _(stmt: lang.Conditional, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]:
+def _(stmt: lang.Conditional, frame: lang.Frame,
+      **kwargs) -> Optional[lang.Assignable]:
     condValue = evaluate(stmt.cond, frame)
     for caseValue, stmts in stmt.stmtMap.items():
         if evaluate(caseValue, frame) == condValue:
@@ -301,7 +305,8 @@ def _(stmt: lang.Conditional, frame: lang.Frame, **kwargs) -> Optional[lang.PyLi
 
 
 @execute.register
-def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]:
+def _(stmt: lang.While, frame: lang.Frame,
+      **kwargs) -> Optional[lang.Assignable]:
     if stmt.init:
         evaluate(stmt.init, frame, **kwargs)
     while evaluate(stmt.cond, frame) is True:
@@ -312,7 +317,8 @@ def _(stmt: lang.While, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]
 
 
 @execute.register
-def _(stmt: lang.Repeat, frame: lang.Frame, **kwargs) -> Optional[lang.PyLiteral]:
+def _(stmt: lang.Repeat, frame: lang.Frame,
+      **kwargs) -> Optional[lang.Assignable]:
     executeStmts(stmt.stmts, frame)
     while evaluate(stmt.cond, frame) is False:
         returnVal = executeStmts(stmt.stmts, frame)
