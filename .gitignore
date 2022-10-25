@@ -96,3 +96,6 @@ main.py
 poetry.lock
 pseudo
 replit.nix
+
+# Internal scripts
+*.sh
