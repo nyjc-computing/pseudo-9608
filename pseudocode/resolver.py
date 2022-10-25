@@ -6,12 +6,17 @@ verify(statements: list, frame: Frame) -> None
     in the list of statements
 """
 
-from typing import Optional, Union
-from typing import Iterable, Iterator
-from typing import Tuple
-from functools import singledispatch
 from dataclasses import dataclass
+from functools import singledispatch
 from itertools import product
+from typing import (
+    Any,
+    Iterable,
+    Iterator,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from . import builtin, lang
 
@@ -95,7 +100,7 @@ def resolveArgsParams(callargs: lang.Args, params: lang.Params,
 @dataclass
 class Resolver:
     """Resolves a list of statements with the given frame."""
-    typesys: lang.TypeSystem
+    env: Any
     frame: lang.Frame
     statements: lang.Stmts
 

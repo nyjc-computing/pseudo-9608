@@ -4,7 +4,12 @@ execute(frame: Frame, statements: list) -> None
     Interprets and executes a list of statements
 """
 
-from typing import Optional, Union, Callable as function
+from typing import (
+    Any,
+    Callable as function,
+    Optional,
+    Union,
+)
 from functools import singledispatch
 from dataclasses import dataclass, field
 
@@ -51,7 +56,7 @@ def undeclaredElseError(frame: lang.Frame,
 @dataclass
 class Interpreter:
     """Interprets a list of statements with a given frame."""
-    typesys: lang.TypeSystem
+    env: Any
     frame: lang.Frame
     statements: lang.Stmts
     outputHandler: function = field(default=print, init=False)

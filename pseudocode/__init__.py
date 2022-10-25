@@ -102,9 +102,10 @@ class Pseudo:
     """
 
     def __init__(self) -> None:
-        self.typesys = TypeSystem(*builtin.TYPES)
+        # self.typesys = TypeSystem(*builtin.TYPES)
         sysFrame = system.initFrame()
-        self.frame: Frame = Frame(typesys=sysFrame.types, outer=sysFrame)
+        self.env = Environment(Frame(typesys=sysFrame.types, outer=sysFrame))
+        self.frame: Frame = self.env.frame
         system.resolveGlobal(sysFrame, self.frame)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
@@ -151,7 +152,7 @@ class Pseudo:
             return result
 
         # Resolving
-        resolver = Resolver(self.typesys, self.frame, statements)
+        resolver = Resolver(self.env, self.frame, statements)
         try:
             resolver.inspect()
         except builtin.LogicError as err:
@@ -162,7 +163,7 @@ class Pseudo:
             return result
 
         # Interpreting
-        interpreter = Interpreter(self.typesys, self.frame, statements)
+        interpreter = Interpreter(self.env, self.frame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
             interpreter.interpret()
