@@ -109,11 +109,11 @@ class Environment:
     - typesys: TypeSystem
     """
     frame: Frame
-    # typesys: TypeSystem
+    types: TypeSystem
 
     def with_frame(self, frame: Union[Frame, ObjectTemplate]) -> "Environment":
         """Returns a new Environment with the new frame."""
-        return type(self)(frame)
+        return type(self)(frame, self.types)
 
 
 class Name:
