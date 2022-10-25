@@ -199,8 +199,21 @@ class Frame:
 
     Methods
     -------
+    has(name)
+        returns True if the var exists in frame,
+        otherwise returns False
+    declare(name, typedValue)
+        associates name with typedValue in the Container
+    get(name)
+        retrieves the slot associated with the name
+    getType(name)
+        retrieves the type information associated with the name
+    getValue(name)
+        retrieves the value associated with the name
     set(name, typedValue)
         assigns the given TypedValue to the name
+    setValue(name, value)
+        updates the value associated with the name
     delete(name)
         deletes the slot associated with the name
     lookup(name)
@@ -222,8 +235,11 @@ class Frame:
     def has(self, name: NameKey) -> bool:
         return name in self.data
 
-    def declare(self, name: NameKey, type: str) -> None:
-        self.data[name] = self.types.cloneType(type)
+    def declare(self, name: NameKey, typedValue: TypedValue) -> None:
+        self.data[name] = typedValue
+
+    def get(self, name: NameKey) -> TypedValue:
+        return self.data[name]
 
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
@@ -234,14 +250,11 @@ class Frame:
             raise ValueError(f"Accessed unassigned variable {name!r}")
         return returnval
 
-    def get(self, name: NameKey) -> TypedValue:
-        return self.data[name]
+    def set(self, name: NameKey, typedValue: TypedValue) -> None:
+        self.data[name] = typedValue
 
     def setValue(self, name: NameKey, value: Value) -> None:
         self.data[name].value = value
-
-    def set(self, name: NameKey, typedValue: TypedValue) -> None:
-        self.data[name] = typedValue
 
     def delete(self, name: NameKey) -> None:
         del self.data[name]
@@ -344,8 +357,8 @@ class Array(Container):
     def has(self, index: IndexKey) -> bool:
         return index in self.data
 
-    def declare(self, index: IndexKey, type: str) -> None:
-        self.data[index] = self.types.cloneType(type)
+    def declare(self, index: IndexKey, typedValue: TypedValue) -> None:
+        self.data[index] = typedValue
 
     def getType(self, index: IndexKey) -> Type:
         return self.data[index].type
@@ -378,8 +391,8 @@ class Object(Container):
     has(name)
         returns True if the var exists in frame,
         otherwise returns False
-    declare(name, type)
-        initialises a named TypedValue from the type system
+    declare(name, typedValue)
+        associates name with typedValue in the Container
     get(name)
         retrieves the slot associated with the name
     getType(name)
@@ -402,8 +415,8 @@ class Object(Container):
     def has(self, name: NameKey) -> bool:
         return name in self.data
 
-    def declare(self, name: NameKey, type: str) -> None:
-        self.data[name] = self.types.cloneType(type)
+    def declare(self, name: NameKey, typedValue: TypedValue) -> None:
+        self.data[name] = typedValue
 
     def getType(self, name: NameKey) -> Type:
         return self.data[name].type
