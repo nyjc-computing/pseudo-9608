@@ -320,10 +320,7 @@ class Array(Container):
                  type: Type) -> None:
         self.types = typesys
         self.ranges = ranges
-        self.data: IndexMap = {
-            index: self.types.cloneType(type)
-            for index in self.rangeProduct(ranges)
-        }
+        self.data: IndexMap = {}
 
     def __repr__(self) -> str:
         nameValuePairs = [

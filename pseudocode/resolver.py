@@ -129,6 +129,9 @@ def declareByval(declare: lang.Declare, env: lang.Environment) -> None:
         array = lang.Array(typesys=env.frame.types,
                            ranges=declare.metadata['size'],
                            type=declare.metadata['type'])
+        for index in array.rangeProduct(declare.metadata['size']):
+            array.declare(index, env.types.cloneType(declare.metadata['type']))
+
         assert isinstance(env.frame, lang.Frame), "Frame expected"
         env.frame.setValue(name, array)
 
