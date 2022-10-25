@@ -90,7 +90,7 @@ class Pseudo:
     def __init__(self) -> None:
         typesys = lang.TypeSystem(*builtin.TYPES)
         sysFrame = system.initFrame(typesys)
-        self.env = lang.Environment(lang.Frame(typesys=sysFrame.types,
+        self.env = lang.Environment(lang.Frame(typesys=typesys,
                                                outer=sysFrame),
                                     typesys)
         system.resolveEnv(sysFrame, self.env)

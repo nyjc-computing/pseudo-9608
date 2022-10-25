@@ -126,7 +126,7 @@ def declareByval(declare: lang.Declare, env: lang.Environment) -> None:
     name: lang.NameKey = str(declare.name)
     env.frame.declare(name, env.types.cloneType(declare.type))
     if declare.type == 'ARRAY':
-        array = lang.Array(typesys=env.frame.types,
+        array = lang.Array(typesys=env.types,
                            ranges=declare.metadata['size'],
                            type=declare.metadata['type'])
         for index in array.rangeProduct(declare.metadata['size']):
@@ -492,7 +492,7 @@ def _(stmt: lang.TypeStmt, env: lang.Environment,
     objenv = env.with_frame(objTemplate)
     for expr in stmt.exprs:
         resolve(expr, objenv)
-    env.frame.types.setTemplate(str(stmt.name), objTemplate)
+    env.types.setTemplate(str(stmt.name), objTemplate)
 
 
 @verify.register

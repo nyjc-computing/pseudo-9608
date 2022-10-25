@@ -224,7 +224,7 @@ class Frame:
     def __init__(self,
                  typesys: TypeSystem,
                  outer: "Frame" = None) -> None:
-        self.types = typesys
+        # self.types = typesys
         self.data: NameMap = {}
         self.outer = outer
 
@@ -318,7 +318,7 @@ class Array(Container):
 
     def __init__(self, typesys: "TypeSystem", ranges: IndexRanges,
                  type: Type) -> None:
-        self.types = typesys
+        # self.types = typesys
         self.ranges = ranges
         self.data: IndexMap = {}
 
@@ -402,7 +402,7 @@ class Object(Container):
     __slots__ = ("types", "data")
 
     def __init__(self, typesys: "TypeSystem") -> None:
-        self.types = typesys
+        # self.types = typesys
         self.data: NameMap = {}
 
     def __repr__(self) -> str:
