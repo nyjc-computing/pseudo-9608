@@ -146,7 +146,7 @@ def initFrame(typesys: lang.TypeSystem) -> lang.Frame:
     Return a system frame with function declarations.
     Functions are not yet defined.
     """
-    sysFrame = lang.Frame(typesys=typesys)
+    sysFrame = lang.Frame()
     for func, retType, _ in funcReturnParams:
         sysFrame.declare(func.__name__, typesys.cloneType(retType))
     return sysFrame

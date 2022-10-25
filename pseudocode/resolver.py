@@ -126,8 +126,7 @@ def declareByval(declare: lang.Declare, env: lang.Environment) -> None:
     name: lang.NameKey = str(declare.name)
     env.frame.declare(name, env.types.cloneType(declare.type))
     if declare.type == 'ARRAY':
-        array = lang.Array(typesys=env.types,
-                           ranges=declare.metadata['size'],
+        array = lang.Array(ranges=declare.metadata['size'],
                            type=declare.metadata['type'])
         for index in array.rangeProduct(declare.metadata['size']):
             array.declare(index, env.types.cloneType(declare.metadata['type']))
@@ -437,7 +436,7 @@ def _(stmt: lang.ProcedureStmt, env: lang.Environment,
     # No UnresolvedNames to resolve
 
     # Declare parameters
-    local = lang.Frame(typesys=env.types, outer=env.frame)
+    local = lang.Frame(outer=env.frame)
     localenv = env.with_frame(local)
     params = transformDeclares(stmt.params, stmt.passby, localenv)
 
@@ -457,7 +456,7 @@ def _(stmt: lang.FunctionStmt, env: lang.Environment,
     # No UnresolvedNames to resolve
 
     # Declare parameters
-    local = lang.Frame(typesys=env.types, outer=env.frame)
+    local = lang.Frame(outer=env.frame)
     localenv = env.with_frame(local)
     params = transformDeclares(stmt.params, stmt.passby, localenv)
 

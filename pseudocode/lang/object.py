@@ -139,7 +139,7 @@ class ObjectTemplate(Template):
         This returns an empty Object with the same names
         declared.
         """
-        obj = Object(typesys=self.types)
+        obj = Object()
         for name, type in self.data.items():
             obj.declare(name, type)
         return obj
@@ -203,7 +203,7 @@ class Frame:
         returns True if the var exists in frame,
         otherwise returns False
     declare(name, typedValue)
-        associates name with typedValue in the Container
+        associates name with typedValue in the Frame
     get(name)
         retrieves the slot associated with the name
     getType(name)
@@ -219,12 +219,9 @@ class Frame:
     lookup(name)
         returns the first frame containing the name
     """
-    __slots__ = ("types", "data", "outer")
+    __slots__ = ("data", "outer")
 
-    def __init__(self,
-                 typesys: TypeSystem,
-                 outer: "Frame" = None) -> None:
-        # self.types = typesys
+    def __init__(self, outer: "Frame" = None) -> None:
         self.data: NameMap = {}
         self.outer = outer
 
@@ -281,12 +278,9 @@ class Container(PseudoValue):
 
     Attributes
     ----------
-    - types
-        The TypeSystem used by the Container to resolve types
     - data
         A MutableMapping used to map keys to TypedValues
     """
-    types: "TypeSystem"
     data: MutableMapping
 
 
@@ -314,11 +308,9 @@ class Array(Container):
     setValue(index, value)
         updates the value associated with the index
     """
-    __slots__ = ("types", "ranges", "data")
+    __slots__ = ("ranges", "data")
 
-    def __init__(self, typesys: "TypeSystem", ranges: IndexRanges,
-                 type: Type) -> None:
-        # self.types = typesys
+    def __init__(self, ranges: IndexRanges, type: Type) -> None:
         self.ranges = ranges
         self.data: IndexMap = {}
 
@@ -399,10 +391,9 @@ class Object(Container):
     setValue(name, value)
         updates the value associated with the name
     """
-    __slots__ = ("types", "data")
+    __slots__ = ("data", )
 
-    def __init__(self, typesys: "TypeSystem") -> None:
-        # self.types = typesys
+    def __init__(self) -> None:
         self.data: NameMap = {}
 
     def __repr__(self) -> str:

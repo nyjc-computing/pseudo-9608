@@ -90,9 +90,8 @@ class Pseudo:
     def __init__(self) -> None:
         typesys = lang.TypeSystem(*builtin.TYPES)
         sysFrame = system.initFrame(typesys)
-        self.env = lang.Environment(lang.Frame(typesys=typesys,
-                                               outer=sysFrame),
-                                    typesys)
+        self.env = lang.Environment(frame=lang.Frame(outer=sysFrame),
+                                    types=typesys)
         system.resolveEnv(sysFrame, self.env)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
