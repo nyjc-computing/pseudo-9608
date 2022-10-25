@@ -344,6 +344,9 @@ class Array(Container):
     def has(self, index: IndexKey) -> bool:
         return index in self.data
 
+    def declare(self, index: IndexKey, type: str) -> None:
+        self.data[index] = self.types.cloneType(type)
+
     def getType(self, index: IndexKey) -> Type:
         return self.data[index].type
 

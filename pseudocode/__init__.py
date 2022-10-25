@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 
 from pseudocode import builtin
-from pseudocode.lang import Frame
+from pseudocode.lang import Frame, TypeSystem
 import pseudocode.system as system
 
 from pseudocode import scanner, parser
@@ -92,6 +92,7 @@ class Pseudo:
     """
 
     def __init__(self) -> None:
+        self.typesys = TypeSystem(*builtin.TYPES)
         sysFrame = system.initFrame()
         self.frame: Frame = Frame(typesys=sysFrame.types, outer=sysFrame)
         system.resolveGlobal(sysFrame, self.frame)
@@ -140,7 +141,7 @@ class Pseudo:
             return result
 
         # Resolving
-        resolver = Resolver(self.frame, statements)
+        resolver = Resolver(self.typesys, self.frame, statements)
         try:
             resolver.inspect()
         except builtin.LogicError as err:
@@ -151,7 +152,7 @@ class Pseudo:
             return result
 
         # Interpreting
-        interpreter = Interpreter(self.frame, statements)
+        interpreter = Interpreter(self.typesys, self.frame, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
             interpreter.interpret()

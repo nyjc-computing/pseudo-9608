@@ -95,7 +95,7 @@ def resolveArgsParams(callargs: lang.Args, params: lang.Params,
 @dataclass
 class Resolver:
     """Resolves a list of statements with the given frame."""
-    __slots__ = ('frame', 'statements')
+    typesys: lang.TypeSystem
     frame: lang.Frame
     statements: lang.Stmts
 
