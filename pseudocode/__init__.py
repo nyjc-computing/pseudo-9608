@@ -3,11 +3,12 @@
 Pseudo
     Interprets code from a file or string
 """
-
+from dataclasses import dataclass
+import os
+import sys
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-import os, sys
 
 # Log errors to pseudo.log
 import logging
@@ -34,16 +35,26 @@ class Result(TypedDict):
     error: Optional[builtin.PseudoError]  # Error returned by the interpreter
 
 
+@dataclass
+class Environment:
+    """Encapsulates the environment in which interpreting pseudocode is carried out.
+
+    Arguments/Attributes
+    --------------------
+    - frame: Frame
+    - typesys: TypeSystem
+    """
+    frame: Frame
+    # typesys: TypeSystem
+
 
 __version__ = '0.5.0a'
 VERSION = f"Pseudo {__version__}"
-HELP = """
-usage: pseudo [option] ... file
+HELP = """usage: pseudo [option] ... file
 Options and arguments:
 -h     : print this help message and exit (also --help)
 file   : program read from script file
 """.strip()
-
 
 
 def logException(msg="Unexpected error has occurred") -> None:
@@ -71,7 +82,6 @@ def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
         leftmargin = len(lineinfo) + err.column
         print((' ' * leftmargin) + '^')
     print(errType, err.report())
-
 
 
 class Pseudo:
