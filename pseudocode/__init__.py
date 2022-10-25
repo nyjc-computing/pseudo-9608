@@ -19,7 +19,6 @@ logging.basicConfig(
 )
 
 from pseudocode import builtin, lang
-from pseudocode.lang import Frame, TypeSystem
 import pseudocode.system as system
 
 from pseudocode import scanner, parser
@@ -31,7 +30,8 @@ from pseudocode.interpreter import Interpreter
 class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
     lines: List[str]  # list of code lines as strings
-    frame: Frame  # The return frame from the interpreter
+    frame: lang.Frame  # The return frame from the interpreter
+    env: lang.Environment
     error: Optional[builtin.PseudoError]  # Error returned by the interpreter
 
 
@@ -89,11 +89,12 @@ class Pseudo:
     """
 
     def __init__(self) -> None:
-        # self.typesys = TypeSystem(*builtin.TYPES)
+        # self.typesys = lang.TypeSystem(*builtin.TYPES)
         sysFrame = system.initFrame()
-        self.env = lang.Environment(Frame(typesys=sysFrame.types, outer=sysFrame))
-        self.frame: Frame = self.env.frame
-        system.resolveGlobal(sysFrame, self.frame)
+        self.env = lang.Environment(lang.Frame(typesys=sysFrame.types,
+                                               outer=sysFrame))
+        self.frame: lang.Frame = self.env.frame
+        system.resolveEnv(sysFrame, self.env)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
@@ -123,6 +124,7 @@ class Pseudo:
         result: Result = {
             'lines': [],
             'frame': self.frame,
+            'env': self.env,
             'error': None,
         }
 

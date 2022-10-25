@@ -151,13 +151,13 @@ def initFrame() -> lang.Frame:
         sysFrame.declare(func.__name__, retType)
     return sysFrame
 
-def resolveGlobal(sysFrame: lang.Frame, globalFrame: lang.Frame) -> None:
+def resolveEnv(sysFrame: lang.Frame, env: lang.Environment) -> None:
     """
-    Resolve all system functions in sysFrame to point to global frame.
+    Resolve all system functions in sysFrame to use given environment.
     """
     # Be careful to avoid recursion
     for func, retType, params in funcReturnParams:
         sysFrame.setValue(
             func.__name__,
-            lang.Builtin(globalFrame, params, func)
+            lang.Builtin(env, params, func)
         )

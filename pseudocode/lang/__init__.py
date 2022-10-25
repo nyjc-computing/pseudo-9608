@@ -111,6 +111,10 @@ class Environment:
     frame: Frame
     # typesys: TypeSystem
 
+    def with_frame(self, frame: Union[Frame, ObjectTemplate]) -> "Environment":
+        """Returns a new Environment with the new frame."""
+        return type(self)(frame)
+
 
 class Name:
     """Name represents a meaningful name, either a custom type or a
@@ -134,13 +138,13 @@ class Name:
 
 
 class Callable(object.PseudoValue):
-    """Base class for Function and Procedure.
+    """Base class for Builtin, Function and Procedure.
     Represents a Callable in pseudo.
 
     Attributes
     ----------
-    - frame
-        The frame used by the callable
+    - env
+        The environment used by the callable
     - params
         A list of parameters used by the callable
     - stmts
@@ -160,7 +164,7 @@ class Builtin(Callable):
         the Python function to call when invoked
     """
     __slots__ = ("frame", "params", "func")
-    frame: object.Frame  # Builtins resolve with global frame
+    env: "Environment"
     params: object.Params
     func: function
 
@@ -169,7 +173,7 @@ class Builtin(Callable):
 class Function(Callable):
     """Functions are evaluated to return a value."""
     __slots__ = ("frame", "params", "stmts")
-    frame: object.Frame
+    env: "Environment"
     params: object.Params
     stmts: Stmts
 
@@ -178,7 +182,7 @@ class Function(Callable):
 class Procedure(Callable):
     """Procedures are called to execute its statements."""
     __slots__ = ("frame", "params", "stmts")
-    frame: object.Frame
+    env: "Environment"
     params: object.Params
     stmts: Stmts
 

@@ -93,7 +93,7 @@ def resolveArgsParams(callargs: lang.Args, params: lang.Params,
             token=token,
         )
     for arg, param in zip(callargs, params):
-        # param is a TypedValue slot from either local or frame
+        # param is a TypedValue slot from either local or global frame
         expectTypeElseError(resolve(arg, env), param.type, token=arg.token)
 
 
@@ -116,7 +116,7 @@ def declareByref(declare: lang.Declare, env: lang.Environment) -> None:
     expectTypeElseError(declare.type,
                         env.frame.outer.getType(name),
                         token=declare.token)
-    # Reference frame vars in local
+    # Reference global vars in local frame
     env.frame.set(name, env.frame.outer.get(name))
 
 
@@ -436,13 +436,14 @@ def _(stmt: lang.ProcedureStmt, env: lang.Environment,
 
     # Declare parameters
     local = lang.Frame(typesys=env.frame.types, outer=env.frame)
-    params = transformDeclares(stmt.params, stmt.passby, local)
+    localenv = env.with_frame(local)
+    params = transformDeclares(stmt.params, stmt.passby, localenv)
 
     # Add procedure definition
-    proc = lang.Procedure(local, params, stmt.stmts)
+    proc = lang.Procedure(localenv, params, stmt.stmts)
     env.frame.setValue(str(stmt.name), proc)
 
-    verifyStmts(stmt.stmts, local)
+    verifyStmts(stmt.stmts, localenv)
 
 
 @verify.register
@@ -455,10 +456,11 @@ def _(stmt: lang.FunctionStmt, env: lang.Environment,
 
     # Declare parameters
     local = lang.Frame(typesys=env.frame.types, outer=env.frame)
-    params = transformDeclares(stmt.params, stmt.passby, local)
+    localenv = env.with_frame(local)
+    params = transformDeclares(stmt.params, stmt.passby, localenv)
 
     # Add procedure definition
-    func = lang.Function(local, params, stmt.stmts)
+    func = lang.Function(localenv, params, stmt.stmts)
     env.frame.setValue(str(stmt.name), func)
 
     # Check for return statements
@@ -467,7 +469,7 @@ def _(stmt: lang.FunctionStmt, env: lang.Environment,
             "Function does not guarantee a return value",
             stmt.name.token
         )
-    verifyStmts(stmt.stmts, local, stmt.returnType)
+    verifyStmts(stmt.stmts, localenv, stmt.returnType)
 
 
 @verify.register
@@ -485,8 +487,9 @@ def _(stmt: lang.TypeStmt, env: lang.Environment,
     """Declare a custom Type in the given environment's TypeSystem."""
     env.frame.types.declare(str(stmt.name))
     objTemplate = lang.ObjectTemplate(typesys=env.frame.types)
+    objenv = env.with_frame(objTemplate)
     for expr in stmt.exprs:
-        resolve(expr, objTemplate)
+        resolve(expr, objenv)
     env.frame.types.setTemplate(str(stmt.name), objTemplate)
 
 

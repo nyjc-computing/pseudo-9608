@@ -127,7 +127,7 @@ def _(callable: lang.Procedure, callargs, env: lang.Environment, **kwargs) -> No
     for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, env)
         slot.value = argval
-    executeStmts(callable.stmts, callable.frame, **kwargs)
+    executeStmts(callable.stmts, callable.env, **kwargs)
 
 
 @evalCallable.register
@@ -137,7 +137,7 @@ def _(callable: lang.Function, callargs, env: lang.Environment,
     for arg, slot in zip(callargs, callable.params):
         argval = evaluate(arg, env)
         slot.value = argval
-    returnVal = executeStmts(callable.stmts, callable.frame, **kwargs)
+    returnVal = executeStmts(callable.stmts, callable.env, **kwargs)
     assert returnVal, f"None returned from {callable}"
     return returnVal
 
@@ -226,7 +226,7 @@ def _(expr: lang.GetAttr, env: lang.Environment,
 def _(expr: lang.Call, env: lang.Environment,
       **kw) -> Optional[lang.Assignable]:
     callable = evaluate(expr.callable, env)
-    returnVal = evalCallable(callable, expr.args, callable.frame)
+    returnVal = evalCallable(callable, expr.args, callable.env)
     return returnVal
 
 
@@ -333,7 +333,7 @@ def _(stmt: lang.Repeat, env: lang.Environment,
 @execute.register
 def _(stmt: lang.OpenFile, env: lang.Environment, **kwargs) -> None:
     filename = evaluate(stmt.filename, env)
-    undeclaredElseError(env.frame, filename, "File already opened",
+    undeclaredElseError(env, filename, "File already opened",
                         token=stmt.filename.token)
     env.frame.declare(filename, 'FILE')
     env.frame.setValue(filename,
@@ -345,7 +345,7 @@ def _(stmt: lang.OpenFile, env: lang.Environment, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.ReadFile, env: lang.Environment, **kwargs) -> None:
     filename = evaluate(stmt.filename, env)
-    declaredElseError(env.frame, filename, "File not open",
+    declaredElseError(env, filename, "File not open",
                       token=stmt.filename.token)
     file = env.frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
@@ -354,7 +354,7 @@ def _(stmt: lang.ReadFile, env: lang.Environment, **kwargs) -> None:
     expectTypeElseError(file.mode, 'READ', token=stmt.filename.token)
     varname = evaluate(stmt.target, env)
     assert isinstance(varname, str), f"Expected str, got {varname!r}"
-    declaredElseError(env.frame, varname, token=stmt.target.token)
+    declaredElseError(env, varname, token=stmt.target.token)
     # TODO: Catch and handle Python file io errors
     line = file.iohandler.readline().rstrip()
     # TODO: Type conversion
@@ -364,7 +364,7 @@ def _(stmt: lang.ReadFile, env: lang.Environment, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.WriteFile, env: lang.Environment, **kwargs) -> None:
     filename = evaluate(stmt.filename, env)
-    declaredElseError(env.frame, filename, "File not open",
+    declaredElseError(env, filename, "File not open",
                       token=stmt.filename.token)
     file = env.frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
@@ -387,7 +387,7 @@ def _(stmt: lang.WriteFile, env: lang.Environment, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.CloseFile, env: lang.Environment, **kwargs) -> None:
     filename = evaluate(stmt.filename, env)
-    declaredElseError(env.frame, filename, "File not open",
+    declaredElseError(env, filename, "File not open",
                       token=stmt.filename.token)
     file = env.frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
@@ -400,7 +400,7 @@ def _(stmt: lang.CloseFile, env: lang.Environment, **kwargs) -> None:
 @execute.register
 def _(stmt: lang.CallStmt, env: lang.Environment, **kwargs) -> None:
     callable = evaluate(stmt.expr.callable, env)
-    evalCallable(callable, stmt.expr.args, callable.frame, **kwargs)
+    evalCallable(callable, stmt.expr.args, callable.env, **kwargs)
 
 
 @execute.register
