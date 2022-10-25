@@ -1,3 +1,20 @@
+"""object.py: PseudoValues for Pseudo
+
+TypeSystem
+    A manager for built-in and declared types
+
+Object
+    Allows attributes to be addressed by name
+
+Array
+    Allows elements to be addressed by index
+
+Frame
+    Allows values to be addressed by name
+
+File
+    An open file
+"""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import product
@@ -14,9 +31,12 @@ __all__ = [
     'Array',
     'Assignable',
     'Container',
+    'Frame',
     'IndexKey',
     'IndexRange',
     'IndexRanges',
+    'NameKey',
+    'NameMap',
     'Object',
     'ObjectTemplate',
     'Params',
@@ -33,8 +53,10 @@ PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
 Value = Union[PyLiteral, "PseudoValue"]
 
+# Mapping for Frame and Containers
 NameKey = str  # for Object/Frame
 IndexKey = Tuple[int, ...]  # for Array
+NameMap = MutableMapping[NameKey, "TypedValue"]
 IndexMap = MutableMapping[IndexKey, "TypedValue"]
 
 IndexRange = Tuple[int, int]  # Array ranges (start, end)
@@ -166,6 +188,70 @@ class TypeSystem:
     def cloneType(self, type: Type) -> "TypedValue":
         """Return a copy of the template for the type."""
         return self.data[type].clone()
+
+
+class Frame:
+    """Frames differ from Objects in that they can be chained (with a
+    reference to an outer Frame, names can be reassigned to a different
+    TypedValue, and slots can be deleted after declaration.
+    Existence checks should be carried out (using has()) before using
+    the methods here.
+
+    Methods
+    -------
+    set(name, typedValue)
+        assigns the given TypedValue to the name
+    delete(name)
+        deletes the slot associated with the name
+    lookup(name)
+        returns the first frame containing the name
+    """
+    __slots__ = ("types", "data", "outer")
+
+    def __init__(self,
+                 typesys: object.TypeSystem,
+                 outer: "Frame" = None) -> None:
+        self.types = typesys
+        self.data: NameMap = {}
+        self.outer = outer
+
+    def __repr__(self) -> str:
+        nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
+        return f"{{{', '.join(nameTypePairs)}}}"
+
+    def has(self, name: NameKey) -> bool:
+        return name in self.data
+
+    def declare(self, name: NameKey, type: str) -> None:
+        self.data[name] = self.types.cloneType(type)
+
+    def getType(self, name: NameKey) -> object.Type:
+        return self.data[name].type
+
+    def getValue(self, name: NameKey) -> object.Value:
+        returnval = self.data[name].value
+        if returnval is None:
+            raise ValueError(f"Accessed unassigned variable {name!r}")
+        return returnval
+
+    def get(self, name: NameKey) -> object.TypedValue:
+        return self.data[name]
+
+    def setValue(self, name: NameKey, value: object.Value) -> None:
+        self.data[name].value = value
+
+    def set(self, name: NameKey, typedValue: object.TypedValue) -> None:
+        self.data[name] = typedValue
+
+    def delete(self, name: NameKey) -> None:
+        del self.data[name]
+
+    def lookup(self, name: NameKey) -> Optional["Frame"]:
+        if self.has(name):
+            return self
+        if self.outer:
+            return self.outer.lookup(name)
+        return None
 
 
 class PseudoValue(ABC):

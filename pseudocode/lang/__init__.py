@@ -60,8 +60,6 @@ Declares = Sequence["Declare"]
 # IndexRanges = Sequence[IndexRange]
 
 # Mappings
-NameKey = str  # for Object/Frame
-NameMap = MutableMapping[NameKey, "TypedValue"]
 CaseMap = MutableMapping["Literal", Stmts]  # for Conditionals
 
 # CallTargets resolve to function names
@@ -107,83 +105,19 @@ class Name:
     """
     __slots__ = ("name", "_token")
 
-    def __init__(self, name: NameKey, *, token: "Token") -> None:
+    def __init__(self, name: object.NameKey, *, token: "Token") -> None:
         self.name = name
         self._token = token
 
     def __repr__(self) -> str:
         return f"Name({self.name})"
 
-    def __str__(self) -> NameKey:
+    def __str__(self) -> object.NameKey:
         return self.name
 
     @property
     def token(self) -> "Token":
         return self._token
-
-
-class Frame:
-    """Frames differ from Objects in that they can be chained (with a
-    reference to an outer Frame, names can be reassigned to a different
-    TypedValue, and slots can be deleted after declaration.
-    Existence checks should be carried out (using has()) before using
-    the methods here.
-
-    Methods
-    -------
-    set(name, typedValue)
-        assigns the given TypedValue to the name
-    delete(name)
-        deletes the slot associated with the name
-    lookup(name)
-        returns the first frame containing the name
-    """
-    __slots__ = ("types", "data", "outer")
-
-    def __init__(self,
-                 typesys: object.TypeSystem,
-                 outer: "Frame" = None) -> None:
-        self.types = typesys
-        self.data: NameMap = {}
-        self.outer = outer
-
-    def __repr__(self) -> str:
-        nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
-        return f"{{{', '.join(nameTypePairs)}}}"
-
-    def has(self, name: NameKey) -> bool:
-        return name in self.data
-
-    def declare(self, name: NameKey, type: str) -> None:
-        self.data[name] = self.types.cloneType(type)
-
-    def getType(self, name: NameKey) -> object.Type:
-        return self.data[name].type
-
-    def getValue(self, name: NameKey) -> object.Value:
-        returnval = self.data[name].value
-        if returnval is None:
-            raise ValueError(f"Accessed unassigned variable {name!r}")
-        return returnval
-
-    def get(self, name: NameKey) -> object.TypedValue:
-        return self.data[name]
-
-    def setValue(self, name: NameKey, value: object.Value) -> None:
-        self.data[name].value = value
-
-    def set(self, name: NameKey, typedValue: object.TypedValue) -> None:
-        self.data[name] = typedValue
-
-    def delete(self, name: NameKey) -> None:
-        del self.data[name]
-
-    def lookup(self, name: NameKey) -> Optional["Frame"]:
-        if self.has(name):
-            return self
-        if self.outer:
-            return self.outer.lookup(name)
-        return None
 
 
 class Callable(object.PseudoValue):
@@ -213,7 +147,7 @@ class Builtin(Callable):
         the Python function to call when invoked
     """
     __slots__ = ("frame", "params", "func")
-    frame: "Frame"  # Builtins resolve with global frame
+    frame: object.Frame  # Builtins resolve with global frame
     params: object.Params
     func: function
 
@@ -222,7 +156,7 @@ class Builtin(Callable):
 class Function(Callable):
     """Functions are evaluated to return a value."""
     __slots__ = ("frame", "params", "stmts")
-    frame: "Frame"
+    frame: object.Frame
     params: object.Params
     stmts: Stmts
 
@@ -231,7 +165,7 @@ class Function(Callable):
 class Procedure(Callable):
     """Procedures are called to execute its statements."""
     __slots__ = ("frame", "params", "stmts")
-    frame: "Frame"
+    frame: object.Frame
     params: object.Params
     stmts: Stmts
 
@@ -251,7 +185,7 @@ class File(object.PseudoValue):
         An object for accessing the file
     """
     __slots__ = ("name", "mode", "iohandler")
-    name: NameKey
+    name: object.NameKey
     mode: str
     iohandler: IO
 
@@ -382,7 +316,7 @@ class SetExpr(Expr):
 class GetName(SetExpr):
     """A GetName Expr represents a Name with a Frame context."""
     __slots__ = ("frame", "name")
-    frame: "Frame"
+    frame: object.Frame
     name: Name
 
     @property
