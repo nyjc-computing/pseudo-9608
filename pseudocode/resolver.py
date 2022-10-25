@@ -126,7 +126,7 @@ def declareByval(declare: lang.Declare, env: lang.Environment) -> None:
     name: lang.NameKey = str(declare.name)
     env.frame.declare(name, declare.type)
     if declare.type == 'ARRAY':
-        array = lang.Array(typesys=env.frame.types,
+        array = lang.Array(typesys=env.types,
                            ranges=declare.metadata['size'],
                            type=declare.metadata['type'])
         assert isinstance(env.frame, lang.Frame), "Frame expected"
@@ -287,10 +287,10 @@ def _(expr: lang.GetAttr, env: lang.Environment, **kw) -> lang.Type:
         "Object unresolved"
     objType = resolve(expr.object, env)
     # Check objType existence in typesystem
-    if not env.frame.types.has(objType):
+    if not env.types.has(objType):
         raise builtin.LogicError("Undeclared type", expr.token)
     # Check attribute existence in object template
-    obj = env.frame.types.cloneType(objType).value
+    obj = env.types.cloneType(objType).value
     assert isinstance(obj, lang.Object), "Invalid Object"
     if not obj.has(str(expr.name)):
         raise builtin.LogicError("Undeclared attribute", expr.token)
@@ -434,7 +434,7 @@ def _(stmt: lang.ProcedureStmt, env: lang.Environment,
     # No UnresolvedNames to resolve
 
     # Declare parameters
-    local = lang.Frame(typesys=env.frame.types, outer=env.frame)
+    local = lang.Frame(typesys=env.types, outer=env.frame)
     localenv = env.with_frame(local)
     params = transformDeclares(stmt.params, stmt.passby, localenv)
 
@@ -454,7 +454,7 @@ def _(stmt: lang.FunctionStmt, env: lang.Environment,
     # No UnresolvedNames to resolve
 
     # Declare parameters
-    local = lang.Frame(typesys=env.frame.types, outer=env.frame)
+    local = lang.Frame(typesys=env.types, outer=env.frame)
     localenv = env.with_frame(local)
     params = transformDeclares(stmt.params, stmt.passby, localenv)
 
@@ -484,12 +484,12 @@ def _(stmt: lang.FileStmt, env: lang.Environment,
 def _(stmt: lang.TypeStmt, env: lang.Environment,
       returnType: Optional[lang.Type] = None) -> None:
     """Declare a custom Type in the given environment's TypeSystem."""
-    env.frame.types.declare(str(stmt.name))
-    objTemplate = lang.ObjectTemplate(typesys=env.frame.types)
+    env.types.declare(str(stmt.name))
+    objTemplate = lang.ObjectTemplate(typesys=env.types)
     objenv = env.with_frame(objTemplate)
     for expr in stmt.exprs:
         resolve(expr, objenv)
-    env.frame.types.setTemplate(str(stmt.name), objTemplate)
+    env.types.setTemplate(str(stmt.name), objTemplate)
 
 
 @verify.register
