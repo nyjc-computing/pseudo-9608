@@ -124,9 +124,9 @@ def declareByval(declare: lang.Declare, env: lang.Environment) -> None:
     if (isinstance(env.frame, lang.ObjectTemplate) and declare.type == 'ARRAY'):
         raise builtin.LogicError("ARRAY in TYPE not supported", declare.token)
     name: lang.NameKey = str(declare.name)
-    env.frame.declare(name, declare.type)
+    env.frame.declare(name, env.types.cloneType(declare.type))
     if declare.type == 'ARRAY':
-        array = lang.Array(typesys=env.types,
+        array = lang.Array(typesys=env.frame.types,
                            ranges=declare.metadata['size'],
                            type=declare.metadata['type'])
         assert isinstance(env.frame, lang.Frame), "Frame expected"
@@ -430,7 +430,7 @@ def _(stmt: lang.ProcedureStmt, env: lang.Environment,
       returnType: Optional[lang.Type] = None) -> None:
     """Declare a Procedure in the given environment's frame."""
     # Assign procedure in frame first, to make recursive calls work
-    env.frame.declare(str(stmt.name), 'NULL')
+    env.frame.declare(str(stmt.name), env.types.cloneType('NULL'))
     # No UnresolvedNames to resolve
 
     # Declare parameters
@@ -450,7 +450,7 @@ def _(stmt: lang.FunctionStmt, env: lang.Environment,
       returnType: Optional[lang.Type] = None) -> None:
     """Declare a Function in the given environment's frame."""
     # Assign function in frame first, to make recursive calls work
-    env.frame.declare(str(stmt.name), stmt.returnType)
+    env.frame.declare(str(stmt.name), env.types.cloneType(stmt.returnType))
     # No UnresolvedNames to resolve
 
     # Declare parameters
@@ -489,7 +489,7 @@ def _(stmt: lang.TypeStmt, env: lang.Environment,
     objenv = env.with_frame(objTemplate)
     for expr in stmt.exprs:
         resolve(expr, objenv)
-    env.types.setTemplate(str(stmt.name), objTemplate)
+    env.frame.types.setTemplate(str(stmt.name), objTemplate)
 
 
 @verify.register

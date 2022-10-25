@@ -334,7 +334,7 @@ def _(stmt: lang.OpenFile, env: lang.Environment, **kwargs) -> None:
     filename = evaluate(stmt.filename, env)
     undeclaredElseError(env, filename, "File already opened",
                         token=stmt.filename.token)
-    env.frame.declare(filename, 'FILE')
+    env.frame.declare(filename, env.types.cloneType('FILE'))
     env.frame.setValue(filename,
                        lang.File(filename,
                                  stmt.mode,
