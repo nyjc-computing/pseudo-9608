@@ -30,31 +30,31 @@ def expectTypeElseError(exprmode: str,
         raise builtin.RuntimeError(f"{errmsg} {expected}", token=token)
 
 
-def declaredElseError(frame: lang.Frame,
-                      name: lang.NameKey,
+def declaredElseError(env: lang.Environment, name: lang.NameKey,
                       errmsg: str = "Undeclared",
                       token: Optional[lang.Token] = None) -> None:
-    """Takes in a frame and a name.
-    Raises an error if the name is not declared in the frame.
+    """Takes in an environment and a name.
+    Raises an error if the name is not declared in the environment's
+    frame.
     """
-    if not frame.has(name):
+    if not env.frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
 
-def undeclaredElseError(frame: lang.Frame,
+def undeclaredElseError(env: lang.Environment,
                         name: lang.NameKey,
                         errmsg="Already declared",
                         token: Optional[lang.Token] = None) -> None:
-    """Takes in a frame and a name.
-    Raises an error if the name is already declared in the frame.
+    """Takes in an environment and a name.
+    Raises an error if the name is already declared in the environment's frame.
     """
-    if frame.has(name):
+    if env.frame.has(name):
         raise builtin.RuntimeError(errmsg, token)
 
 
 @dataclass
 class Interpreter:
-    """Interprets a list of statements with a given frame."""
+    """Interprets a list of statements with a given environment."""
     env: lang.Environment
     frame: lang.Frame
     statements: lang.Stmts
@@ -68,43 +68,40 @@ class Interpreter:
         self.outputHandler = handler  # type: ignore
 
     def interpret(self) -> None:
-        executeStmts(
-            self.statements,
-            self.frame,
-            output=self.outputHandler,
-        )
+        executeStmts(self.statements, self.env,
+                     output=self.outputHandler)
 
 
 # Evaluators
 # Evaluation functions return the evaluated value of Exprs.
 
 
-def evalIndex(indexExpr: lang.Indices, frame: lang.Frame) -> lang.IndexKey:
+def evalIndex(indexExpr: lang.Indices, env: lang.Environment) -> lang.IndexKey:
     """Returns the evaluated value of an Array's index."""
     indexes: lang.IndexKey = tuple()
     for expr in indexExpr:
-        index = evaluate(expr, frame)
+        index = evaluate(expr, env)
         indexes += (index, )
     return indexes
 
 
-def evalLiteral(literal: lang.Literal, frame: lang.Frame) -> lang.PyLiteral:
+def evalLiteral(literal: lang.Literal, env: lang.Environment) -> lang.PyLiteral:
     return literal.value
 
 
-def evalUnary(expr: lang.Unary, frame: lang.Frame) -> lang.PyLiteral:
-    rightval = evaluate(expr.right, frame)
+def evalUnary(expr: lang.Unary, env: lang.Environment) -> lang.PyLiteral:
+    rightval = evaluate(expr.right, env)
     return expr.oper(rightval)
 
 
-def evalBinary(expr: lang.Binary, frame: lang.Frame) -> lang.PyLiteral:
-    leftval = evaluate(expr.left, frame)
-    rightval = evaluate(expr.right, frame)
+def evalBinary(expr: lang.Binary, env: lang.Environment) -> lang.PyLiteral:
+    leftval = evaluate(expr.left, env)
+    rightval = evaluate(expr.right, env)
     return expr.oper(leftval, rightval)
 
 
 @singledispatch
-def evalCallable(callable, callargs, frame, **kwargs):
+def evalCallable(callable, callargs, env, **kwargs):
     """Returns the evaluated value of a Builtin/Callable."""
     raise TypeError(f"{type(callable)} passed in evalCallable")
 
@@ -113,53 +110,53 @@ def evalCallable(callable, callargs, frame, **kwargs):
 # Raises NameError: name 'Expr' is not defined
 # Could be some complex interaction with singledispatch
 @evalCallable.register
-def _(callable: lang.Builtin, callargs, frame: lang.Frame,
+def _(callable: lang.Builtin, callargs, env: lang.Environment,
       **kwargs) -> lang.PyLiteral:
     if callable.func is system.EOF:
-        name = evaluate(callargs[0], frame)  # type: ignore
-        file = frame.getValue(name)
+        name = evaluate(callargs[0], env)  # type: ignore
+        file = env.frame.getValue(name)
         assert isinstance(file, lang.File), "Invalid File"
         return callable.func(file.iohandler)
-    argvals = [evaluate(arg, frame) for arg in callargs]
+    argvals = [evaluate(arg, env) for arg in callargs]
     return callable.func(*argvals)
 
 
 @evalCallable.register
-def _(callable: lang.Procedure, callargs, frame: lang.Frame, **kwargs) -> None:
+def _(callable: lang.Procedure, callargs, env: lang.Environment, **kwargs) -> None:
     # Assign args to param slots
     for arg, slot in zip(callargs, callable.params):
-        argval = evaluate(arg, frame)
+        argval = evaluate(arg, env)
         slot.value = argval
     executeStmts(callable.stmts, callable.frame, **kwargs)
 
 
 @evalCallable.register
-def _(callable: lang.Function, callargs, frame: lang.Frame,
+def _(callable: lang.Function, callargs, env: lang.Environment,
       **kwargs) -> lang.Assignable:
     # Assign args to param slots
     for arg, slot in zip(callargs, callable.params):
-        argval = evaluate(arg, frame)
+        argval = evaluate(arg, env)
         slot.value = argval
     returnVal = executeStmts(callable.stmts, callable.frame, **kwargs)
     assert returnVal, f"None returned from {callable}"
     return returnVal
 
 
-def evalAssign(expr: lang.Assign, frame: lang.Frame) -> lang.Assignable:
+def evalAssign(expr: lang.Assign, env: lang.Environment) -> lang.Assignable:
     """Handles assignment of a value to an Object attribute, Array
     index, or Frame name.
     """
-    value = evaluate(expr.expr, frame)
+    value = evaluate(expr.expr, env)
     if isinstance(expr.assignee, lang.GetName):
         frameMap = expr.assignee.frame
         name = str(expr.assignee.name)
         frameMap.setValue(name, value)
     elif isinstance(expr.assignee, lang.GetIndex):
-        array = evaluate(expr.assignee.array, frame)
-        index = evalIndex(expr.assignee.index, frame)
+        array = evaluate(expr.assignee.array, env)
+        index = evalIndex(expr.assignee.index, env)
         array.setValue(index, value)
     elif isinstance(expr.assignee, lang.GetAttr):
-        obj = evaluate(expr.assignee.object, frame)
+        obj = evaluate(expr.assignee.object, env)
         name = str(expr.assignee.name)
         obj.setValue(name, value)
     else:
@@ -169,34 +166,34 @@ def evalAssign(expr: lang.Assign, frame: lang.Frame) -> lang.Assignable:
 
 
 @singledispatch
-def evaluate(expr, frame, **kwargs):
+def evaluate(expr, env, **kwargs):
     """Dispatcher for Expr evaluators."""
     raise TypeError(f"Unexpected expr {expr}")
 
 
 @evaluate.register
-def _(expr: lang.Literal, frame: lang.Frame, **kw) -> lang.PyLiteral:
-    return evalLiteral(expr, frame)
+def _(expr: lang.Literal, env: lang.Environment, **kw) -> lang.PyLiteral:
+    return evalLiteral(expr, env)
 
 
 @evaluate.register
-def _(expr: lang.Unary, frame: lang.Frame, **kw) -> lang.PyLiteral:
-    return evalUnary(expr, frame)
+def _(expr: lang.Unary, env: lang.Environment, **kw) -> lang.PyLiteral:
+    return evalUnary(expr, env)
 
 
 @evaluate.register
-def _(expr: lang.Binary, frame: lang.Frame, **kw) -> lang.PyLiteral:
-    return evalBinary(expr, frame)
+def _(expr: lang.Binary, env: lang.Environment, **kw) -> lang.PyLiteral:
+    return evalBinary(expr, env)
 
 
 @evaluate.register
-def _(expr: lang.Assign, frame: lang.Frame, **kw) -> lang.Assignable:
-    return evalAssign(expr, frame)
+def _(expr: lang.Assign, env: lang.Environment, **kw) -> lang.Assignable:
+    return evalAssign(expr, env)
 
 
 @evaluate.register
 def _(
-    expr: lang.GetName, frame: lang.Frame, **kw
+    expr: lang.GetName, env: lang.Environment, **kw
 ) -> Union[lang.Assignable, lang.Callable]:
     value = expr.frame.getValue(str(expr.name))
     # mypy can't type-check Non-Files
@@ -211,24 +208,24 @@ def _(
 
 
 @evaluate.register
-def _(expr: lang.GetIndex, frame: lang.Frame,
+def _(expr: lang.GetIndex, env: lang.Environment,
       **kw) -> Union[lang.PyLiteral, lang.Object]:
-    array = evaluate(expr.array, frame)
-    indexes = evalIndex(expr.index, frame)
+    array = evaluate(expr.array, env)
+    indexes = evalIndex(expr.index, env)
     return array.getValue(indexes)
 
 
 @evaluate.register
-def _(expr: lang.GetAttr, frame: lang.Frame,
+def _(expr: lang.GetAttr, env: lang.Environment,
       **kw) -> lang.Assignable:
-    obj = evaluate(expr.object, frame)
+    obj = evaluate(expr.object, env)
     return obj.getValue(str(expr.name))
 
 
 @evaluate.register
-def _(expr: lang.Call, frame: lang.Frame,
+def _(expr: lang.Call, env: lang.Environment,
       **kw) -> Optional[lang.Assignable]:
-    callable = evaluate(expr.callable, frame)
+    callable = evaluate(expr.callable, env)
     returnVal = evalCallable(callable, expr.args, callable.frame)
     return returnVal
 
@@ -237,44 +234,44 @@ def _(expr: lang.Call, frame: lang.Frame,
 
 
 def executeStmts(
-        stmts: lang.Stmts, frame: lang.Frame,
+        stmts: lang.Stmts, env: lang.Environment,
         **kwargs) -> Optional[lang.Assignable]:
     """Execute a list of statements."""
     for stmt in stmts:
         if isinstance(stmt, lang.Return):
-            return execReturn(stmt, frame, **kwargs)
+            return execReturn(stmt, env, **kwargs)
         else:
-            returnVal = execute(stmt, frame, **kwargs)
+            returnVal = execute(stmt, env, **kwargs)
             if returnVal:
                 return returnVal
     return None
 
 
-def execReturn(stmt: lang.Return, frame: lang.Frame,
+def execReturn(stmt: lang.Return, env: lang.Environment,
                **kwargs) -> lang.Assignable:
     """Return statements should be explicitly checked for and the
     return value passed back. They should not be dispatched through
     execute().
     """
-    return evaluate(stmt.expr, frame, **kwargs)
+    return evaluate(stmt.expr, env, **kwargs)
 
 
 @singledispatch
-def execute(stmt: lang.Stmt, frame: lang.Frame, **kwargs):
+def execute(stmt: lang.Stmt, env: lang.Environment, **kwargs):
     """Dispatcher for statement executors."""
     raise TypeError(f"Invalid Stmt {stmt}")
 
 
 @execute.register
-def _(stmt: lang.Return, frame: lang.Frame, **kwargs) -> None:
+def _(stmt: lang.Return, env: lang.Environment, **kwargs) -> None:
     raise TypeError("Return Stmts should not be dispatched from execute()")
 
 
 @execute.register
-def _(stmt: lang.Output, frame: lang.Frame, *, output: function,
+def _(stmt: lang.Output, env: lang.Environment, *, output: function,
       **kwargs) -> None:
     for expr in stmt.exprs:
-        value = evaluate(expr, frame)
+        value = evaluate(expr, env)
         if type(value) is bool:
             value = str(value).upper()
         output(str(value), end='')
@@ -282,109 +279,100 @@ def _(stmt: lang.Output, frame: lang.Frame, *, output: function,
 
 
 @execute.register
-def _(stmt: lang.Input, frame: lang.Frame, **kwargs) -> None:
+def _(stmt: lang.Input, env: lang.Environment, **kwargs) -> None:
     if isinstance(stmt.key, lang.GetName):
         stmt.key.frame.setValue(str(stmt.key.name), input())
     elif isinstance(stmt.key, lang.GetIndex):
-        array = evaluate(stmt.key.array, frame)
-        index = evalIndex(stmt.key.index, frame)
+        array = evaluate(stmt.key.array, env)
+        index = evalIndex(stmt.key.index, env)
         array.setValue(index, input())
     elif isinstance(stmt.key, lang.GetAttr):
-        obj = evaluate(stmt.key.object, frame)
+        obj = evaluate(stmt.key.object, env)
         name = str(stmt.key.name)
         obj.setValue(name, input())
-    raise builtin.RuntimeError("Invalid Input assignee", token=stmt.key.token)
+    raise builtin.RuntimeError("Invalid Input assignee",
+                               token=stmt.key.token)
 
 
 @execute.register
-def _(stmt: lang.Conditional, frame: lang.Frame,
+def _(stmt: lang.Conditional, env: lang.Environment,
       **kwargs) -> Optional[lang.Assignable]:
-    condValue = evaluate(stmt.cond, frame)
+    condValue = evaluate(stmt.cond, env)
     for caseValue, stmts in stmt.stmtMap.items():
-        if evaluate(caseValue, frame) == condValue:
-            return executeStmts(stmts, frame, **kwargs)
+        if evaluate(caseValue, env) == condValue:
+            return executeStmts(stmts, env, **kwargs)
     else:  # for loop completed normally, i.e. no matching cases
         if stmt.fallback:
-            return executeStmts(stmt.fallback, frame, **kwargs)
+            return executeStmts(stmt.fallback, env, **kwargs)
     return None
 
 
 @execute.register
-def _(stmt: lang.While, frame: lang.Frame,
+def _(stmt: lang.While, env: lang.Environment,
       **kwargs) -> Optional[lang.Assignable]:
     if stmt.init:
-        evaluate(stmt.init, frame, **kwargs)
-    while evaluate(stmt.cond, frame) is True:
-        returnVal = executeStmts(stmt.stmts, frame, **kwargs)
+        evaluate(stmt.init, env, **kwargs)
+    while evaluate(stmt.cond, env) is True:
+        returnVal = executeStmts(stmt.stmts, env, **kwargs)
         if returnVal:
             return returnVal
     return None
 
 
 @execute.register
-def _(stmt: lang.Repeat, frame: lang.Frame,
+def _(stmt: lang.Repeat, env: lang.Environment,
       **kwargs) -> Optional[lang.Assignable]:
-    executeStmts(stmt.stmts, frame)
-    while evaluate(stmt.cond, frame) is False:
-        returnVal = executeStmts(stmt.stmts, frame)
+    executeStmts(stmt.stmts, env)
+    while evaluate(stmt.cond, env) is False:
+        returnVal = executeStmts(stmt.stmts, env)
         if returnVal:
             return returnVal
     return None
 
 
 @execute.register
-def _(stmt: lang.OpenFile, frame: lang.Frame, **kwargs) -> None:
-    filename = evaluate(stmt.filename, frame)
-    undeclaredElseError(frame,
-                        filename,
-                        "File already opened",
+def _(stmt: lang.OpenFile, env: lang.Environment, **kwargs) -> None:
+    filename = evaluate(stmt.filename, env)
+    undeclaredElseError(env.frame, filename, "File already opened",
                         token=stmt.filename.token)
-    frame.declare(filename, 'FILE')
-    frame.setValue(
-        filename,
-        lang.File(filename, stmt.mode, open(filename, stmt.mode[0].lower())),
-    )
+    env.frame.declare(filename, 'FILE')
+    env.frame.setValue(filename,
+                       lang.File(filename,
+                                 stmt.mode,
+                                 open(filename, stmt.mode[0].lower())))
 
 
 @execute.register
-def _(stmt: lang.ReadFile, frame: lang.Frame, **kwargs) -> None:
-    filename = evaluate(stmt.filename, frame)
-    declaredElseError(frame,
-                      filename,
-                      "File not open",
+def _(stmt: lang.ReadFile, env: lang.Environment, **kwargs) -> None:
+    filename = evaluate(stmt.filename, env)
+    declaredElseError(env.frame, filename, "File not open",
                       token=stmt.filename.token)
-    file = frame.getValue(filename)
+    file = env.frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
-    expectTypeElseError(frame.getType(filename),
-                        'FILE',
+    expectTypeElseError(env.frame.getType(filename), 'FILE',
                         token=stmt.filename.token)
     expectTypeElseError(file.mode, 'READ', token=stmt.filename.token)
-    varname = evaluate(stmt.target, frame)
+    varname = evaluate(stmt.target, env)
     assert isinstance(varname, str), f"Expected str, got {varname!r}"
-    declaredElseError(frame, varname, token=stmt.target.token)
+    declaredElseError(env.frame, varname, token=stmt.target.token)
     # TODO: Catch and handle Python file io errors
     line = file.iohandler.readline().rstrip()
     # TODO: Type conversion
-    frame.setValue(varname, line)
+    env.frame.setValue(varname, line)
 
 
 @execute.register
-def _(stmt: lang.WriteFile, frame: lang.Frame, **kwargs) -> None:
-    filename = evaluate(stmt.filename, frame)
-    declaredElseError(frame,
-                      filename,
-                      "File not open",
+def _(stmt: lang.WriteFile, env: lang.Environment, **kwargs) -> None:
+    filename = evaluate(stmt.filename, env)
+    declaredElseError(env.frame, filename, "File not open",
                       token=stmt.filename.token)
-    file = frame.getValue(filename)
+    file = env.frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
-    expectTypeElseError(frame.getType(filename),
-                        'FILE',
+    expectTypeElseError(env.frame.getType(filename), 'FILE',
                         token=stmt.filename.token)
-    expectTypeElseError(file.mode,
-                        'WRITE',
-                        'APPEND',
+    expectTypeElseError(file.mode, 'WRITE', 'APPEND',
                         token=stmt.filename.token)
-    writedata = evaluate(stmt.data, frame)
+    writedata = evaluate(stmt.data, env)
     if type(writedata) is bool:
         writedata = str(writedata).upper()
     else:
@@ -397,47 +385,44 @@ def _(stmt: lang.WriteFile, frame: lang.Frame, **kwargs) -> None:
 
 
 @execute.register
-def _(stmt: lang.CloseFile, frame: lang.Frame, **kwargs) -> None:
-    filename = evaluate(stmt.filename, frame)
-    declaredElseError(frame,
-                      filename,
-                      "File not open",
+def _(stmt: lang.CloseFile, env: lang.Environment, **kwargs) -> None:
+    filename = evaluate(stmt.filename, env)
+    declaredElseError(env.frame, filename, "File not open",
                       token=stmt.filename.token)
-    file = frame.getValue(filename)
+    file = env.frame.getValue(filename)
     assert isinstance(file, lang.File), f"Invalid file {file}"
-    expectTypeElseError(frame.getType(filename),
-                        'FILE',
+    expectTypeElseError(env.frame.getType(filename), 'FILE',
                         token=stmt.filename.token)
     file.iohandler.close()
-    frame.delete(filename)
+    env.frame.delete(filename)
 
 
 @execute.register
-def _(stmt: lang.CallStmt, frame: lang.Frame, **kwargs) -> None:
-    callable = evaluate(stmt.expr.callable, frame)
+def _(stmt: lang.CallStmt, env: lang.Environment, **kwargs) -> None:
+    callable = evaluate(stmt.expr.callable, env)
     evalCallable(callable, stmt.expr.args, callable.frame, **kwargs)
 
 
 @execute.register
-def _(stmt: lang.AssignStmt, frame: lang.Frame, **kwargs) -> None:
-    evaluate(stmt.expr, frame, **kwargs)
+def _(stmt: lang.AssignStmt, env: lang.Environment, **kwargs) -> None:
+    evaluate(stmt.expr, env, **kwargs)
 
 
 @execute.register
-def _(stmt: lang.DeclareStmt, frame: lang.Frame, **kwargs) -> None:
+def _(stmt: lang.DeclareStmt, env: lang.Environment, **kwargs) -> None:
     pass
 
 
 @execute.register
-def _(stmt: lang.TypeStmt, frame: lang.Frame, **kwargs) -> None:
+def _(stmt: lang.TypeStmt, env: lang.Environment, **kwargs) -> None:
     pass
 
 
 @execute.register
-def _(stmt: lang.ProcedureStmt, frame: lang.Frame, **kwargs) -> None:
+def _(stmt: lang.ProcedureStmt, env: lang.Environment, **kwargs) -> None:
     pass
 
 
 @execute.register
-def _(stmt: lang.FunctionStmt, frame: lang.Frame, **kwargs) -> None:
+def _(stmt: lang.FunctionStmt, env: lang.Environment, **kwargs) -> None:
     pass
