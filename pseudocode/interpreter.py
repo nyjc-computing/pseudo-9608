@@ -5,7 +5,6 @@ execute(frame: Frame, statements: list) -> None
 """
 
 from typing import (
-    Any,
     Callable as function,
     Optional,
     Union,
@@ -56,7 +55,7 @@ def undeclaredElseError(frame: lang.Frame,
 @dataclass
 class Interpreter:
     """Interprets a list of statements with a given frame."""
-    env: Any
+    env: lang.Environment
     frame: lang.Frame
     statements: lang.Stmts
     outputHandler: function = field(default=print, init=False)

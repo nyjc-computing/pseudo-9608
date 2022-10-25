@@ -18,7 +18,7 @@ logging.basicConfig(
     format='%(name)s - %(levelname)s - %(message)s',
 )
 
-from pseudocode import builtin
+from pseudocode import builtin, lang
 from pseudocode.lang import Frame, TypeSystem
 import pseudocode.system as system
 
@@ -33,19 +33,6 @@ class Result(TypedDict):
     lines: List[str]  # list of code lines as strings
     frame: Frame  # The return frame from the interpreter
     error: Optional[builtin.PseudoError]  # Error returned by the interpreter
-
-
-@dataclass
-class Environment:
-    """Encapsulates the environment in which interpreting pseudocode is carried out.
-
-    Arguments/Attributes
-    --------------------
-    - frame: Frame
-    - typesys: TypeSystem
-    """
-    frame: Frame
-    # typesys: TypeSystem
 
 
 __version__ = '0.5.0a'
@@ -104,7 +91,7 @@ class Pseudo:
     def __init__(self) -> None:
         # self.typesys = TypeSystem(*builtin.TYPES)
         sysFrame = system.initFrame()
-        self.env = Environment(Frame(typesys=sysFrame.types, outer=sysFrame))
+        self.env = lang.Environment(Frame(typesys=sysFrame.types, outer=sysFrame))
         self.frame: Frame = self.env.frame
         system.resolveGlobal(sysFrame, self.frame)
         self.handlers: MutableMapping[str, function] = {

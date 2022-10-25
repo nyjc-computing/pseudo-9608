@@ -99,6 +99,19 @@ class Token:
         return f"{lineinfo} {valuestr!r}"
 
 
+@dataclass
+class Environment:
+    """Encapsulates the environment in which interpreting pseudocode is carried out.
+
+    Arguments/Attributes
+    --------------------
+    - frame: Frame
+    - typesys: TypeSystem
+    """
+    frame: Frame
+    # typesys: TypeSystem
+
+
 class Name:
     """Name represents a meaningful name, either a custom type or a
     variable name.

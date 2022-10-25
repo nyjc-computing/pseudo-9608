@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from functools import singledispatch
 from itertools import product
 from typing import (
-    Any,
     Iterable,
     Iterator,
     Optional,
@@ -100,7 +99,7 @@ def resolveArgsParams(callargs: lang.Args, params: lang.Params,
 @dataclass
 class Resolver:
     """Resolves a list of statements with the given frame."""
-    env: Any
+    env: lang.Environment
     frame: lang.Frame
     statements: lang.Stmts
 
