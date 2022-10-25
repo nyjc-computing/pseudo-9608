@@ -141,12 +141,12 @@ funcReturnParams: List[Tuple[function, lang.Type, List[lang.TypedValue]]] = [
     (REALTOSTRING, 'STRING', [lang.TypedValue(type='REAL', value=None)]),
 ]
 
-def initFrame() -> lang.Frame:
+def initFrame(typesys) -> lang.Frame:
     """
     Return a system frame with function declarations.
     Functions are not yet defined.
     """
-    sysFrame = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
+    sysFrame = lang.Frame(typesys=typesys)
     for func, retType, _ in funcReturnParams:
         sysFrame.declare(func.__name__, retType)
     return sysFrame
