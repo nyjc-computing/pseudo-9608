@@ -30,8 +30,7 @@ from pseudocode.interpreter import Interpreter
 class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
     lines: List[str]  # list of code lines as strings
-    frame: lang.Frame  # The return frame from the interpreter
-    env: lang.Environment
+    env: lang.Environment  # The environment used by the interpreter
     error: Optional[builtin.PseudoError]  # Error returned by the interpreter
 
 
@@ -93,7 +92,6 @@ class Pseudo:
         sysFrame = system.initFrame()
         self.env = lang.Environment(lang.Frame(typesys=sysFrame.types,
                                                outer=sysFrame))
-        self.frame: lang.Frame = self.env.frame
         system.resolveEnv(sysFrame, self.env)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
@@ -123,7 +121,7 @@ class Pseudo:
         """Executes code represented by the src string."""
         result: Result = {
             'lines': [],
-            'frame': self.frame,
+            # 'frame': self.frame,
             'env': self.env,
             'error': None,
         }
@@ -141,7 +139,7 @@ class Pseudo:
             return result
 
         # Resolving
-        resolver = Resolver(self.env, self.frame, statements)
+        resolver = Resolver(self.env, statements)
         try:
             resolver.inspect()
         except builtin.LogicError as err:
@@ -152,7 +150,7 @@ class Pseudo:
             return result
 
         # Interpreting
-        interpreter = Interpreter(self.env, self.frame, statements)
+        interpreter = Interpreter(self.env, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
             interpreter.interpret()

@@ -101,7 +101,6 @@ def resolveArgsParams(callargs: lang.Args, params: lang.Params,
 class Resolver:
     """Resolves a list of statements with the given environment."""
     env: lang.Environment
-    frame: lang.Frame
     statements: lang.Stmts
 
     def inspect(self) -> None:

@@ -56,7 +56,6 @@ def undeclaredElseError(env: lang.Environment,
 class Interpreter:
     """Interprets a list of statements with a given environment."""
     env: lang.Environment
-    frame: lang.Frame
     statements: lang.Stmts
     outputHandler: function = field(default=print, init=False)
 

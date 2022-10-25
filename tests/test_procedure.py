@@ -30,7 +30,7 @@ class ProcedureTestCase(unittest.TestCase):
         # Procedure should complete successfully
         self.assertIsNone(self.result['error'])
         
-        frame = self.result['frame']
+        frame = self.result['env'].frame
 
         # Check procedure type
         self.assertEqual(
