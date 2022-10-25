@@ -209,7 +209,7 @@ class Frame:
     __slots__ = ("types", "data", "outer")
 
     def __init__(self,
-                 typesys: object.TypeSystem,
+                 typesys: TypeSystem,
                  outer: "Frame" = None) -> None:
         self.types = typesys
         self.data: NameMap = {}
@@ -225,22 +225,22 @@ class Frame:
     def declare(self, name: NameKey, type: str) -> None:
         self.data[name] = self.types.cloneType(type)
 
-    def getType(self, name: NameKey) -> object.Type:
+    def getType(self, name: NameKey) -> Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> object.Value:
+    def getValue(self, name: NameKey) -> Value:
         returnval = self.data[name].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned variable {name!r}")
         return returnval
 
-    def get(self, name: NameKey) -> object.TypedValue:
+    def get(self, name: NameKey) -> TypedValue:
         return self.data[name]
 
-    def setValue(self, name: NameKey, value: object.Value) -> None:
+    def setValue(self, name: NameKey, value: Value) -> None:
         self.data[name].value = value
 
-    def set(self, name: NameKey, typedValue: object.TypedValue) -> None:
+    def set(self, name: NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
 
     def delete(self, name: NameKey) -> None:
