@@ -1,10 +1,19 @@
+"""typesystem.py
+
+Template
+    Used to clone abstract data types
+
+TypeSystem
+    A manager for built-in and declared types
+"""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from .object import Object, TypedValue
+from .object import Object, PyLiteral, TypedValue
 from .types import (
-    PyLiteral, Type, Key, NameKey, IndexKey, IndexRange, IndexRanges
+    Type, Key, NameKey, IndexKey, IndexRange, IndexRanges
 )
 
 

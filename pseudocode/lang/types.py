@@ -1,12 +1,15 @@
+"""types.py
+
+Attribute types used in Pseudo objects.
+"""
+
 from typing import (
     Hashable,
     Sequence,
     Tuple,
-    Union,
 )
 
 __all__ = [
-    'PyLiteral',
     'Type',
     'Key',
     'NameKey',
@@ -15,7 +18,6 @@ __all__ = [
     'IndexRanges',
 ]
 
-PyLiteral = Union[bool, int, float, str]  # Simple data types
 Type = str  # pseudocode type, whether built-in or declared
 
 Key = Hashable

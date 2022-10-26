@@ -1,4 +1,10 @@
-"""Entities and types used by pseudo-9608.
+"""lang.py
+This module defines the entities and types used by pseudo-9608.
+
+types.py contains definitions for attribute types used in object.py
+and typesystem.py
+object.py contains definitions for object types in Pseudo.
+typesystem.py contains definitions that make up the typesystem used in Pseudo.
 
 Token
     A token in the source code
@@ -6,25 +12,15 @@ Token
 Name
     A named reference
 
-TypeSystem
-    A manager for built-in and declared types
-
-Object
-    Allows attributes to be addressed by name
-
-Array
-    Allows elements to be addressed by index
-
-Frame
-    Allows values to be addressed by name
-
 Builtin, Function, Procedure
     Callables invoked with arguments
 
 File
     An open file
 """
+from dataclasses import dataclass
 from typing import (
+    get_args,
     Any,
     Callable as function,
     IO,
@@ -37,13 +33,17 @@ from typing import (
     TypedDict,
     Union,
 )
-from dataclasses import dataclass
 
+# Merge namespace
 from .object import *
 from .types import *
 from .typesystem import *
+
 from . import (
-    object, )
+    object as o,
+    types as t,
+    typesystem as ts,
+)
 
 # Pseudocode types
 # PyLiteral = Union[bool, int, float, str]  # Simple data types
@@ -51,15 +51,15 @@ from . import (
 Index = Union["Expr"]
 Indices = Tuple[Index, ...]  # Array indexes
 Passby = LiteralType["BYREF", "BYVALUE"]
+PASSTYPE = get_args(Passby)
+FileMode = LiteralType["READ", "WRITE", "APPEND", "RANDOM"]
+FILEMODES = get_args(FileMode)
 
 # Plurals
 Exprs = Iterable["Expr"]
 Stmts = Iterable["Stmt"]
 Args = Sequence["Expr"]  # Callable args
 Declares = Sequence["Declare"]
-# IndexKey = Tuple[int, ...]  # for Array
-# IndexRange = Tuple[int, int]  # Array ranges (start, end)
-# IndexRanges = Sequence[IndexRange]
 
 # Mappings
 CaseMap = MutableMapping["Literal", Stmts]  # for Conditionals
@@ -78,8 +78,8 @@ SourceExpr = Union["UnresolvedName", "GetExpr"]
 
 class TypeMetadata(TypedDict, total=False):
     """The metadata dict passed to an Array declaration"""
-    size: object.IndexRanges
-    type: object.Type
+    size: o.IndexRanges
+    type: o.Type
 
 
 @dataclass(eq=False, frozen=True)
@@ -91,7 +91,7 @@ class Token:
     __slots__ = ("line", "column", "type", "word", "value")
     line: int
     column: int
-    type: object.Type
+    type: o.Type
     word: str
     value: Any
 
@@ -110,10 +110,10 @@ class Environment:
     - frame: Frame
     - typesys: TypeSystem
     """
-    frame: Frame
-    types: TypeSystem
+    frame: o.Frame
+    types: ts.TypeSystem
 
-    def with_frame(self, frame: Union[Frame, ObjectTemplate]) -> "Environment":
+    def with_frame(self, frame: Union[o.Frame, ts.ObjectTemplate]) -> "Environment":
         """Returns a new Environment with the new frame."""
         return type(self)(frame, self.types)
 
@@ -124,14 +124,14 @@ class Name:
     """
     __slots__ = ("name", "_token")
 
-    def __init__(self, name: object.NameKey, *, token: "Token") -> None:
+    def __init__(self, name: o.NameKey, *, token: "Token") -> None:
         self.name = name
         self._token = token
 
     def __repr__(self) -> str:
         return f"Name({self.name})"
 
-    def __str__(self) -> object.NameKey:
+    def __str__(self) -> o.NameKey:
         return self.name
 
     @property
@@ -139,7 +139,7 @@ class Name:
         return self._token
 
 
-class Callable(object.PseudoValue):
+class Callable(o.PseudoValue):
     """Base class for Builtin, Function and Procedure.
     Represents a Callable in pseudo.
 
@@ -149,8 +149,6 @@ class Callable(object.PseudoValue):
         The environment used by the callable
     - params
         A list of parameters used by the callable
-    - stmts
-        A list of statements the callable executes when called
     """
 
 
@@ -160,39 +158,45 @@ class Builtin(Callable):
 
     Attributes
     ----------
-    - params
-        A list of parameters used by the callable
     - func
         the Python function to call when invoked
     """
-    __slots__ = ("frame", "params", "func")
+    __slots__ = ("env", "params", "func")
     env: "Environment"
-    params: object.Params
+    params: o.Params
     func: function
 
 
 @dataclass
 class Function(Callable):
-    """Functions are evaluated to return a value."""
-    __slots__ = ("frame", "params", "stmts")
+    """Functions are evaluated to return a value.
+    - stmts
+      A list of statements the Function executes when called
+    """
+    __slots__ = ("env", "params", "stmts")
     env: "Environment"
-    params: object.Params
+    params: o.Params
     stmts: Stmts
 
 
 @dataclass
 class Procedure(Callable):
-    """Procedures are called to execute its statements."""
-    __slots__ = ("frame", "params", "stmts")
+    """Procedures are called to execute its statements.
+    - stmts
+      A list of statements the Procedure executes when called
+    """
+    __slots__ = ("env", "params", "stmts")
     env: "Environment"
-    params: object.Params
+    params: o.Params
     stmts: Stmts
 
 
 @dataclass
-class File(object.PseudoValue):
+class File(o.PseudoValue):
     """Represents a file object in pseudo.
-    Files can be opened in READ, WRITE, or APPEND mode.
+    Files can be opened in READ, WRITE, or APPEND, or RANDOM mode.
+
+    *Note:* RANDOM mode is not yet supported.
 
     Attributes
     ----------
@@ -204,8 +208,8 @@ class File(object.PseudoValue):
         An object for accessing the file
     """
     __slots__ = ("name", "mode", "iohandler")
-    name: object.NameKey
-    mode: str
+    name: o.NameKey
+    mode: FileMode
     iohandler: IO
 
 
@@ -233,8 +237,8 @@ class Literal(Expr):
     code.
     """
     __slots__ = ("type", "value", "token")
-    type: object.Type
-    value: object.PyLiteral
+    type: o.Type
+    value: o.PyLiteral
     token: Token
 
     def __hash__(self):
@@ -253,7 +257,7 @@ class Declare(Expr):
     """A Declare Expr associates a Name with its declared Type."""
     __slots__ = ("name", "type", "metadata")
     name: Name
-    type: object.Type
+    type: o.Type
     metadata: TypeMetadata
 
     @property
@@ -335,7 +339,7 @@ class SetExpr(Expr):
 class GetName(SetExpr):
     """A GetName Expr represents a Name with a Frame context."""
     __slots__ = ("frame", "name")
-    frame: object.Frame
+    frame: o.Frame
     name: Name
 
     @property
@@ -369,8 +373,7 @@ class GetAttr(SetExpr):
 
 @dataclass
 class Call(Expr):
-    """A Call Expr represents the invocation of a Callable (Function or
-    Procedure) with arguments.
+    """A Call Expr represents the invocation of a Callable with arguments.
     """
     __slots__ = ("callable", "args")
     callable: CallTarget
@@ -386,9 +389,7 @@ class Stmt:
     A statement usually has one or more expressions, and represents an
     effect: console output, user input, or frame mutation.
     """
-
-    __slots__: Iterable[str] = tuple()
-
+    __slots__ = tuple()
 
 class ExprStmt(Stmt):
     """Base class for statements that contain only a single Expr."""
@@ -424,7 +425,7 @@ class Output(Stmt):
     """Output encapsulates values to be displayed in a terminal/console.
     """
     __slots__ = ("exprs", )
-    exprs: "Exprs"
+    exprs: Exprs
 
 
 @dataclass
@@ -432,7 +433,7 @@ class Input(Stmt):
     """Input encapsulates a SetExpr to which user input should be
     assigned.
     """
-    __slots__ = ("keyExpr", )
+    __slots__ = ("key", )
     key: "SetExpr"
 
 
@@ -493,10 +494,10 @@ class ProcFunc(Stmt):
     """ProcFunc encapsulates a declared Procedure or Function."""
     __slots__ = ("name", "passby", "params", "stmts", "returnType")
     name: Name
-    passby: LiteralType["BYVALUE", "BYREF"]
-    params: Iterable[Declare]
+    passby: Passby
+    params: Declares
     stmts: Stmts
-    returnType: object.Type
+    returnType: o.Type
 
 
 class ProcedureStmt(ProcFunc):
@@ -512,7 +513,7 @@ class TypeStmt(Stmt):
     """TypeStmt encapsulates a declared custom Type."""
     __slots__ = ("name", "exprs")
     name: Name
-    exprs: Iterable["Declare"]
+    exprs: Declares
 
 
 class FileStmt(Stmt):
@@ -524,7 +525,7 @@ class FileStmt(Stmt):
 class OpenFile(FileStmt):
     __slots__ = ("filename", "mode")
     filename: "Expr"
-    mode: str
+    mode: FileMode
 
 
 @dataclass

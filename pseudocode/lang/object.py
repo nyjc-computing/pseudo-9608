@@ -1,7 +1,6 @@
-"""object.py: PseudoValues for Pseudo
+"""object.py
 
-TypeSystem
-    A manager for built-in and declared types
+Defines internal Pseudo objects that do not interact with the user.
 
 Object
     Allows attributes to be addressed by name
@@ -11,11 +10,9 @@ Array
 
 Frame
     Allows values to be addressed by name
-
-File
-    An open file
 """
-from abc import ABC, abstractmethod
+
+from abc import ABC
 from dataclasses import dataclass
 from itertools import product
 from typing import (
@@ -23,12 +20,11 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
-    Tuple,
     Union,
 )
 
 from .types import (
-    PyLiteral, Type, Key, NameKey, IndexKey, IndexRange, IndexRanges
+    Type, Key, NameKey, IndexKey, IndexRange, IndexRanges
 )
 
 __all__ = [
@@ -44,6 +40,7 @@ __all__ = [
     'Value',
 ]
 
+PyLiteral = Union[bool, int, float, str]
 Value = Union[PyLiteral, "PseudoValue"]
 
 NameMap = MutableMapping[NameKey, "TypedValue"]
