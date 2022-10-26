@@ -4,7 +4,7 @@ parse(tokens: str) -> statements: list
     Parses tokens and returns a list of statements.
 """
 
-from typing import Optional, Iterable, Mapping, Tuple, List
+from typing import cast, Optional, Iterable, Mapping, Tuple, List
 from typing import TypeVar, Callable as function
 
 from . import builtin, lang
@@ -639,12 +639,10 @@ def openfileStmt(tokens: Tokens) -> lang.OpenFile:
     filename: lang.Expr = value(tokens)
     matchWordElseError(tokens, 'FOR', msg="after file identifier")
     mode = matchWordElseError(tokens,
-                              'READ',
-                              'WRITE',
-                              'APPEND',
+                              *lang.FILEMODES,
                               msg="Invalid file mode")
     matchWordElseError(tokens, '\n')
-    return lang.OpenFile(filename, mode.word)
+    return lang.OpenFile(filename, cast(lang.FileMode, mode.word))
 
 
 def readfileStmt(tokens: Tokens) -> lang.ReadFile:

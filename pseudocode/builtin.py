@@ -22,7 +22,7 @@ class PseudoError(Exception):
 
     def report(self) -> str:
         """Returns the contained token and message as a formatted string"""
-        return f"{repr(self.token)}: {self.msg()}"
+        return f"{str(self.token)}: {self.msg()}"
 
 class ParseError(PseudoError):
     """Custom error raised by scanner and parser."""

@@ -3,11 +3,12 @@
 Pseudo
     Interprets code from a file or string
 """
-
+from dataclasses import dataclass
+import os
+import sys
 from typing import Optional
 from typing import Iterable, List, MutableMapping
 from typing import TypedDict, Callable as function
-import os, sys
 
 # Log errors to pseudo.log
 import logging
@@ -17,8 +18,7 @@ logging.basicConfig(
     format='%(name)s - %(levelname)s - %(message)s',
 )
 
-from pseudocode import builtin
-from pseudocode.lang import Frame
+from pseudocode import builtin, lang
 import pseudocode.system as system
 
 from pseudocode import scanner, parser
@@ -30,20 +30,17 @@ from pseudocode.interpreter import Interpreter
 class Result(TypedDict):
     """The metadata dict passed to an Array declaration"""
     lines: List[str]  # list of code lines as strings
-    frame: Frame  # The return frame from the interpreter
+    env: lang.Environment  # The environment used by the interpreter
     error: Optional[builtin.PseudoError]  # Error returned by the interpreter
-
 
 
 __version__ = '0.5.0a'
 VERSION = f"Pseudo {__version__}"
-HELP = """
-usage: pseudo [option] ... file
+HELP = """usage: pseudo [option] ... file
 Options and arguments:
 -h     : print this help message and exit (also --help)
 file   : program read from script file
 """.strip()
-
 
 
 def logException(msg="Unexpected error has occurred") -> None:
@@ -73,7 +70,6 @@ def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     print(errType, err.report())
 
 
-
 class Pseudo:
     """A 9608 pseudocode interpreter.
 
@@ -92,9 +88,11 @@ class Pseudo:
     """
 
     def __init__(self) -> None:
-        sysFrame = system.initFrame()
-        self.frame: Frame = Frame(typesys=sysFrame.types, outer=sysFrame)
-        system.resolveGlobal(sysFrame, self.frame)
+        typesys = lang.TypeSystem(*builtin.TYPES)
+        sysFrame = system.initFrame(typesys)
+        self.env = lang.Environment(frame=lang.Frame(outer=sysFrame),
+                                    types=typesys)
+        system.resolveEnv(sysFrame, self.env)
         self.handlers: MutableMapping[str, function] = {
             'output': print,
             'input': input,
@@ -123,7 +121,8 @@ class Pseudo:
         """Executes code represented by the src string."""
         result: Result = {
             'lines': [],
-            'frame': self.frame,
+            # 'frame': self.frame,
+            'env': self.env,
             'error': None,
         }
 
@@ -140,7 +139,7 @@ class Pseudo:
             return result
 
         # Resolving
-        resolver = Resolver(self.frame, statements)
+        resolver = Resolver(self.env, statements)
         try:
             resolver.inspect()
         except builtin.LogicError as err:
@@ -151,7 +150,7 @@ class Pseudo:
             return result
 
         # Interpreting
-        interpreter = Interpreter(self.frame, statements)
+        interpreter = Interpreter(self.env, statements)
         interpreter.registerOutputHandler(self.handlers['output'])
         try:
             interpreter.interpret()

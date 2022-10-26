@@ -141,23 +141,23 @@ funcReturnParams: List[Tuple[function, lang.Type, List[lang.TypedValue]]] = [
     (REALTOSTRING, 'STRING', [lang.TypedValue(type='REAL', value=None)]),
 ]
 
-def initFrame() -> lang.Frame:
+def initFrame(typesys: lang.TypeSystem) -> lang.Frame:
     """
     Return a system frame with function declarations.
     Functions are not yet defined.
     """
-    sysFrame = lang.Frame(typesys=lang.TypeSystem(*builtin.TYPES))
+    sysFrame = lang.Frame()
     for func, retType, _ in funcReturnParams:
-        sysFrame.declare(func.__name__, retType)
+        sysFrame.declare(func.__name__, typesys.cloneType(retType))
     return sysFrame
 
-def resolveGlobal(sysFrame: lang.Frame, globalFrame: lang.Frame) -> None:
+def resolveEnv(sysFrame: lang.Frame, env: lang.Environment) -> None:
     """
-    Resolve all system functions in sysFrame to point to global frame.
+    Resolve all system functions in sysFrame to use given environment.
     """
     # Be careful to avoid recursion
     for func, retType, params in funcReturnParams:
         sysFrame.setValue(
             func.__name__,
-            lang.Builtin(globalFrame, params, func)
+            lang.Builtin(env, params, func)
         )

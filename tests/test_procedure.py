@@ -30,7 +30,7 @@ class ProcedureTestCase(unittest.TestCase):
         # Procedure should complete successfully
         self.assertIsNone(self.result['error'])
         
-        frame = self.result['frame']
+        frame = self.result['env'].frame
 
         # Check procedure type
         self.assertEqual(
@@ -46,10 +46,10 @@ class ProcedureTestCase(unittest.TestCase):
 
         # Check procedure params
         self.assertTrue(
-            procedure.frame.getValue('Succeeded')
+            procedure.env.frame.getValue('Succeeded')
         )
         self.assertEqual(
-            procedure.frame.getType('Succeeded'),
+            procedure.env.frame.getType('Succeeded'),
             'BOOLEAN'
         )
 

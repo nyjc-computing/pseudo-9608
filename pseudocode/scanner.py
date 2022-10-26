@@ -4,7 +4,7 @@ scan(src: str) -> tokens: list, lines: list
     Scans src string, returns a list of tokens and a list of code lines.
 """
 
-from typing import Any
+from typing import Any, Union
 from typing import List, Tuple
 
 from . import builtin, lang
@@ -37,8 +37,11 @@ def makeToken(code: "Code", type: lang.Type, word: str,
     return lang.Token(code.line, column, type, word, value)
 
 
-def islinebreak(token: lang.Token) -> bool:
-    return token.word == '\n'
+def islinebreak(token: Union[lang.Token, str]) -> bool:
+    if isinstance(token, lang.Token):
+        return token.word == '\n'
+    else:  # str
+        return token == '\n'
 
 
 # Scanning functions
