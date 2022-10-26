@@ -97,5 +97,8 @@ poetry.lock
 pseudo
 replit.nix
 
+# Pseudo files
+main.pseudo
+
 # Internal scripts
 *.sh
