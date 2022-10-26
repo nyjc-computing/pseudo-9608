@@ -9,11 +9,11 @@ TypeSystem
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import MutableMapping, Optional
 
-from .object import Object, PyLiteral, TypedValue
-from .types import (
-    Type, Key, NameKey, IndexKey, IndexRange, IndexRanges
+from . import (
+    types as t,
+    object as o,
 )
 
 
@@ -42,14 +42,14 @@ class TypeTemplate(Template):
     clone()
     """
     __slots__ = ("type", "value")
-    type: Type
+    type: t.Type
     value: Optional["ObjectTemplate"]
 
-    def clone(self) -> "TypedValue":
+    def clone(self) -> o.TypedValue:
         """This returns an empty TypedValue of the same type."""
         if isinstance(self.value, ObjectTemplate):
-            return TypedValue(self.type, self.value.clone())
-        return TypedValue(self.type, self.value)
+            return o.TypedValue(self.type, self.value.clone())
+        return o.TypedValue(self.type, self.value)
 
 
 class ObjectTemplate(Template):
@@ -66,20 +66,20 @@ class ObjectTemplate(Template):
 
     def __init__(self, typesys: "TypeSystem") -> None:
         self.types = typesys
-        self.data: MutableMapping[NameKey, Type] = {}
+        self.data: MutableMapping[t.NameKey, t.Type] = {}
 
     def __repr__(self) -> str:
         return repr(self.data)
 
-    def declare(self, name: NameKey, type: Type) -> None:
+    def declare(self, name: t.NameKey, type: t.Type) -> None:
         self.data[name] = type
 
-    def clone(self) -> "Object":
+    def clone(self) -> o.Object:
         """
         This returns an empty Object with the same names
         declared.
         """
-        obj = Object()
+        obj = o.Object()
         for name, type in self.data.items():
             obj.declare(name, type)
         return obj
@@ -101,30 +101,30 @@ class TypeSystem:
     """
     __slots__ = ("data", )
 
-    def __init__(self, *types: Type) -> None:
-        self.data: MutableMapping[Type, TypeTemplate] = {}
+    def __init__(self, *types: t.Type) -> None:
+        self.data: MutableMapping[t.Type, TypeTemplate] = {}
         for typeName in types:
             self.declare(typeName)
 
     def __repr__(self) -> str:
         return f"{{{', '.join(self.data.keys())}}}"
 
-    def has(self, type: Type) -> bool:
+    def has(self, type: t.Type) -> bool:
         """returns True if the type has been registered,
         otherwise returns False.
         """
         return type in self.data
 
-    def declare(self, type: Type) -> None:
+    def declare(self, type: t.Type) -> None:
         """declares the existence of type in the TypeSystem.
         Use setTemplate(type, template) to set the template for this type.
         """
         self.data[type] = TypeTemplate(type, None)
 
-    def setTemplate(self, type: Type, template: "ObjectTemplate") -> None:
+    def setTemplate(self, type: t.Type, template: "ObjectTemplate") -> None:
         """Set the template used to initialise a TypedValue with this type."""
         self.data[type].value = template
 
-    def cloneType(self, type: Type) -> "TypedValue":
+    def cloneType(self, type: t.Type) -> o.TypedValue:
         """Return a copy of the template for the type."""
         return self.data[type].clone()

@@ -23,9 +23,7 @@ from typing import (
     Union,
 )
 
-from .types import (
-    Type, Key, NameKey, IndexKey, IndexRange, IndexRanges
-)
+from . import types as t
 
 __all__ = [
     'Array',
@@ -36,6 +34,7 @@ __all__ = [
     'Object',
     'Params',
     'PseudoValue',
+    'PyLiteral',
     'TypedValue',
     'Value',
 ]
@@ -43,8 +42,8 @@ __all__ = [
 PyLiteral = Union[bool, int, float, str]
 Value = Union[PyLiteral, "PseudoValue"]
 
-NameMap = MutableMapping[NameKey, "TypedValue"]
-IndexMap = MutableMapping[IndexKey, "TypedValue"]
+NameMap = MutableMapping[t.NameKey, "TypedValue"]
+IndexMap = MutableMapping[t.IndexKey, "TypedValue"]
 
 Params = Sequence["TypedValue"]
 
@@ -55,7 +54,7 @@ class TypedValue:
     Each TypedValue has a type and a value.
     """
     __slots__ = ("type", "value")
-    type: Type
+    type: t.Type
     value: Optional[Value]
 
     def __repr__(self) -> str:
@@ -101,34 +100,34 @@ class Frame:
         nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
         return f"{{{', '.join(nameTypePairs)}}}"
 
-    def has(self, name: NameKey) -> bool:
+    def has(self, name: t.NameKey) -> bool:
         return name in self.data
 
-    def declare(self, name: NameKey, typedValue: TypedValue) -> None:
+    def declare(self, name: t.NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
 
-    def get(self, name: NameKey) -> TypedValue:
+    def get(self, name: t.NameKey) -> TypedValue:
         return self.data[name]
 
-    def getType(self, name: NameKey) -> Type:
+    def getType(self, name: t.NameKey) -> t.Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> Value:
+    def getValue(self, name: t.NameKey) -> Value:
         returnval = self.data[name].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned variable {name!r}")
         return returnval
 
-    def set(self, name: NameKey, typedValue: TypedValue) -> None:
+    def set(self, name: t.NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
 
-    def setValue(self, name: NameKey, value: Value) -> None:
+    def setValue(self, name: t.NameKey, value: Value) -> None:
         self.data[name].value = value
 
-    def delete(self, name: NameKey) -> None:
+    def delete(self, name: t.NameKey) -> None:
         del self.data[name]
 
-    def lookup(self, name: NameKey) -> Optional["Frame"]:
+    def lookup(self, name: t.NameKey) -> Optional["Frame"]:
         if self.has(name):
             return self
         if self.outer:
@@ -182,7 +181,7 @@ class Array(Container):
     """
     __slots__ = ("ranges", "data")
 
-    def __init__(self, ranges: IndexRanges, type: Type) -> None:
+    def __init__(self, ranges: t.IndexRanges, type: t.Type) -> None:
         self.ranges = ranges
         self.data: IndexMap = {}
 
@@ -193,7 +192,7 @@ class Array(Container):
         return f"{{{', '.join(nameValuePairs)}}}: {self.elementType}"
 
     @staticmethod
-    def rangeProduct(indexes: IndexRanges) -> Iterator:
+    def rangeProduct(indexes: t.IndexRanges) -> Iterator:
         """Returns an iterator from an interable of (start, end) tuples.
         E.g. ((0, 2), (0, 3)) will return the following iterations:
             (0, 0), ..., (0, 3),
@@ -212,19 +211,19 @@ class Array(Container):
         return len(self.ranges)
 
     @property
-    def elementType(self) -> Type:
+    def elementType(self) -> t.Type:
         return tuple(self.data.values())[0].type
 
-    def has(self, index: IndexKey) -> bool:
+    def has(self, index: t.IndexKey) -> bool:
         return index in self.data
 
-    def declare(self, index: IndexKey, typedValue: TypedValue) -> None:
+    def declare(self, index: t.IndexKey, typedValue: TypedValue) -> None:
         self.data[index] = typedValue
 
-    def getType(self, index: IndexKey) -> Type:
+    def getType(self, index: t.IndexKey) -> t.Type:
         return self.data[index].type
 
-    def getValue(self, index: IndexKey) -> Union[PyLiteral, "Object"]:
+    def getValue(self, index: t.IndexKey) -> Union[PyLiteral, "Object"]:
         returnval = self.data[index].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned index {index!r}")
@@ -234,11 +233,11 @@ class Array(Container):
                               Object)), f"Unexpected {type(returnval)}"
         return returnval
 
-    def get(self, index: IndexKey) -> "TypedValue":
+    def get(self, index: t.IndexKey) -> "TypedValue":
         return self.data[index]
 
-    def setValue(self, index: IndexKey, value: Union[PyLiteral,
-                                                     "Object"]) -> None:
+    def setValue(self, index: t.IndexKey, value: Union[PyLiteral,
+                                                       "Object"]) -> None:
         self.data[index].value = value
 
 
@@ -272,16 +271,16 @@ class Object(Container):
         nameTypePairs = [f"{name}: {self.getType(name)}" for name in self.data]
         return f"{{{', '.join(nameTypePairs)}}}"
 
-    def has(self, name: NameKey) -> bool:
+    def has(self, name: t.NameKey) -> bool:
         return name in self.data
 
-    def declare(self, name: NameKey, typedValue: TypedValue) -> None:
+    def declare(self, name: t.NameKey, typedValue: TypedValue) -> None:
         self.data[name] = typedValue
 
-    def getType(self, name: NameKey) -> Type:
+    def getType(self, name: t.NameKey) -> t.Type:
         return self.data[name].type
 
-    def getValue(self, name: NameKey) -> "Assignable":
+    def getValue(self, name: t.NameKey) -> "Assignable":
         returnval = self.data[name].value
         if returnval is None:
             raise ValueError(f"Accessed unassigned variable {name!r}")
@@ -291,10 +290,10 @@ class Object(Container):
                     returnval, Container)), f"Unexpected {type(returnval)}"
         return returnval
 
-    def get(self, name: NameKey) -> "TypedValue":
+    def get(self, name: t.NameKey) -> "TypedValue":
         return self.data[name]
 
-    def setValue(self, name: NameKey, value: "Assignable") -> None:
+    def setValue(self, name: t.NameKey, value: "Assignable") -> None:
         self.data[name].value = value
 
 

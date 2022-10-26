@@ -78,8 +78,8 @@ SourceExpr = Union["UnresolvedName", "GetExpr"]
 
 class TypeMetadata(TypedDict, total=False):
     """The metadata dict passed to an Array declaration"""
-    size: o.IndexRanges
-    type: o.Type
+    size: t.IndexRanges
+    type: t.Type
 
 
 @dataclass(eq=False, frozen=True)
@@ -91,7 +91,7 @@ class Token:
     __slots__ = ("line", "column", "type", "word", "value")
     line: int
     column: int
-    type: o.Type
+    type: t.Type
     word: str
     value: Any
 
@@ -124,10 +124,10 @@ class Name:
     variable name.
     """
     # dataclass doesn't play well with __slots__ and prevents use of field
-    name: o.NameKey
+    name: t.NameKey
     token: "Token" = field(repr=False)
 
-    def __str__(self) -> o.NameKey:
+    def __str__(self) -> t.NameKey:
         return self.name
 
 
@@ -200,7 +200,7 @@ class File(o.PseudoValue):
         An object for accessing the file
     """
     __slots__ = ("name", "mode", "iohandler")
-    name: o.NameKey
+    name: t.NameKey
     mode: FileMode
     iohandler: IO
 
@@ -229,8 +229,9 @@ class Literal(Expr):
     code.
     """
     __slots__ = ("type", "value", "token")
-    type: o.Type
+    type: t.Type
     value: o.PyLiteral
+    
     token: Token
 
     def __hash__(self):
@@ -249,7 +250,7 @@ class Declare(Expr):
     """A Declare Expr associates a Name with its declared Type."""
     __slots__ = ("name", "type", "metadata")
     name: Name
-    type: o.Type
+    type: t.Type
     metadata: TypeMetadata
 
     @property
@@ -489,7 +490,7 @@ class ProcFunc(Stmt):
     passby: Passby
     params: Declares
     stmts: Stmts
-    returnType: o.Type
+    returnType: t.Type
 
 
 class ProcedureStmt(ProcFunc):
