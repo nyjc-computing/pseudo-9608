@@ -149,9 +149,13 @@ class Container(PseudoValue):
 
     Attributes
     ----------
+    - type
+      Type name of the container
+      e.g. Student, e.g. ARRAY[1:3] OF INTEGER
     - data
-        A MutableMapping used to map keys to TypedValues
+      A MutableMapping used to map keys to TypedValues
     """
+    type: t.Type
     data: MutableMapping
 
 
@@ -179,7 +183,7 @@ class Array(Container):
     setValue(index, value)
         updates the value associated with the index
     """
-    __slots__ = ("ranges", "data")
+    __slots__ = ("ranges", "data", "type")
 
     def __init__(self, ranges: t.IndexRanges, type: t.Type) -> None:
         self.ranges = ranges
@@ -262,7 +266,7 @@ class Object(Container):
     setValue(name, value)
         updates the value associated with the name
     """
-    __slots__ = ("data", )
+    __slots__ = ("data", "type")
 
     def __init__(self) -> None:
         self.data: NameMap = {}
