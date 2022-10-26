@@ -336,7 +336,7 @@ def willReturn(stmt) -> bool:
 def _(stmt: lang.Conditional) -> bool:
     # If & CASE: If any case statements do not have a return, the statement is
     # not guaranteed to return.
-    for stmts in stmt.stmtMap.values():
+    for stmts in stmt.cases.values():
         if not any(map(willReturn, stmts)):
             return False
     if (not stmt.fallback) or not any(map(willReturn, stmt.fallback)):
@@ -396,7 +396,7 @@ def _(stmt: lang.Case, env: lang.Environment,
       returnType: Optional[lang.Type] = None) -> None:
     resolveNamesInTarget(stmt, env)
     condType = resolve(stmt.cond, env)
-    for caseValue, statements in stmt.stmtMap.items():
+    for caseValue, statements in stmt.cases.items():
         caseType = resolve(caseValue, env)
         expectTypeElseError(caseType, condType, token=caseValue.token)
         verifyStmts(statements, env, returnType)
@@ -410,7 +410,7 @@ def _(stmt: lang.If, env: lang.Environment,
     resolveNamesInTarget(stmt, env)
     condType = resolve(stmt.cond, env)
     expectTypeElseError(condType, 'BOOLEAN', token=stmt.cond.token)
-    for statements in stmt.stmtMap.values():
+    for statements in stmt.cases.values():
         verifyStmts(statements, env, returnType)
     if stmt.fallback:
         verifyStmts(stmt.fallback, env, returnType)

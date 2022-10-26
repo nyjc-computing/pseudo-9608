@@ -297,7 +297,7 @@ def _(stmt: lang.Input, env: lang.Environment, **kwargs) -> None:
 def _(stmt: lang.Conditional, env: lang.Environment,
       **kwargs) -> Optional[lang.Assignable]:
     condValue = evaluate(stmt.cond, env)
-    for caseValue, stmts in stmt.stmtMap.items():
+    for caseValue, stmts in stmt.cases.items():
         if evaluate(caseValue, env) == condValue:
             return executeStmts(stmts, env, **kwargs)
     else:  # for loop completed normally, i.e. no matching cases

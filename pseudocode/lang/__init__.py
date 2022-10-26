@@ -443,9 +443,9 @@ class Conditional(Stmt):
     A provided condition cond, when evaluated to a value, results in
     the associated statement(s) being executed.
     """
-    __slots__ = ("cond", "stmtMap", "fallback")
+    __slots__ = ("cond", "cases", "fallback")
     cond: "Expr"
-    stmtMap: CaseMap
+    cases: CaseMap
     fallback: Optional[Stmts]
 
 
