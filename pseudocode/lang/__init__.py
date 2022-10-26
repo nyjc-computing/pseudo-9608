@@ -18,7 +18,7 @@ Builtin, Function, Procedure
 File
     An open file
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import (
     get_args,
     Any,
@@ -95,7 +95,7 @@ class Token:
     word: str
     value: Any
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         lineinfo = f"[Line {self.line} column {self.column}]"
         valuestr = self.value or self.word
         return f"{lineinfo} {valuestr!r}"
@@ -118,25 +118,17 @@ class Environment:
         return type(self)(frame, self.types)
 
 
+@dataclass(frozen=True)
 class Name:
     """Name represents a meaningful name, either a custom type or a
     variable name.
     """
-    __slots__ = ("name", "_token")
-
-    def __init__(self, name: o.NameKey, *, token: "Token") -> None:
-        self.name = name
-        self._token = token
-
-    def __repr__(self) -> str:
-        return f"Name({self.name})"
+    # dataclass doesn't play well with __slots__ and prevents use of field
+    name: o.NameKey
+    token: "Token" = field(repr=False)
 
     def __str__(self) -> o.NameKey:
         return self.name
-
-    @property
-    def token(self) -> "Token":
-        return self._token
 
 
 class Callable(o.PseudoValue):
