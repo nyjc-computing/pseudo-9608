@@ -3,7 +3,7 @@
 Pseudo
     Interprets code from a file or string
 """
-from dataclasses import dataclass
+
 import os
 import sys
 from typing import Optional
