@@ -16,10 +16,13 @@ from abc import ABC
 from dataclasses import dataclass
 from itertools import product
 from typing import (
+    Dict,
     Iterator,
+    Mapping,
     MutableMapping,
     Optional,
     Sequence,
+    TypedDict,
     Union,
 )
 
@@ -48,13 +51,23 @@ IndexMap = MutableMapping[t.IndexKey, "TypedValue"]
 Params = Sequence["TypedValue"]
 
 
+class ArrayMetadata(TypedDict, total=False):
+    """The metadata held by the TypedValue for an Array"""
+    size: t.IndexRanges
+    type: t.Type
+
+
+ObjectMetadata = Dict[t.Names, t.Type]
+
+
 @dataclass
 class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
-    Each TypedValue has a type and a value.
+    Each TypedValue has a type and a value, with optional metadata.
     """
-    __slots__ = ("type", "value")
+    __slots__ = ("type", "metadata", "value")
     type: t.Type
+    # metadata: Mapping
     value: Optional[Value]
 
     def __repr__(self) -> str:
