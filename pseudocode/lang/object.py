@@ -13,7 +13,7 @@ Frame
 """
 
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import product
 from typing import (
     Dict,
@@ -65,14 +65,9 @@ class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
     Each TypedValue has a type and a value, with optional metadata.
     """
-    __slots__ = ("type", "metadata", "value")
     type: t.Type
-    # metadata: Optional[Mapping]
-    value: Optional[Value]
-    def __init__(self, type: t.Type, value: Optional[Value] = None, metadata: Optional[Mapping] = None) -> None:
-        self.type = type
-        self.value = value
-        self.metadata = metadata or {}
+    value: Optional[Value] = None
+    metadata: Optional[Mapping] = field(default_factory=dict)
 
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
