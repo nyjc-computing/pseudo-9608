@@ -164,7 +164,7 @@ Variables of a custom data type can be assigned to each other. Individual data i
 >     DECLARE Index : INTEGER
 >     
 >     Pupil1.Surname <- "Johnson"
->     Pupil1.Firstname <- "Leroy"
+>     Pupil1.FirstName <- "Leroy"
 >     Pupil1.DateOfBirth <- 02/01/2005
 >     Pupil1.YearGroup <- 6
 >     Pupil1.FormGroup <- ꞌAꞌ

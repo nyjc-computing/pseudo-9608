@@ -13,13 +13,16 @@ Frame
 """
 
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import product
 from typing import (
+    Dict,
     Iterator,
+    Mapping,
     MutableMapping,
     Optional,
     Sequence,
+    TypedDict,
     Union,
 )
 
@@ -48,14 +51,23 @@ IndexMap = MutableMapping[t.IndexKey, "TypedValue"]
 Params = Sequence["TypedValue"]
 
 
+class ArrayMetadata(TypedDict, total=False):
+    """The metadata held by the TypedValue for an Array"""
+    size: t.IndexRanges
+    type: t.Type
+
+
+ObjectMetadata = Dict[t.Names, t.Type]
+
+
 @dataclass
 class TypedValue:
     """All pseudocode values are encapsulated in a TypedValue.
-    Each TypedValue has a type and a value.
+    Each TypedValue has a type and a value, with optional metadata.
     """
-    __slots__ = ("type", "value")
     type: t.Type
-    value: Optional[Value]
+    value: Optional[Value] = None
+    metadata: Optional[Mapping] = field(default_factory=dict)
 
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
@@ -149,9 +161,13 @@ class Container(PseudoValue):
 
     Attributes
     ----------
+    - type
+      Type name of the container
+      e.g. Student, e.g. ARRAY[1:3] OF INTEGER
     - data
-        A MutableMapping used to map keys to TypedValues
+      A MutableMapping used to map keys to TypedValues
     """
+    type: t.Type
     data: MutableMapping
 
 
@@ -179,7 +195,7 @@ class Array(Container):
     setValue(index, value)
         updates the value associated with the index
     """
-    __slots__ = ("ranges", "data")
+    __slots__ = ("ranges", "data", "type")
 
     def __init__(self, ranges: t.IndexRanges, type: t.Type) -> None:
         self.ranges = ranges
@@ -262,7 +278,7 @@ class Object(Container):
     setValue(name, value)
         updates the value associated with the name
     """
-    __slots__ = ("data", )
+    __slots__ = ("data", "type")
 
     def __init__(self) -> None:
         self.data: NameMap = {}

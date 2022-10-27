@@ -3,7 +3,7 @@
 Pseudo
     Interprets code from a file or string
 """
-from dataclasses import dataclass
+
 import os
 import sys
 from typing import Optional
@@ -63,7 +63,7 @@ def report(lines: Iterable[str], err: builtin.PseudoError) -> None:
     errType = type(err).__name__ + ':'
     if err.line:
         lineinfo = f"[Line {err.line}]"
-        print(lineinfo, lines[err.line - 1])  # type: ignore
+        print(lineinfo, lines[err.line - 1] if lines else '')  # type: ignore
     if err.column:
         leftmargin = len(lineinfo) + err.column
         print((' ' * leftmargin) + '^')
@@ -121,7 +121,6 @@ class Pseudo:
         """Executes code represented by the src string."""
         result: Result = {
             'lines': [],
-            # 'frame': self.frame,
             'env': self.env,
             'error': None,
         }

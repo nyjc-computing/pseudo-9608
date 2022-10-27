@@ -9,13 +9,11 @@ class PseudoError(Exception):
     def __init__(self, msg, token, line=None) -> None:
         super().__init__(msg)
         self.token = token
-        self.line = line
-        self.column = None
-        if token:
-            self.line = token.line
-            self.column = token.column
-        else:
-            self.line = None
+        self.line = line or token.line
+
+    @property
+    def column(self):
+        return hasattr(self.token, "column") and self.token.column
 
     def msg(self) -> str:
         return self.args[0]

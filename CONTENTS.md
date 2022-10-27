@@ -80,3 +80,4 @@ If you are a beginner programmer, I hope this gitbook teaches you soemthing you 
 - [31a Defining behaviour: Cleaning up (again)](https://github.com/nyjc-computing/pseudo-9608/pull/96)
 - [31b Defining behaviour: EOF handling and Returns](https://github.com/nyjc-computing/pseudo-9608/pull/97)
 - [31c Defining behaviour: Object hierarchy](https://github.com/nyjc-computing/pseudo-9608/pull/98)
+- [31d Defining behaviour: Container types and assignment](https://github.com/nyjc-computing/pseudo-9608/pull/104)
