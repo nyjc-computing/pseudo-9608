@@ -67,8 +67,12 @@ class TypedValue:
     """
     __slots__ = ("type", "metadata", "value")
     type: t.Type
-    # metadata: Mapping
+    # metadata: Optional[Mapping]
     value: Optional[Value]
+    def __init__(self, type: t.Type, value: Optional[Value] = None, metadata: Optional[Mapping] = None) -> None:
+        self.type = type
+        self.value = value
+        self.metadata = metadata or {}
 
     def __repr__(self) -> str:
         return f"<{self.type}: {repr(self.value)}>"
